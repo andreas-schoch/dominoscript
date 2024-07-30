@@ -1,0 +1,29 @@
+{
+  "name": "domino-script",
+  "version": "0.0.1",
+  "description": "A recreational stack-oriented concatenative two-dimensional non-linear self-modifying esoteric programming language that uses the dots on domino pieces to represent code.",
+  "type": "module",
+  "main": "./src/interpreter.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "watch": "tsc -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "esoteric programming language",
+    "esolang",
+    "domino",
+    "interpreter",
+    "compiler",
+    "self-modifying",
+    "two-dimensional",
+    "concatenative",
+    "stack-oriented"
+  ],
+  "author": "Andreas Schoch",
+  "license": "MIT",
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "^5.5.4"
+  }
+}
