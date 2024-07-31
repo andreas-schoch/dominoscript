@@ -1,93 +1,61 @@
-import { Board, Cell } from "./Board";
-import { Stack } from "./Stack";
+import { Address, Board, Cell } from "./Board";
 import { DSInterpreterError, DSStepToEmptyCellError } from "./errors";
-import { instructionsByOpcode } from "./instructions/index";
-import { FORWARD, LEFT, RIGHT, navModes } from "./navModes";
+import { InstructionPointer } from "./Runner";
+import { FORWARD, LEFT, navModes, RIGHT } from "./navModes";
+import { Stack } from "./Stack";
 
-export type RelativeDirection = 0 | 1 | 2; // 0 = forward, 1 = left, 2 = right
-export type PriorityDirection = 'Primary' | 'Secondary' | 'Tertiary';
-export type CardinalDirection = 'north' | 'east' | 'south' | 'west';
-
-export interface InstructionPointer {
-  // address: Address;
-  // previous: Address;
-  cell: Cell | null;
-  previousCell: Cell | null;
+export class Context {
+  IP: InstructionPointer;
+  board: Board;
+  stack: Stack;
+  returnStack: Stack;
+  
   navMode: number;
   navModeOverrides: number[];
-}
-
-export class Interpreter {
-  // TODO increase stack size to reasonable amount. This is just while developing
-  stack: Stack = new Stack(8); // stack used by all instructions
-  returnStack: Stack = new Stack(8); // internal stack for calls and returns
   
-  board: Board;  
-  IP: InstructionPointer = {cell: null, previousCell: null, navMode: 0, navModeOverrides: []};
-  isFirstDomino = true;
+  labels: Record<number, Address>;
+  jumpLabel: number | null;
+  callLabel: number | null;
 
-  private finished = false;
+  isFirstDomino: boolean;
+  isFinished: boolean;
 
   constructor(source: string) {
     this.board = new Board(source);
+
+    this.IP = {cell: null, previousCell: null};
+    this.stack = new Stack(8);
+    this.returnStack = new Stack(8);
+    this.navMode = 0;
+    this.navModeOverrides = [];
+    this.labels = {};
+    this.jumpLabel = null;
+    this.callLabel = null;
+    this.isFirstDomino = true;
+    this.isFinished = false;
   }
 
-  run(): void {
-    const timeStart = Date.now();
-    this.findFirstDomino();
-    
-    let i = 0;
-    while(!this.finished) {
-      if (i++ > 20) break; // TODO remove this is only to prevent infinite loops while developing 
-
-      const c1 = this.isFirstDomino ? this.IP.cell : this.step();
-      this.isFirstDomino = false;
-      console.log(this.IP.cell);
-      const c2 = this.step();
-
-      console.log(c1?.value, c2?.value);
-
-      if (!c1 && !c2) {
-        this.finished = true;
-        break;
-      } else if (!c1 || !c2) throw new DSInterpreterError('The steps here should always return 2 cells as we expect to move to a new domino');
-
-      if (c1.value === null || c2.value === null) throw new DSInterpreterError('Both cells are empty. This should never happen');
-
-      const opcode = parseInt(`${c1.value}${c2.value}`, 7);
-      // console.log(`${c1.value}${c2.value}`, opcode)
-      const instruction = instructionsByOpcode[opcode];
-      console.log(opcode, instruction.name);
-      console.log(Array.from(this.stack.data));
-      instruction(this.stack, this.IP, this.step.bind(this));
-      console.log(Array.from(this.stack.data));
+  step(): Cell | null {
+    // JUMP
+    if (this.jumpLabel !== null) {
+      this.IP.cell = this.board.getOrThrow(this.jumpLabel);
+      this.jumpLabel = null;
+      return this.IP.cell;
     }
 
-    const timeEnd = Date.now();
-    console.log('Time taken:', timeEnd - timeStart, 'ms');
-    this.stack.clear
-  }
-
-  private findFirstDomino(): void {
-    // It scans the board from top left to the right and down until it finds the first domino.
-    const len = this.board.width * this.board.height;
-    for (let i = 0; i < len; i++) {
-      const cell = this.board.getOrThrow(i);
-      if (cell.value !== null) {
-        this.moveIP(cell);
-        return;
-      }
+    // CALL
+    if (this.callLabel !== null) {
+      this.returnStack.push(this.IP.cell!.address); // FIXME this should be the address after the CALL instruction, not the current address or is this ok?
+      this.IP.cell = this.board.getOrThrow(this.callLabel);
+      this.callLabel = null;
+      return this.IP.cell;
     }
-    if (this.IP.cell?.address === -1) this.finished = true;
-  }
 
-  private step(): Cell | null {
-    // if at the end `didStep` is still false, the program is finished.
+    // if at the end `startAddress` is still false, the program is finished.
     let startAddress = this.IP.cell?.address;
 
     const currentCell = this.IP.cell;
     if (!currentCell || currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
-    
     const isOnEntryHalf = this.IP.previousCell === null || this.IP.previousCell.address !== currentCell.connection;
 
     // if (navModeOverride !== undefined && isOnEntryHalf) throw new DSInterpreterError('Cannot override nav mode when on entry half of a domino');
@@ -127,14 +95,14 @@ export class Interpreter {
     
     // If all possible directions are empty, the program is finished.
     if (!forwardCell && !leftCell && !rightCell) {
-      this.finished = true;
+      this.isFinished = true;
       return null;
     }
     
     // The current movement mode will determine where to move next.
     // const index = navModeOverride !== undefined ? navModeOverride : this.movementModeIndex;
-    const overrideIndex = this.IP.navModeOverrides.shift();
-    const index = overrideIndex !== undefined ? overrideIndex : this.IP.navMode;
+    const overrideIndex = this.navModeOverrides.shift();
+    const index = overrideIndex !== undefined ? overrideIndex : this.navMode;
     let mm = navModes[index];
     if (!Array.isArray(mm)) mm = mm(forwardCell, leftCell, rightCell);
     for (const direction of mm) {
@@ -154,11 +122,11 @@ export class Interpreter {
     }
 
     // if it reaches here it means that according to the direction mode, the IP had no valid moves (despite there being 1 or more neighbours)
-    this.finished = true;
+    this.isFinished = true;
     return null;
   }
 
-  private moveIP(cell: Cell): Cell {
+  moveIP(cell: Cell): Cell {
     // TODO consider keeping track of total steps, total dominos visited, total returns/calls, etc.
     if (cell.value === null) throw new DSStepToEmptyCellError(this.IP.cell!.address, cell.address);
     if (this.IP.cell && this.IP.previousCell && this.IP.cell.address !== -1 && this.IP.cell === this.IP.previousCell) throw new DSInterpreterError('IP address and previous are the same');
@@ -171,25 +139,17 @@ export class Interpreter {
     console.log(cell);
     return cell;
   }
+
+  findFirstDomino(): void {
+    // It scans the board from top left to the right and down until it finds the first domino.
+    const len = this.board.width * this.board.height;
+    for (let i = 0; i < len; i++) {
+      const cell = this.board.getOrThrow(i);
+      if (cell.value !== null) {
+        this.moveIP(cell);
+        return;
+      }
+    }
+    if (this.IP.cell?.address === -1) this.isFinished = true;
+  }
 }
-
-
-const ds = new Interpreter(`\
-0-1 0-3 . . . .
-               
-. . . 4 . . . .
-      |        
-0 1-0 1 6-6 . .
-|              
-5 . . . . . . .`);
-
-
-
-
-
-console.log(ds.board.grid);
-
-
-ds.run();
-
-ds.stack.peek();

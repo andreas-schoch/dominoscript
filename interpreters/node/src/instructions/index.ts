@@ -1,15 +1,15 @@
 import { DUP, NUM, POP, ROTL, STR, SWAP } from "./StackManipulations";
 import { ADD, DIV, MOD, MUL, NEG, SUB } from "./Arithmetic";
-import { Stack } from "../Stack";
 import { AND, EQL, GTR, NOT, OR } from "./ComparisonAndLogical";
 import { BAND, BNOT, BOR, BSL, BSR, BXOR } from "./Bitwise";
-import { NOOP } from "./Misc";
-import { InstructionPointer } from "../Interpreter";
-import { Board, Cell } from "../Board";
-import { BRANCH } from "./ContrlFlow";
+import { GET, NOOP, SET } from "./Misc";
+import { BRANCH, CALL, JUMP, LABEL, NAVM } from "./ContrlFlow";
+import { NUMIN, NUMOUT, STRIN, STROUT } from "./InputOutput";
+import { Context } from "../Context";
 
-export type Instruction = (stack: Stack, IP: InstructionPointer, step: () => Cell | null) => void;
+export type Instruction = (ctx: Context) => void;
 
+// TODO benchmark performance of this approach vs a single large switch statement where instructions are inlined without function calls
 export const instructionsByOpcode: Instruction[] = [
   // Stack Management
   POP,
@@ -48,26 +48,26 @@ export const instructionsByOpcode: Instruction[] = [
   INVALID,
 
   // Control Flow
-  INVALID, // TODO 'DIR',
-  BRANCH, // TODO 'BRANCH',
-  INVALID, // TODO 'LABEL',
-  INVALID, // TODO 'JUMP',
-  INVALID, // TODO 'CALL',
+  NAVM,
+  BRANCH,
+  LABEL,
+  JUMP,
+  CALL,
   INVALID,
   INVALID,
 
   // Input & Output
-  INVALID, // TODO 'NUMIN',
-  INVALID, // TODO 'NUMOUT',
-  INVALID, // TODO 'STRIN',
-  INVALID, // TODO 'STROUT',
+  NUMIN,
+  NUMOUT,
+  STRIN,
+  STROUT,
   INVALID,
   INVALID,
   INVALID,
 
   // Reflection & Meta
-  INVALID, // TODO 'GET',
-  INVALID, // TODO 'SET',
+  GET,
+  SET,
   INVALID,
   INVALID,
   INVALID,
@@ -75,6 +75,6 @@ export const instructionsByOpcode: Instruction[] = [
   NOOP
 ];
 
-export function INVALID(stack: Stack) {
+export function INVALID() {
   throw new Error('Invalid instruction');
 }

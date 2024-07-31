@@ -1,30 +1,30 @@
-import { Stack } from "../Stack";
+import { Context } from "../Context";
 
 
-export function BNOT(stack: Stack) {
-    stack.push(~stack.pop());
+export function BNOT(ctx: Context) {
+    ctx.stack.push(~ctx.stack.pop());
 }
 
-export function BAND(stack: Stack) {
-    stack.push(stack.pop() & stack.pop());
+export function BAND(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() & ctx.stack.pop());
 }
 
-export function BOR(stack: Stack) {
-    stack.push(stack.pop() | stack.pop());
+export function BOR(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() | ctx.stack.pop());
 }
 
-export function BXOR(stack: Stack) {
-    stack.push(stack.pop() ^ stack.pop());
+export function BXOR(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() ^ ctx.stack.pop());
 }
 
-export function BSL(stack: Stack) {
-    const a = stack.pop();
-    const b = stack.pop();
-    stack.push(b << a);
+export function BSL(ctx: Context) {
+    const a = ctx.stack.pop();
+    const b = ctx.stack.pop();
+    ctx.stack.push(b << a);
 }
 
-export function BSR(stack: Stack) {
-    const a = stack.pop();
-    const b = stack.pop();
-    stack.push(b >> a);
+export function BSR(ctx: Context) {
+    const a = ctx.stack.pop();
+    const b = ctx.stack.pop();
+    ctx.stack.push(b >> a);
 }

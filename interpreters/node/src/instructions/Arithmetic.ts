@@ -1,31 +1,31 @@
-import { Stack } from "../Stack";
+import { Context } from "../Context";
 
-export function ADD(stack: Stack): void {
-    stack.push(stack.pop() + stack.pop());
+export function ADD(ctx: Context): void {
+    ctx.stack.push(ctx.stack.pop() + ctx.stack.pop());
 }
 
-export function SUB(stack: Stack): void {
-    const a = stack.pop();
-    const b = stack.pop();
-    stack.push(b - a);
+export function SUB(ctx: Context): void {
+    const a = ctx.stack.pop();
+    const b = ctx.stack.pop();
+    ctx.stack.push(b - a);
 }
 
-export function MUL(stack: Stack): void {
-    stack.push(stack.pop() * stack.pop());
+export function MUL(ctx: Context): void {
+    ctx.stack.push(ctx.stack.pop() * ctx.stack.pop());
 }
 
-export function DIV(stack: Stack): void {
-    const a = stack.pop();
-    const b = stack.pop();
-    stack.push(b / a);
+export function DIV(ctx: Context): void {
+    const a = ctx.stack.pop();
+    const b = ctx.stack.pop();
+    ctx.stack.push(b / a);
 }
 
-export function MOD(stack: Stack): void {
-    const a = stack.pop();
-    const b = stack.pop();
-    stack.push(b % a);
+export function MOD(ctx: Context): void {
+    const a = ctx.stack.pop();
+    const b = ctx.stack.pop();
+    ctx.stack.push(b % a);
 }
 
-export function NEG(stack: Stack): void {
-    stack.push(-stack.pop());
+export function NEG(ctx: Context): void {
+    ctx.stack.push(-ctx.stack.pop());
 }

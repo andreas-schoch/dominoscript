@@ -1,21 +1,22 @@
+import { Context } from "../Context";
 import { Stack } from "../Stack";
 
-export function NOT(stack: Stack) {
-    stack.push(stack.pop() === 0 ? 1 : 0);
+export function NOT(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() === 0 ? 1 : 0);
 }
 
-export function AND(stack: Stack) {
-    stack.push(stack.pop() && stack.pop() ? 1 : 0);
+export function AND(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() && ctx.stack.pop() ? 1 : 0);
 }
 
-export function OR(stack: Stack) {
-    stack.push(stack.pop() || stack.pop() ? 1 : 0);
+export function OR(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() || ctx.stack.pop() ? 1 : 0);
 }
 
-export function EQL(stack: Stack) {
-    stack.push(stack.pop() === stack.pop() ? 1 : 0);
+export function EQL(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() === ctx.stack.pop() ? 1 : 0);
 }
 
-export function GTR(stack: Stack) {
-    stack.push(stack.pop() > stack.pop() ? 1 : 0);
+export function GTR(ctx: Context) {
+    ctx.stack.push(ctx.stack.pop() > ctx.stack.pop() ? 1 : 0);
 }

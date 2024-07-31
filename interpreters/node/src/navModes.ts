@@ -1,5 +1,5 @@
 import { Cell } from "./Board";
-import { RelativeDirection } from "./Interpreter";
+import { RelativeDirection } from "./Runner";
 
 export type NavModeMapping = [RelativeDirection, RelativeDirection?, RelativeDirection?];
 export type NavModeGetter = (forward: Cell | null, left: Cell | null, right: Cell | null) => NavModeMapping;
