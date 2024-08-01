@@ -583,7 +583,7 @@ A single "double-six" domino can represent numbers from 0-6 twice giving us a 7x
 |  **3** | [BNOT](#bitwise_not) | [BAND](#bitwise_and) | [BOR](#bitwise_or) | [BXOR](#bitwise_xor) | [BSL](#bitwise_shift_left) | [BSR](#bitwise_shift_right) | [—](#reserved_3_6) | [Bitwise](#bitwise) |
 |  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [—](#reserved_4_5) | [—](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [—](#reserved_5_4) | [—](#reserved_5_5) | [—](#reserved_5_6) | [Input & Output](#input-and-output) |
-|  **6** | [GETNUM](#getnum) | [SETNUM](#setnum) | [GETSTR](#getstr) | [SETSTR](#setstr) | [—](#reserved_6_4) | [—](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
+|  **6** | [GET](#get) | [SET](#set) | [—](#reserved_6_2) | [—](#reserved_6_3) | [—](#reserved_6_4) | [—](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
 
 
 
@@ -958,8 +958,65 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `GET`
 <img src="assets/horizontal/6-0.png" alt="Domino" width="128">
 
+Get the value of a single whole domino at a specific address on the grid.
+
+Pops an item from the stack representing the address of the <ins>first</ins> domino half, then gets the number of dots on that first half and the other half. Out of both halves it forms a number the same way it does when parsing opcodes.
+
+**For example:**
+- First half 0, second half 6 -> 6 in base7 -> 6 in decimal
+- First half 1, second half 0 -> 10 in base7 -> 7 in decimal
+- First half 6, second half 6 -> 66 in base7 -> 48 in decimal
+
+The resulting decimal value will then be pushed to the stack.
+
+If the address is out of bounds, an `InvalidAddressError` is thrown.
+
+If the address references an empty cell the number -1 will be pushed to the stack.
+
 #### `SET`
 <img src="assets/horizontal/6-1.png" alt="Domino" width="128">
+
+Sets the value of 2 cells (a whole domino) on the grid to a specific value. This one is similar to the `p` instruction in befunge used to modify the grid.
+
+`SET` pops 2 items from the stack:
+- The address of the first cell (just like `GET`)
+- and then the value to set the domino to. 0-48 range is allowed for D6 mode. If
+
+For example here we have a 10x3 grid:
+
+<pre class="ds i">
+<span style="color: red;">0-1 1-0 6-0</span> <span style="color: green;">0-1 1-0</span>
+                  
+. . . . <span style="color: yellow;">1-6</span> <span style="color: green;">1-4 0-1</span>
+
+. . . . . . . . . .
+</pre>
+
+**What is happening?:**
+- We push the number 42 to the stack <span style="color: red;">(marked in red)
+- We push the number 29 to the stack <span style="color: green;">(marked in green)</span>
+- We execute the `SET` instruction <span style="color: yellow;">(marked in yellow)</span>
+  - it pops 29 for the address
+  - it pops 42 for the value
+
+ The decimal number 42 is `60` in base7, so the domino `6-0` will be added to the board after `SET` is executed:
+
+<pre class="ds i">
+<span style="color: red;">0-1 1-0 6-0</span> <span style="color: green;">0-1 1-0</span>
+                  
+. . . . <span style="color: yellow;">1-6</span> <span style="color: green;">1-4 0-1</span>
+
+. . . . . . . . 0-6
+</pre>
+
+
+<ins>But why is the set domino "backwards"?</ins> Because the IP was moving to the west when `SET` was executed. Remember that the IP can move in all 4 cardinal directions, so there is no "backwards" or "forwards" in the traditional sense.
+
+If the address argument is and out of bounds, an `InvalidAddressError` is thrown *(Note: I am thinking about using negative numbers for "relative addressing". So -1 would be the SET instruction domino itself, -2 the one before it etc. Need to see if that is useful first)*
+
+If the value argument is not within 0-48, an `InvalidValueError` is thrown.
+
+If the address of the other domino half is out of bounds, an `InvalidValueError` is thrown.
 
 #### `RESERVED_6_2`
 <img src="assets/horizontal/6-2.png" alt="Domino" width="128">
