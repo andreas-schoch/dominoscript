@@ -1,6 +1,8 @@
 import { Cell } from "./Board";
-import { RelativeDirection } from "./Runner";
 
+export type PriorityDirection = 'Primary' | 'Secondary' | 'Tertiary';
+export type CardinalDirection = 'north' | 'east' | 'south' | 'west';
+export type RelativeDirection = 0 | 1 | 2; // 0 = forward, 1 = left, 2 = right
 export type NavModeMapping = [RelativeDirection, RelativeDirection?, RelativeDirection?];
 export type NavModeGetter = (forward: Cell | null, left: Cell | null, right: Cell | null) => NavModeMapping;
 

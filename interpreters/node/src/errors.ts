@@ -23,7 +23,7 @@ export class DSMultiConnectionError extends Error {
 export class DSMissingConnectionError extends Error {
   constructor(line: number, column: number) {
     super(`Non-empty cell at line ${line}, column ${column} does not have a connection`);
-    this.name = 'DSMissingConnectionError';
+    this.name = 'MissingConnectionError';
   }
 }
 
@@ -67,6 +67,27 @@ export class DSStepToEmptyCellError extends Error {
 export class DSUnexpectedEndOfNumberError extends Error {
   constructor(address: number) {
     super(`Unexpected end of number`);
-    this.name = 'DSUnexpectedEndOfNumberError';
+    this.name = 'UnexpectedEndOfNumberError';
+  }
+}
+
+export class DSEmptyStackError extends Error {
+  constructor() {
+    super(`Cannot pop from an empty stack`);
+    this.name = 'StackUnderflowError';
+  }
+}
+
+export class DSFullStackError extends Error {
+  constructor() {
+    super(`Cannot push to a full stack`);
+    this.name = 'StackOverflowError';
+  }
+}
+
+export class DSInvalidInstructionError extends Error {
+  constructor(opcode: number) {
+    super(`Invalid instruction opcode ${opcode}`);
+    this.name = 'InvalidInstructionError';
   }
 }

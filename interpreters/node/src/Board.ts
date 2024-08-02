@@ -1,4 +1,4 @@
-import { DSAddressError, DSInterpreterError, DSInvalidGridError, DSSyntaxError } from "./errors";
+import { DSAddressError, DSInterpreterError } from "./errors";
 import { Grid, sourceToGrid } from "./serializer";
 
 export type Address = number;

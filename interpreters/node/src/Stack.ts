@@ -1,3 +1,5 @@
+import { DSEmptyStackError, DSFullStackError } from "./errors";
+
 export class Stack {
   public data: Int32Array;
   private length: number = 0;
@@ -7,12 +9,12 @@ export class Stack {
   }
 
   push(value: number): void {
-    if (this.isFull()) throw new Error('Stack overflow');
+    if (this.isFull()) throw new DSFullStackError();
     this.data[this.length++] = value;
   }
 
   pop(): number {
-  if (this.isEmpty()) throw new Error('Stack underflow');
+  if (this.isEmpty()) throw new DSEmptyStackError();
   const value = this.data[--this.length];
   this.data.fill(0, this.length);
   return value;
@@ -61,6 +63,7 @@ export class Stack {
 
   clear(): void {
     this.length = 0;
+    this.data.fill(0);
   }
 
   isEmpty(): boolean {
