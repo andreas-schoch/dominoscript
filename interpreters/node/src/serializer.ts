@@ -1,5 +1,5 @@
-import { Cell, CellValue } from "./Board";
-import { DSConnectionToEmptyCellError, DSInvalidGridError, DSMultiConnectionError, DSMissingConnectionError, DSSyntaxError } from "./errors";
+import { Cell, CellValue } from "./Board.js";
+import { DSConnectionToEmptyCellError, DSInvalidGridError, DSMultiConnectionError, DSMissingConnectionError, DSSyntaxError } from "./errors.js";
 
 export interface Grid {
   cells: Cell[];

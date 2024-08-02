@@ -1,11 +1,11 @@
-import { DUP, NUM, POP, ROTL, STR, SWAP } from "./StackManipulations";
-import { ADD, DIV, MOD, MUL, NEG, SUB } from "./Arithmetic";
-import { AND, EQL, GTR, NOT, OR } from "./ComparisonAndLogical";
-import { BAND, BNOT, BOR, BSL, BSR, BXOR } from "./Bitwise";
-import { GET, NOOP, SET } from "./Misc";
-import { BRANCH, CALL, JUMP, LABEL, NAVM } from "./ContrlFlow";
-import { NUMIN, NUMOUT, STRIN, STROUT } from "./InputOutput";
-import { Context } from "../Context";
+import { DUP, NUM, POP, ROTL, STR, SWAP } from "./StackManipulations.js";
+import { ADD, DIV, MOD, MUL, NEG, SUB } from "./Arithmetic.js";
+import { AND, EQL, GTR, NOT, OR } from "./ComparisonAndLogical.js";
+import { BAND, BNOT, BOR, BSL, BSR, BXOR } from "./Bitwise.js";
+import { GET, NOOP, SET } from "./Misc.js";
+import { BRANCH, CALL, JUMP, LABEL, NAVM } from "./ContrlFlow.js";
+import { NUMIN, NUMOUT, STRIN, STROUT } from "./InputOutput.js";
+import { Context } from "../Context.js";
 
 export type Instruction = (ctx: Context) => void;
 

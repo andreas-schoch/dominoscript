@@ -1,4 +1,4 @@
-import { DSEmptyStackError, DSFullStackError } from "./errors";
+import { DSEmptyStackError, DSFullStackError } from "./errors.js";
 
 export class Stack {
   public data: Int32Array;
@@ -23,11 +23,6 @@ export class Stack {
   peek(): number | undefined {
     // if (this.length === 0) throw new Error('Stack underflow');
     return this.data[this.length - 1];
-  }
-
-  peek2(): number {
-    if (this.length < 0) throw new Error('Stack underflow');
-    return this.data[this.length - 2];
   }
 
   duplicate(): void {

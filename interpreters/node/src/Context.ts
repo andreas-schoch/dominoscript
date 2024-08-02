@@ -1,5 +1,5 @@
-import { Address, Board, Cell } from "./Board";
-import { Stack } from "./Stack";
+import { Address, Board, Cell } from "./Board.js";
+import { Stack } from "./Stack.js";
 
 export interface Context {
   currentCell: Cell | null;

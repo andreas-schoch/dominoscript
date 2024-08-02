@@ -1,7 +1,7 @@
-import { Cell } from "./Board";
-import { Context } from "./Context";
-import { DSInterpreterError, DSStepToEmptyCellError } from "./errors";
-import { FORWARD, LEFT, navModes, RIGHT } from "./navModes";
+import { Cell } from "./Board.js";
+import { Context } from "./Context.js";
+import { DSInterpreterError, DSStepToEmptyCellError } from "./errors.js";
+import { FORWARD, LEFT, navModes, RIGHT } from "./navModes.js";
 
 export function step(ctx: Context): Cell | null {
   

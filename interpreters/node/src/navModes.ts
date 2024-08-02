@@ -1,4 +1,4 @@
-import { Cell } from "./Board";
+import { Cell } from "./Board.js";
 
 export type PriorityDirection = 'Primary' | 'Secondary' | 'Tertiary';
 export type CardinalDirection = 'north' | 'east' | 'south' | 'west';

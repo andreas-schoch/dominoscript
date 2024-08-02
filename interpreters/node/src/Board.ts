@@ -1,5 +1,5 @@
-import { DSAddressError, DSInterpreterError } from "./errors";
-import { Grid, sourceToGrid } from "./serializer";
+import { DSAddressError, DSInterpreterError } from "./errors.js";
+import { Grid, sourceToGrid } from "./serializer.js";
 
 export type Address = number;
 export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | null;

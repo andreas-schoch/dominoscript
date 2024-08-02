@@ -1,13 +1,13 @@
-import { Cell, CellValue } from "../Board";
-import { Context } from "../Context";
-import { DSInterpreterError } from "../errors";
+import { Cell, CellValue } from "../Board.js";
+import { Context } from "../Context.js";
+import { DSInterpreterError } from "../errors.js";
 
 export function GET(ctx: Context): void {
-    const address = ctx.stack.pop();
-    const cell = ctx.board.getOrNull(address);
-    if (!cell) return ctx.stack.push(-1);
-    const value = parseDominoValue(ctx, cell);
-    ctx.stack.push(value);
+  const address = ctx.stack.pop();
+  const cell = ctx.board.getOrNull(address);
+  if (!cell) return ctx.stack.push(-1);
+  const value = parseDominoValue(ctx, cell);
+  ctx.stack.push(value);
 }
 
 export function SET(ctx: Context): void {

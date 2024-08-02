@@ -1,8 +1,8 @@
-import { Context, createContext } from "./Context";
-import { DSInterpreterError } from "./errors";
-import { instructionsByOpcode } from "./instructions/index";
-import { parseDominoValue } from "./instructions/Misc";
-import { step } from "./step";
+import { Context, createContext } from "./Context.js";
+import { DSInterpreterError } from "./errors.js";
+import { instructionsByOpcode } from "./instructions/index.js";
+import { parseDominoValue } from "./instructions/Misc.js";
+import { step } from "./step.js";
   
 export function run(source: string): void {
   const timeStart = Date.now();
@@ -10,17 +10,18 @@ export function run(source: string): void {
   
   let i = 0;
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
-    if (i++ > 50) break; // TODO remove this is only to prevent infinite loops while developing 
+    i++;
+    // if (i++ > 50) break; // TODO remove this is only to prevent infinite loops while developing 
 
     const instruction = instructionsByOpcode[opcode];
-    console.log(opcode, instruction.name, ctx.currentCell?.address);
+    // console.log(opcode, instruction.name, ctx.currentCell?.address);
     instruction(ctx);
-    console.log(Array.from(ctx.stack.data));
+    // console.log(Array.from(ctx.stack.data));
   }
 
   const timeEnd = Date.now();
-  console.log('Time taken:', timeEnd - timeStart, 'ms');
-  console.log(ctx.board)
+  console.log('Time taken:', timeEnd - timeStart, 'ms', 'Instructions:', i);
+  // console.log(ctx.board)
   ctx.stack.clear();
 }
 
@@ -28,7 +29,7 @@ function nextOpcode(ctx: Context): number | null {
   const c1 = step(ctx);
   const c2 = step(ctx);
 
-  console.log(c1?.value, c2?.value);
+  // console.log(c1?.value, c2?.value);
 
   if (!c1 && !c2) {
     ctx.isFinished = true;
