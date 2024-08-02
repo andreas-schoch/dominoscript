@@ -24,9 +24,11 @@ This repository contains the reference implementation written in TypeScript as w
 
 - **[How does it work](#how-does-it-work)**
   - [Text Format](#text-format)
-  - [Stack](#stack)
-  - [Instruction Pointer](#instruction-pointer)
-  - [Navigation Modes](#navigation-modes)
+  - [About the stack](#about-the-stack)
+  - [How to represent Strings](#how-to-represent-strings)
+  - [How to represent floating point numbers](#how-to-represent-floating-point-numbers)
+  - [How the Instruction Pointer Moves](#how-the-instruction-pointer-moves)
+  - [How Navigation Modes work](#how-navigation-modes-work)
 
 - **[Instructions](#instructions)**
   - [Stack Management](#stack-management)
@@ -52,10 +54,11 @@ This repository contains the reference implementation written in TypeScript as w
   - [Random One Way](#random-one-way)
 
 - **[Other References](#other-references)**
-  - [Unicode To Domino](#unicode-to-domino)
+  - [Unicode To Domino](#unicode-to-domino-lookup-table)
   - [Error Types](#error-types)
-  - [D-Modes](#d-modes)
-  - [Javascript API](#javascript-api)
+  - [Domino Modes](#domino-modes)
+
+<br>
 
 ## Core Concepts
 - **`Recreational Esolang`**: This isn't a serious programming language. I got inspired after watching "The Art of Code" by Dylan Beattie where I discovered "Piet" and eventually went down the esolang rabbit hole. I wanted to create a language that is not only weirdly powerful but can also look good when hanged on a wall.
@@ -74,7 +77,7 @@ This repository contains the reference implementation written in TypeScript as w
 
 - **`Int32 Based`** The stack only stores signed 32-bit Integers. There are no inbuilt data structures. Floats don't exist. Strings don't exist but are supported in the sense that you can treat the Integers as UNICODE and output them as such *(Well I guess you could maybe represent floats similarly to how pico8 does it using 16.16 fixed point arithmetic)*.
 
-
+<br>
 
 ## How does it work
 
@@ -296,10 +299,15 @@ DominoScript is a language where you cannot really tell what is going on just by
 
 When the IP encounters a [STR](#str) instruction, it will parse the next dominos as characters of a string. How that works exactly is explained in more detail in the description of the instruction.
 
-> It is important to understand that <ins>internally</ins> everything in DominoScript is represented as signed 32-bit integer and <ins>externally</ins> everything is represented by the dots on the domino pieces.
+> It is important to understand that <ins>internally</ins> everything in DominoScript is represented as signed 32-bit integers and <ins>externally</ins> everything is represented by the dots on the domino pieces.
 <br><br>Internally strings are just <ins>null-terminated sequences of integers representing unicode characters</ins>. It is your job as the developer to keep track of what items on the stack are numbers and what are characters of a string.
 
-You can use almost any instruction on characters of a "string" but most of them will not distinguish between what is a number and a character. There are only 5 instructions which specifically are for handling strings: [STR](#str), [STRIN](#strin), [STROUT](#strout) [GETSTR](#getstr) and [SETSTR](#setstr).
+You can use any instruction on characters of a "string" but most of them will not distinguish between what is a number and a character. There are only 3 instructions which are specifically for handling strings: [STR](#str), [STRIN](#strin), [STROUT](#strout).
+
+For convenience and clarity in examples I will often represent unicode characters like this:
+<pre class="i">[..., 'NUL', 's', 'e', 'y']</pre>
+But in reality the stack will store them as integers and look like this:
+<pre class="i">[..., 0, 115, 101, 121]</pre>
 
 ### How to represent floating point numbers
 
@@ -311,12 +319,12 @@ Floats don't exist in DominoScript. I'd suggest to scale up numbers by a factor 
 
 The instruction pointer (`IP`) keeps track of the current cell address that will be used for the next instruction. Since DominoScript is 2D and non-linear, it isn't obvious where the IP will move to without understanding the fundamental rules and the Navigation Modes.
 
-**`Before the program starts:`** 
+**Before the program starts:** 
 - the interpreter will scan the grid from top-left to top-right, move down and repeat until it finds the first domino.
-- Upon reaching the first domino, the IP is placed at the address of the first domino half it finds.
+- Upon reaching the first domino, the IP is placed at the address of the first found domino half.
 - If no domino could be found, the program is considered finished.
 
-**`During the program execution:`** The IP will adhere to the following rules:
+**During the program execution:** The IP will adhere to the following rules:
 
 - <span id="rule_01">**`Rule_01`**:</span> The IP moves in all cardinal directions, never diagonally. How dominos are parsed is all relative to that. For example the horizontal domino `3—5` can be interpreted as the base7 number `35` (IP moves eastwards) or `53` (IP moves westwards). Same thing for vertical dominos.
 
@@ -359,8 +367,6 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 
 Take this snippet for example:
-
----
 
 <div class="side-by-side">
   <div class="title">East</div>
@@ -418,7 +424,7 @@ Take this snippet for example:
 
 </div>
 
-*(All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The red color is just for show)*
+*(All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show)*
 
 If we imagine the `6` to be the exit half, what will be the next domino the IP moves to?
 
@@ -428,8 +434,6 @@ If we imagine the `6` to be the exit half, what will be the next domino the IP m
 - `index 3` the IP will move to `2—2` (Primary, Left)
 - `index 4` the IP will move to `3—3` (Primary, Right)
 - `index 5` the IP will move to `3—3` (Primary, Right)
-
----
 
 
 <div class="side-by-side">
@@ -496,8 +500,6 @@ What if we remove the `1—1` domino? Where will the IP go to then?
 - `index 3` the IP will move to `2—2` (Primary, Left)
 - `index 4` the IP will move to `3—3` (Primary, Right)
 - `index 5` the IP will move to `3—3` (Primary, Right)
-
----
 
 <div class="side-by-side">
   <div class="title">East</div>
@@ -569,6 +571,8 @@ And what if we remove both the `1—1` and the `2—2` domino?
 
 Again, these are only the very basic navigation modes. See the [reference](#navigation-modes-reference) for all the different modes and how they work.
 
+<br>
+
 ## Instructions
 
 A single "double-six" domino can represent numbers from 0-6 twice giving us a 7x7 matrix of possible instructions. The first number represents the row and the second number represents the column. This gives us 49 possible instructions.
@@ -595,7 +599,9 @@ A single "double-six" domino can represent numbers from 0-6 twice giving us a 7x
 
 Discards the top of the stack.
 
-If the stack is empty, a `StackUnderflowError` is thrown causing the program to terminate.
+**Errors**:
+
+- If the stack is empty, a `StackUnderflowError` is thrown.
 
 #### `NUM`
 <img src="assets/horizontal/0-1.png" alt="Domino" width="128">
@@ -638,6 +644,12 @@ You might think that since internally numbers are int32s, that we parse from bas
   - `0—1` is PUSH again
   - `0—5` is 5 in both base7 and decimal
 
+<br>
+
+**Errors**:
+- `UnexpectedEndOfNumberError` is thrown when the IP cannot step as many times as indicated by the first half of the first domino.
+- 
+
 #### `STR`
 
 <img src="assets/horizontal/0-2.png" alt="Domino" width="128">
@@ -671,85 +683,6 @@ This is the resulting stack:
 <pre class="i">
 [..., 0, 45, 213, 210]
 </pre>
-
-### Numeric
-
-| CHARACTER | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
-|-----------|---------------|---------|-------|-----------|
-| `0`       | U+0030        | 48      | 66    | `1—0 6—6` |
-| `1`       | U+0031        | 49      | 70    | `1—0 7—0` |
-| `2`       | U+0032        | 50      | 101   | `1—1 0—1` |
-| `3`       | U+0033        | 51      | 102   | `1—1 0—2` |
-| `4`       | U+0034        | 52      | 103   | `1—1 0—3` |
-| `5`       | U+0035        | 53      | 104   | `1—1 0—4` |
-| `6`       | U+0036        | 54      | 105   | `1—1 0—5` |
-| `7`       | U+0037        | 55      | 106   | `1—1 0—6` |
-| `8`       | U+0038        | 56      | 110   | `1—1 1—0` |
-| `9`       | U+0039        | 57      | 111   | `1—1 1—1` |
-
-
-### Alphabetical (uppercase)
-| CHARACTER | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
-|-----------|---------------|---------|-------|-----------|
-| `A`       | U+0041        | 65      | 124   | `1—1 2—4` |
-| `B`       | U+0042        | 66      | 125   | `1—1 2—5` |
-| `C`       | U+0043        | 67      | 126   | `1—1 2—6` |
-| `D`       | U+0044        | 68      | 130   | `1—1 3—0` |
-| `E`       | U+0045        | 69      | 131   | `1—1 3—1` |
-| `F`       | U+0046        | 70      | 132   | `1—1 3—2` |
-| `G`       | U+0047        | 71      | 133   | `1—1 3—3` |
-| `H`       | U+0048        | 72      | 134   | `1—1 3—4` |
-| `I`       | U+0049        | 73      | 135   | `1—1 3—5` |
-| `J`       | U+004A        | 74      | 136   | `1—1 3—6` |
-| `K`       | U+004B        | 75      | 140   | `1—1 4—0` |
-| `L`       | U+004C        | 76      | 141   | `1—1 4—1` |
-| `M`       | U+004D        | 77      | 142   | `1—1 4—2` |
-| `N`       | U+004E        | 78      | 143   | `1—1 4—3` |
-| `O`       | U+004F        | 79      | 144   | `1—1 4—4` |
-| `P`       | U+0050        | 80      | 145   | `1—1 4—5` |
-| `Q`       | U+0051        | 81      | 146   | `1—1 4—6` |
-| `R`       | U+0052        | 82      | 150   | `1—1 5—0` |
-| `S`       | U+0053        | 83      | 151   | `1—1 5—1` |
-| `T`       | U+0054        | 84      | 152   | `1—1 5—2` |
-| `U`       | U+0055        | 85      | 153   | `1—1 5—3` |
-| `V`       | U+0056        | 86      | 154   | `1—1 5—4` |
-| `W`       | U+0057        | 87      | 155   | `1—1 5—5` |
-| `X`       | U+0058        | 88      | 156   | `1—1 5—6` |
-| `Y`       | U+0059        | 89      | 160   | `1—1 6—0` |
-| `Z`       | U+005A        | 90      | 161   | `1—1 6—1` |
-
-### Alphabetical (lowercase)
-
-| CHARACTER | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
-|-----------|---------------|---------|-------|-----------|
-| `a`       | U+0061        | 97      | 202   | `1—2 0—2` |
-| `b`       | U+0062        | 98      | 203   | `1—2 0—3` |
-| `c`       | U+0063        | 99      | 204   | `1—2 0—4` |
-| `d`       | U+0064        | 100     | 205   | `1—2 0—5` |
-| `e`       | U+0065        | 101     | 206   | `1—2 0—6` |
-| `f`       | U+0066        | 102     | 210   | `1—2 1—0` |
-| `g`       | U+0067        | 103     | 211   | `1—2 1—1` |
-| `h`       | U+0068        | 104     | 212   | `1—2 1—2` |
-| `i`       | U+0069        | 105     | 213   | `1—2 1—3` |
-| `j`       | U+006A        | 106     | 214   | `1—2 1—4` |
-| `k`       | U+006B        | 107     | 215   | `1—2 1—5` |
-| `l`       | U+006C        | 108     | 216   | `1—2 1—6` |
-| `m`       | U+006D        | 109     | 220   | `1—2 2—0` |
-| `n`       | U+006E        | 110     | 221   | `1—2 2—1` |
-| `o`       | U+006F        | 111     | 222   | `1—2 2—2` |
-| `p`       | U+0070        | 112     | 223   | `1—2 2—3` |
-| `q`       | U+0071        | 113     | 224   | `1—2 2—4` |
-| `r`       | U+0072        | 114     | 225   | `1—2 2—5` |
-| `s`       | U+0073        | 115     | 226   | `1—2 2—6` |
-| `t`       | U+0074        | 116     | 230   | `1—2 3—0` |
-| `u`       | U+0075        | 117     | 231   | `1—2 3—1` |
-| `v`       | U+0076        | 118     | 232   | `1—2 3—2` |
-| `w`       | U+0077        | 119     | 233   | `1—2 3—3` |
-| `x`       | U+0078        | 120     | 234   | `1—2 3—4` |
-| `y`       | U+0079        | 121     | 235   | `1—2 3—5` |
-| `z`       | U+007A        | 122     | 236   | `1—2 3—6` |
-
-
 
 Keep in mind that the IP can move in 4 cardinal direction so the following variations would also push the string `"hi!"` to the stack:
 
@@ -801,7 +734,8 @@ Rotate the top 3 items on the stack to the left. The top item becomes the third 
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
----
+<br>
+
 <h3 id="arithmetic">Arithmetic</h3>
 
 #### `ADD`
@@ -857,8 +791,7 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
-
----
+<br>
 <h3 id="bitwise">Bitwise</h3>
 
 #### `BITWISE_AND`
@@ -891,23 +824,33 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 Changes the Navigation Mode. The default Mode is `0`. 
 
-See [Navigation Modes](#navigation-mode-reference) to see all possible nav modes and their indexes.
+See [Navigation Modes](#navigation-modes) to see all possible nav modes and their indexes.
 
 #### `BRANCH`
 <img src="assets/horizontal/4-1.png" alt="Domino" width="128">
 
-#### `JUMP`
+#### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
 
-#### `RESERVED_4_3`
+It maps a specific address on the grid with a label. The label is the address of the domino.
+
+Both the 
+
+#### `JUMP`
 <img src="assets/horizontal/4-3.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Moves the IP to a labeled address on the grid. If the IP cannot move anymore, the program will terminate.
 
-#### `RESERVED_4_4`
+If label is unknown it will throw an `UnknownLabelError`.
+
+#### `CALL`
 <img src="assets/horizontal/4-4.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Like the name suggests, it is similar to a function call.
+
+Exactly like JUMP with one crucial difference: When it cannot move anymore, the IP will return to where it was called from instead of terminating the program.
+
+Internally there is another stack that keeps track of the return addresses.
 
 #### `RESERVED_4_5`
 <img src="assets/horizontal/4-5.png" alt="Domino" width="128">
@@ -919,23 +862,39 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
+<br>
 <h3 id="input-and-output">Input & Output</h3>
 
 #### `NUMIN`
 <img src="assets/horizontal/5-0.png" alt="Domino" width="128">
 
+Prompt the user for a number. The user input will be pushed to the stack.
+
 #### `NUMOUT`
 <img src="assets/horizontal/5-1.png" alt="Domino" width="128">
+
+Pop the top item from the stack and output it to stdout.
 
 #### `STRIN`
 <img src="assets/horizontal/5-2.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Prompt the user for a string. The user input will be pushed to the stack as individual unicode characters in reverse order.
+
+So if the user inputs `"yes"`, the stack will look like this:
+
+<pre class="i">
+[..., 0, 115, 101, 121]
+</pre>
+
+For convenience you might often see the stack represented  But remember that in reality it just stores int32s.
+
+<pre class="i">
+[..., 'NUL' 's', 'e', 'y']
+</pre>
+
 
 #### `STROUT`
 <img src="assets/horizontal/5-3.png" alt="Domino" width="128">
-
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 #### `RESERVED_5_4`
 <img src="assets/horizontal/5-4.png" alt="Domino" width="128">
@@ -952,71 +911,86 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
+<br>
 
-<h3 id="reflection-and-meta">Reflection & Meta</h3>
+<h3 id="misc">Misc</h3>
 
 #### `GET`
 <img src="assets/horizontal/6-0.png" alt="Domino" width="128">
 
 Get the value of a single whole domino at a specific address on the grid.
 
-Pops an item from the stack representing the address of the <ins>first</ins> domino half, then gets the number of dots on that first half and the other half. Out of both halves it forms a number the same way it does when parsing opcodes.
+Pops an item from the stack representing the address of the <ins>first</ins> domino half, then gets the number of dots on that first half and the other half. Out of both halves it forms a number the same way it does when parsing opcodes. The resulting decimal value will then be pushed to the stack.
 
 **For example:**
-- First half 0, second half 6 -> 6 in base7 -> 6 in decimal
-- First half 1, second half 0 -> 10 in base7 -> 7 in decimal
-- First half 6, second half 6 -> 66 in base7 -> 48 in decimal
+- `0-6`: First half 0, second half 6 -> 6 in base7 -> 6 in decimal pushed to stack
+- `1-0`: First half 1, second half 0 -> 10 in base7 -> 7 in decimal pushed to stack
+- `6-6`: First half 6, second half 6 -> 66 in base7 -> 48 in decimal pushed to stack
 
-The resulting decimal value will then be pushed to the stack.
-
-If the address is out of bounds, an `InvalidAddressError` is thrown.
-
-If the address references an empty cell the number -1 will be pushed to the stack.
+**Errors:**
+- If the address is out of bounds, an `InvalidAddressError` is thrown.
+- If the address references an empty cell the number -1 will be pushed to the stack. No error.
 
 #### `SET`
 <img src="assets/horizontal/6-1.png" alt="Domino" width="128">
 
-Sets the value of 2 cells (a whole domino) on the grid to a specific value. This one is similar to the `p` instruction in befunge used to modify the grid.
+Sets the value of 2 cells (a whole domino) on the grid. This one is similar to the `p` instruction in befunge used to modify the grid.
 
-`SET` pops 2 items from the stack:
+It requires 2 arguments from the stack:
 - The address of the first cell (just like `GET`)
 - and then the value to set the domino to. 0-48 range is allowed for D6 mode. If
 
 For example here we have a 10x3 grid:
 
+<div class="side-by-side">
+  <div class="title">before SET</div>
+  <div class="title">after SET</div>
+</div>
+
+<div class="side-by-side">
+
 <pre class="ds i">
-<span style="color: red;">0-1 1-0 6-0</span> <span style="color: green;">0-1 1-0</span>
+<span style="color: red;">0—1 1—0 6—0</span> <span style="color: green;">0—1 1—0</span>
                   
-. . . . <span style="color: yellow;">1-6</span> <span style="color: green;">1-4 0-1</span>
+. . . . <span style="color: yellow;">1—6</span> <span style="color: green;">6—1 0—1</span>
 
 . . . . . . . . . .
 </pre>
 
-**What is happening?:**
-- We push the number 42 to the stack <span style="color: red;">(marked in red)
-- We push the number 29 to the stack <span style="color: green;">(marked in green)</span>
-- We execute the `SET` instruction <span style="color: yellow;">(marked in yellow)</span>
-  - it pops 29 for the address
-  - it pops 42 for the value
-
- The decimal number 42 is `60` in base7, so the domino `6-0` will be added to the board after `SET` is executed:
-
 <pre class="ds i">
-<span style="color: red;">0-1 1-0 6-0</span> <span style="color: green;">0-1 1-0</span>
+<span style="color: red;">0—1 1—0 6—0</span> <span style="color: green;">0—1 1—0</span>
                   
-. . . . <span style="color: yellow;">1-6</span> <span style="color: green;">1-4 0-1</span>
+. . 0—6 <span style="color: yellow;">1—6</span> <span style="color: green;">6—1 0—1</span>
 
-. . . . . . . . 0-6
+. . . . . . . . . .
 </pre>
 
+</div>
 
-<ins>But why is the set domino "backwards"?</ins> Because the IP was moving to the west when `SET` was executed. Remember that the IP can move in all 4 cardinal directions, so there is no "backwards" or "forwards" in the traditional sense.
 
-If the address argument is and out of bounds, an `InvalidAddressError` is thrown *(Note: I am thinking about using negative numbers for "relative addressing". So -1 would be the SET instruction domino itself, -2 the one before it etc. Need to see if that is useful first)*
+**What has happened?:**
+- We push the number 42 to the stack <span style="color: red;">(marked in red)
+- We push the number 13 to the stack <span style="color: green;">(marked in green)</span>
+- We execute the `SET` instruction <span style="color: yellow;">(marked in yellow)</span>
+  - it pops 13 for the address
+  - it pops 42 for the value
 
-If the value argument is not within 0-48, an `InvalidValueError` is thrown.
+ The decimal number 42 is `60` in base7. The cell at address 13 is set to the value `6`, the cell at the address 12 is set to the value `0`:
 
-If the address of the other domino half is out of bounds, an `InvalidValueError` is thrown.
+
+<ins>But why is the set domino "backwards"?</ins> Because the IP was moving to the west when `SET` was executed. Remember that the IP can move in all 4 cardinal directions, so there is no "backwards" or "forwards" in the traditional sense. The address argument indicates the first cell only. The other one depends on the direction the IP is moving.
+
+*(You might have noticed that the new domino was placed right after the `SET` instruction domino. So the IP will now move to the now domino which is a `GET` instruction from this direction. It will result in an StackUnderflowError because it tries to pop an address from an empty stack.)*
+
+<br>
+
+**Errors:**
+
+- If the address argument is out of bounds, an `InvalidAddressError` is thrown.
+
+- If the value argument is not within 0-48, an `InvalidValueError` is thrown.
+
+- If the address of the other domino half is out of bounds, an `InvalidValueError` is thrown.
 
 #### `RESERVED_6_2`
 <img src="assets/horizontal/6-2.png" alt="Domino" width="128">
@@ -1045,8 +1019,11 @@ No operation. The IP will move to the next domino without executing any instruct
 
  Any "reserved" opcode which isn't mapped to an instruction will be a NOOP but this is the only one that should be used as such to ensure program compatibility with future versions of the interpreter when reserved opcodes are mapped to new instructions.
 
+<br>
 
- ## Navigation Mode Reference
+ ## Navigation Modes
+
+ TODO simplify
 
 *(F=Forward, L=Left, R=Right)*
 
@@ -1209,13 +1186,184 @@ This is basically the same as the "Random Three Way" but with the tertiary direc
 
 Only one direction is allowed. The other 2 are blocked. The direction is randomized each time the IP moves to a new domino.
 
-## Error handling:
+<br>
 
-The spec doesn't define a way to "catch" errors in a graceful way yet. For now, whenever an error occurs, the interpreter should send an error message to stderr and halt the program. The error message should be descriptive enough to help the developer understand what went wrong and include the IP coords where it occured. The interpreter should also return a non-zero exit code to indicate that an error occurred.
+## Other References:
 
-**Thesse are all the error types the interpreter should implement:**
-- TODO
+### Unicode to domino Lookup Table
 
+Wiith DominoScript you can output unicode characters to the console. Here is a lookup table for the ASCII range.
+
+### Control characters (ASCII 0-31)
+
+| CHARACTER                           | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
+|-------------------------------------|---------------|---------|-------|-----------|
+| `NUL` *(null character)*            | U+0000        | 0       | 0     | `0—0 0—0` |
+| `SOH` *(start of heading)*          | U+0001        | 1       | 1     | `0—0 0—1` |
+| `STX` *(start of text)*             | U+0002        | 2       | 2     | `0—0 0—2` |
+| `ETX` *(end of text)*               | U+0003        | 3       | 3     | `0—0 0—3` |
+| `EOT` *(end of transmission)*       | U+0004        | 4       | 4     | `0—0 0—4` |
+| `ENQ` *(enquiry)*                   | U+0005        | 5       | 5     | `0—0 0—5` |
+| `ACK` *(acknowledge)*               | U+0006        | 6       | 6     | `0—0 0—6` |
+| `BEL` *(bell)*                      | U+0007        | 7       | 10    | `0—0 1—0` |
+| `BS` *(backspace)*                  | U+0008        | 8       | 11    | `0—0 1—1` |
+| `HT` *(horizontal tab)*             | U+0009        | 9       | 12    | `0—0 1—2` |
+| `LF` *(line feed)*                  | U+000A        | 10      | 13    | `0—0 1—3` |
+| `VT` *(vertical tab)*               | U+000B        | 11      | 14    | `0—0 1—4` |
+| `FF` *(form feed)*                  | U+000C        | 12      | 15    | `0—0 1—5` |
+| `CR` *(carriage return)*            | U+000D        | 13      | 16    | `0—0 1—6` |
+| `SO` *(shift out)*                  | U+000E        | 14      | 20    | `0—0 2—0` |
+| `SI` *(shift in)*                   | U+000F        | 15      | 21    | `0—0 2—1` |
+| `DLE` *(data link escape)*          | U+0010        | 16      | 22    | `0—0 2—2` |
+| `DC1` *(device control 1)*          | U+0011        | 17      | 23    | `0—0 2—3` |
+| `DC2` *(device control 2)*          | U+0012        | 18      | 24    | `0—0 2—4` |
+| `DC3` *(device control 3)*          | U+0013        | 19      | 25    | `0—0 2—5` |
+| `DC4` *(device control 4)*          | U+0014        | 20      | 26    | `0—0 2—6` |
+| `NAK` *(negative acknowledge)*      | U+0015        | 21      | 30    | `0—0 3—0` |
+| `SYN` *(synchronous idle)*          | U+0016        | 22      | 31    | `0—0 3—1` |
+| `ETB` *(end of transmission block)* | U+0017        | 23      | 32    | `0—0 3—2` |
+| `CAN` *(cancel)*                    | U+0018        | 24      | 33    | `0—0 3—3` |
+| `EM` *(end of medium)*              | U+0019        | 25      | 34    | `0—0 3—4` |
+| `SUB` *(substitute)*                | U+001A        | 26      | 35    | `0—0 3—5` |
+| `ESC` *(escape)*                    | U+001B        | 27      | 36    | `0—0 3—6` |
+| `FS` *(file separator)*             | U+001C        | 28      | 40    | `0—0 4—0` |
+| `GS` *(group separator)*            | U+001D        | 29      | 41    | `0—0 4—1` |
+| `RS` *(record separator)*           | U+001E        | 30      | 42    | `0—0 4—2` |
+| `US` *(unit separator)*             | U+001F        | 31      | 43    | `0—0 4—3` |
+
+### ASCI Printable Characters
+
+| CHARACTER     | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
+|---------------|---------------|---------|-------|-----------|
+| *space*       | U+0020        | 32      | 44    | `0—0 4—4` |
+| `!`           | U+0021        | 33      | 45    | `0—0 4—5` |
+| `"`           | U+0022        | 34      | 46    | `0—0 4—6` |
+| `#`           | U+0023        | 35      | 50    | `0—0 5—0` |
+| `$`           | U+0024        | 36      | 51    | `0—0 5—1` |
+| `%`           | U+0025        | 37      | 52    | `0—0 5—2` |
+| `&`           | U+0026        | 38      | 53    | `0—0 5—3` |
+| `'`           | U+0027        | 39      | 54    | `0—0 5—4` |
+| `(`           | U+0028        | 40      | 55    | `0—0 5—5` |
+| `)`           | U+0029        | 41      | 56    | `0—0 5—6` |
+| `*`           | U+002A        | 42      | 60    | `0—0 6—0` |
+| `+`           | U+002B        | 43      | 61    | `0—0 6—1` |
+| `,`           | U+002C        | 44      | 62    | `0—0 6—2` |
+| `-`           | U+002D        | 45      | 63    | `0—0 6—3` |
+| `.`           | U+002E        | 46      | 64    | `0—0 6—4` |
+| `/`           | U+002F        | 47      | 65    | `0—0 6—5` |
+| `0`           | U+0030        | 48      | 66    | `1—0 6—6` |
+| `1`           | U+0031        | 49      | 100   | `1—1 0—0` |
+| `2`           | U+0032        | 50      | 101   | `1—1 0—1` |
+| `3`           | U+0033        | 51      | 102   | `1—1 0—2` |
+| `4`           | U+0034        | 52      | 103   | `1—1 0—3` |
+| `5`           | U+0035        | 53      | 104   | `1—1 0—4` |
+| `6`           | U+0036        | 54      | 105   | `1—1 0—5` |
+| `7`           | U+0037        | 55      | 106   | `1—1 0—6` |
+| `8`           | U+0038        | 56      | 110   | `1—1 1—0` |
+| `9`           | U+0039        | 57      | 111   | `1—1 1—1` |
+| `:`           | U+003A        | 58      | 112   | `1—1 1—2` |
+| `;`           | U+003B        | 59      | 113   | `1—1 1—3` |
+| `<`           | U+003C        | 60      | 114   | `1—1 1—4` |
+| `=`           | U+003D        | 61      | 115   | `1—1 1—5` |
+| `>`           | U+003E        | 62      | 116   | `1—1 1—6` |
+| `?`           | U+003F        | 63      | 120   | `1—1 2—0` |
+| `@`           | U+0040        | 64      | 121   | `1—1 2—1` |
+| `A`           | U+0041        | 65      | 122   | `1—1 2—2` |
+| `B`           | U+0042        | 66      | 123   | `1—1 2—3` |
+| `C`           | U+0043        | 67      | 124   | `1—1 2—4` |
+| `D`           | U+0044        | 68      | 125   | `1—1 2—5` |
+| `E`           | U+0045        | 69      | 126   | `1—1 2—6` |
+| `F`           | U+0046        | 70      | 130   | `1—1 3—0` |
+| `G`           | U+0047        | 71      | 131   | `1—1 3—1` |
+| `H`           | U+0048        | 72      | 132   | `1—1 3—2` |
+| `I`           | U+0049        | 73      | 133   | `1—1 3—3` |
+| `J`           | U+004A        | 74      | 134   | `1—1 3—4` |
+| `K`           | U+004B        | 75      | 135   | `1—1 3—5` |
+| `L`           | U+004C        | 76      | 136   | `1—1 3—6` |
+| `M`           | U+004D        | 77      | 140   | `1—1 4—0` |
+| `N`           | U+004E        | 78      | 141   | `1—1 4—1` |
+| `O`           | U+004F        | 79      | 142   | `1—1 4—2` |
+| `P`           | U+0050        | 80      | 143   | `1—1 4—3` |
+| `Q`           | U+0051        | 81      | 144   | `1—1 4—4` |
+| `R`           | U+0052        | 82      | 145   | `1—1 4—5` |
+| `S`           | U+0053        | 83      | 146   | `1—1 4—6` |
+| `T`           | U+0054        | 84      | 150   | `1—1 5—0` |
+| `U`           | U+0055        | 85      | 151   | `1—1 5—1` |
+| `V`           | U+0056        | 86      | 152   | `1—1 5—2` |
+| `W`           | U+0057        | 87      | 153   | `1—1 5—3` |
+| `X`           | U+0058        | 88      | 154   | `1—1 5—4` |
+| `Y`           | U+0059        | 89      | 155   | `1—1 5—5` |
+| `Z`           | U+005A        | 90      | 156   | `1—1 5—6` |
+| `[`           | U+005B        | 91      | 160   | `1—1 6—0` |
+| `\`           | U+005C        | 92      | 161   | `1—1 6—1` |
+| `]`           | U+005D        | 93      | 162   | `1—1 6—2` |
+| `^`           | U+005E        | 94      | 163   | `1—1 6—3` |
+| `_`           | U+005F        | 95      | 164   | `1—1 6—4` |
+| `` ` ``       | U+0060        | 96      | 165   | `1—1 6—5` |
+| `a`           | U+0061        | 97      | 166   | `1—1 6—6` |
+| `b`           | U+0062        | 98      | 200   | `1—2 0—0` |
+| `c`           | U+0063        | 99      | 201   | `1—2 0—1` |
+| `d`           | U+0064        | 100     | 202   | `1—2 0—2` |
+| `e`           | U+0065        | 101     | 203   | `1—2 0—3` |
+| `f`           | U+0066        | 102     | 204   | `1—2 0—4` |
+| `g`           | U+0067        | 103     | 205   | `1—2 0—5` |
+| `h`           | U+0068        | 104     | 206   | `1—2 0—6` |
+| `i`           | U+0069        | 105     | 210   | `1—2 1—0` |
+| `j`           | U+006A        | 106     | 211   | `1—2 1—1` |
+| `k`           | U+006B        | 107     | 212   | `1—2 1—2` |
+| `l`           | U+006C        | 108     | 213   | `1—2 1—3` |
+| `m`           | U+006D        | 109     | 214   | `1—2 1—4` |
+| `n`           | U+006E        | 110     | 215   | `1—2 1—5` |
+| `o`           | U+006F        | 111     | 216   | `1—2 1—6` |
+| `p`           | U+0070        | 112     | 220   | `1—2 2—0` |
+| `q`           | U+0071        | 113     | 221   | `1—2 2—1` |
+| `r`           | U+0072        | 114     | 222   | `1—2 2—2` |
+| `s`           | U+0073        | 115     | 223   | `1—2 2—3` |
+| `t`           | U+0074        | 116     | 224   | `1—2 2—4` |
+| `u`           | U+0075        | 117     | 225   | `1—2 2—5` |
+| `v`           | U+0076        | 118     | 226   | `1—2 2—6` |
+| `w`           | U+0077        | 119     | 230   | `1—2 3—0` |
+| `x`           | U+0078        | 120     | 231   | `1—2 3—1` |
+| `y`           | U+0079        | 121     | 232   | `1—2 3—2` |
+| `z`           | U+007A        | 122     | 233   | `1—2 3—3` |
+| `{`           | U+007B        | 123     | 234   | `1—2 3—4` |
+| `\|`          | U+007C        | 124     | 235   | `1—2 3—5` |
+| `}`           | U+007D        | 125     | 236   | `1—2 3—6` |
+| `~`           | U+007E        | 126     | 240   | `1—2 4—0` |
+
+
+### Error Types
+
+The spec doesn't define a way to "catch" errors in a graceful way yet. For now, whenever an error occurs, the program will terminate and the interpreter will throw an error to stderr.
+
+- **SyntaxError**: Unexpected token '{token}' at line {line}, column {column}
+- **InvalidGridError**: Invalid grid. All lines containing code must be the same length (for now)
+- **MultiConnectionError**: {type} connection at line {line}, column {column} is trying to connect a cell that is already connected
+- **MissingConnectionError**: Non-empty cell at line {line}, column {column} does not have a connection
+- **ConnectionToEmptyCellError**: Connection to an empty cell at line {line}, column {column}
+- **InterpreterError**: Something wrong with the Interpreter: {message}
+- **UnexpectedEndOfInputError**: Unexpected end of input at line {line}, column {column}
+- **AddressError**: Address '{address}' out of bounds
+- **StepToEmptyCellError**: Trying to step from cell {currentAddress} to empty cell {emptyAddress}
+- **UnexpectedEndOfNumberError**: Unexpected end of number
+- **EmptyStackError**: Cannot pop from an empty stack
+- **FullStackError**: Cannot push to a full stack
+
+### Domino Modes
+By default DominoScript uses "Double Six" dominoes (D&) which have 6 dots on each side. It will support higher modes in the future. Each mode will expand the opcode range.
+
+Opcode ranges for different modes:
+- `D3`: 0-8
+- `D6`: 0-48 *(default)*
+- `D9`: 0-99
+- `D12`: 0-169
+- `D15`: 0-255
+
+All modes above `D6` will build on top of the previous one. So `D6` will be the base mode and `D9` will have the instructions mapped to the same opcodes as `D6` plus some additional ones.
+
+The only exception is `D3` which will use the most important instructions and map them to the 0-8 range.
+
+D9 mode will likely extend DominoScript with instructions for floating point arithmetic, trigonometric functions and helpful math functions. Not sure yet if floats will be true IEEE754 floats or just fixed point numbers like in pico-8.
 
 <style>
   /* dominoscript looks a bit more readable when slightly styled */
