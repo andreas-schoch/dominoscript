@@ -2,7 +2,7 @@ import { Address, Board, Cell } from "./Board";
 import { Stack } from "./Stack";
 
 export interface Context {
-  cell: Cell | null;
+  currentCell: Cell | null;
   lastCell: Cell | null;
 
   board: Board;
@@ -25,7 +25,7 @@ export interface Context {
 
 export function createContext(source: string): Context {
   return {
-    cell: null,
+    currentCell: null,
     lastCell: null,
     board: new Board(source),
     stack: new Stack(8),

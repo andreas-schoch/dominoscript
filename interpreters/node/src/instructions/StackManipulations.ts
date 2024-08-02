@@ -12,7 +12,7 @@ export function POP(ctx: Context): void {
 function parseNum(ctx: Context): number {
   const firstHalf = step(ctx);
   console.log(firstHalf);
-  if (!firstHalf) throw new DSUnexpectedEndOfNumberError(ctx.cell?.address || -1);
+  if (!firstHalf) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
   if (firstHalf.value === null) throw new DSUnexpectedEndOfNumberError(firstHalf.address);
 
   const numberHalfs = (firstHalf.value * 2) + 1;
@@ -22,7 +22,7 @@ function parseNum(ctx: Context): number {
   for (let i = 0; i < numberHalfs; i++) {
     const half = step(ctx);
     console.log(half);
-    if (!half) throw new DSUnexpectedEndOfNumberError(ctx.cell?.address || -1);
+    if (!half) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
     if (half.value === null) throw new DSUnexpectedEndOfNumberError(half.address);
     base7 += half.value;
   }

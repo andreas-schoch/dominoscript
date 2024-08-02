@@ -33,7 +33,8 @@ export class Board {
     this.grid = sourceToGrid(source);
   }
 
-  getOrThrow(address: Address): Cell {
+  getOrThrow(address: Address | null): Cell {
+    if (address === null) throw new DSAddressError(address);
     if (address < 0 || address >= this.grid.cells.length) throw new DSAddressError(address);
     return this.grid.cells[address];
   }
@@ -45,11 +46,9 @@ export class Board {
 
   set(addressA: Address, valueA: CellValue, addressB: Address, valueB: CellValue): void {
     if (addressA === addressB) throw new DSInterpreterError('Cannot connect a cell to itself');
-    if (addressA < 0 || addressA >= this.grid.cells.length) throw new DSInterpreterError('Address A out of bounds');
-    if (addressB < 0 || addressB >= this.grid.cells.length) throw new DSInterpreterError('Address B out of bounds');
 
-    const cellA = this.grid.cells[addressA];
-    const cellB = this.grid.cells[addressB];
+    const cellA = this.getOrThrow(addressA);
+    const cellB = this.getOrThrow(addressB);
     
     // Cleanup: if either cell is already connected to another cell, empty that other cell
     if (cellA.connection !== null && cellA.connection !== addressB) {

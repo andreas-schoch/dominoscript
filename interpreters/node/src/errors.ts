@@ -50,7 +50,7 @@ export class DSUnexpectedEndOfInputError extends Error {
 }
 
 export class DSAddressError extends Error {
-  constructor(address: number) {
+  constructor(address: number | null) {
     super(`Address '${address}' out of bounds`);
     this.name = 'AddressError';
   }

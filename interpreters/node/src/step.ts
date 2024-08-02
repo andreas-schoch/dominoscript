@@ -8,30 +8,30 @@ export function step(ctx: Context): Cell | null {
   if (ctx.isFirstDomino) {
     findFirstDomino(ctx);
     if (ctx.isFinished) return null;
-    else return ctx.cell;
+    else return ctx.currentCell;
   }
 
   if (ctx.isFinished) return null;
 
   // perform jump
   if (ctx.jumpLabel !== null) {
-    ctx.cell = ctx.board.getOrThrow(ctx.jumpLabel);
+    ctx.currentCell = ctx.board.getOrThrow(ctx.jumpLabel);
     ctx.jumpLabel = null;
-    return ctx.cell;
+    return ctx.currentCell;
   }
 
   // perform call
   if (ctx.callLabel !== null) {
-    ctx.returnStack.push(ctx.cell!.address); // FIXME this should be the address after the CALL instruction, not the current address or is this ok?
-    ctx.cell = ctx.board.getOrThrow(ctx.callLabel);
+    ctx.returnStack.push(ctx.currentCell!.address); // FIXME this should be the address after the CALL instruction, not the current address or is this ok?
+    ctx.currentCell = ctx.board.getOrThrow(ctx.callLabel);
     ctx.callLabel = null;
-    return ctx.cell;
+    return ctx.currentCell;
   }
 
   // if at the end `startAddress` is still false, the program is finished.
-  let startAddress = ctx.cell?.address;
+  let startAddress = ctx.currentCell?.address;
 
-  const currentCell = ctx.cell;
+  const currentCell = ctx.currentCell;
   if (!currentCell || currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
   const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== currentCell.connection;
 
@@ -89,7 +89,7 @@ export function step(ctx: Context): Cell | null {
   }
 
   // TODO write tests instead of asserting faulty interpreter behaviour at runtime...
-  if (startAddress !== ctx.cell?.address) throw new DSInterpreterError('should have returned already if IP could move');
+  if (startAddress !== ctx.currentCell?.address) throw new DSInterpreterError('should have returned already if IP could move');
 
   if (!ctx.returnStack.isEmpty()) {
     const returnCell = ctx.board.getOrThrow(ctx.returnStack.pop());
@@ -104,10 +104,10 @@ export function step(ctx: Context): Cell | null {
 }
 
 function moveIP(ctx: Context, cell: Cell): Cell {
-  if (cell.value === null) throw new DSStepToEmptyCellError(ctx.cell!.address, cell.address);
-  if (ctx.cell && ctx.lastCell && ctx.cell.address !== -1 && ctx.cell === ctx.lastCell) throw new DSInterpreterError('IP address and previous are the same');
-  ctx.lastCell = ctx.cell;
-  ctx.cell = cell;
+  if (cell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell!.address, cell.address);
+  if (ctx.currentCell && ctx.lastCell && ctx.currentCell.address !== -1 && ctx.currentCell === ctx.lastCell) throw new DSInterpreterError('IP address and previous are the same');
+  ctx.lastCell = ctx.currentCell;
+  ctx.currentCell = cell;
   return cell;
 }
 
@@ -122,5 +122,5 @@ function findFirstDomino(ctx: Context): void {
       return;
     }
   }
-  if (ctx.cell?.address === -1) ctx.isFinished = true;
+  if (ctx.currentCell?.address === -1) ctx.isFinished = true;
 }

@@ -1,7 +1,7 @@
-import { Cell } from "./Board";
 import { Context, createContext } from "./Context";
 import { DSInterpreterError } from "./errors";
 import { instructionsByOpcode } from "./instructions/index";
+import { parseDominoValue } from "./instructions/Misc";
 import { step } from "./step";
   
 export function run(source: string): void {
@@ -13,13 +13,14 @@ export function run(source: string): void {
     if (i++ > 50) break; // TODO remove this is only to prevent infinite loops while developing 
 
     const instruction = instructionsByOpcode[opcode];
-    console.log(opcode, instruction.name);
+    console.log(opcode, instruction.name, ctx.currentCell?.address);
     instruction(ctx);
     console.log(Array.from(ctx.stack.data));
   }
 
   const timeEnd = Date.now();
   console.log('Time taken:', timeEnd - timeStart, 'ms');
+  console.log(ctx.board)
   ctx.stack.clear();
 }
 
@@ -40,19 +41,11 @@ function nextOpcode(ctx: Context): number | null {
   return opcode;
 }
 
-function parseDominoValue(ctx: Context, cell: Cell): number {
-  if (cell.value === null) return -1
-  if (cell.connection === null) throw new DSInterpreterError('There cannot be a Cell without a connection');
-  const otherCell = ctx.board.getOrThrow(cell.connection);
-  if (otherCell.value === null) throw new DSInterpreterError('The other cell cannot be empty');
-  return cell.value * ctx.base + otherCell.value;
-}
-
 // run(`\
-// 0-1 0-3 . . . .
+// . . 0-1 0-1 0-1
                
-// . . . 4 . . . .
-//       |        
-// 0 1-0 1 6-6 . .
-// |              
-// 5 . . . . . . .`);
+// . . . . . 6 1-0
+//           |    
+// . . . 1-6 6 . .
+               
+// . . . . . . . .`);

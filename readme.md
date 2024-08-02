@@ -581,7 +581,7 @@ A single "double-six" domino can represent numbers from 0-6 twice giving us a 7x
 
 |     |     0     |     1     |     2     |     3     |     4     |     5     |     6     |    CATEGORY     |
 |-----|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
-|  **0** | [POP](#pop) | [NUM](#push) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotate_left) | [—](#reserved_0_6) | [Stack Management](#stack-management) |
+|  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotate_left) | [—](#reserved_0_6) | [Stack Management](#stack-management) |
 |  **1** | [ADD](#add) | [SUB](#subtract) | [MULT](#multiply) | [DIV](#divide) | [MOD](#modulo) | [NEG](#neg) | [—](#reserved_1_6) | [Arithmetic](#arithmetic) |
 |  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#equals) | [GTR](#greater) | [—](#reserved_2_5) | [—](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
 |  **3** | [BNOT](#bitwise_not) | [BAND](#bitwise_and) | [BOR](#bitwise_or) | [BXOR](#bitwise_xor) | [BSL](#bitwise_shift_left) | [BSR](#bitwise_shift_right) | [—](#reserved_3_6) | [Bitwise](#bitwise) |
