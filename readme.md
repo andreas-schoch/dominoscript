@@ -104,16 +104,19 @@ A text based format is used to represent domino pieces.
 - The digits `0` to `6` represent the dots on half of a D6 domino. To indicate an empty cell, use a dot `.`
 - The "long hyphen" character `—` indicates a horizontal domino *(regular hyphen `-` also accepted to make it easier to type)*. It can only appear on **even** columns and **odd** rows.
 - The "pipe" character `|` indicates a vertical domino. It can only appear on **odd** columns and **even** rows.
-- Lines that start with a `#` are comments and are ignored. Comments can only be placed before or after the code. The `#` character is not allowed in the code itself.
+- Any other lines <ins>before</ins> and <ins>after</ins> the actual code are ignored.
+- It is just a text format, so the file extension doesn't matter for now. You can make it `.md` and comment using markdown if you want! [See example](./examples/002_hello_world_commented.md)
 
 *(Note: The use of alternative connectors like `║` (U+2551), `═` (U+2550), `━` (U+2501) and such might be supported in the future but for now you should not use them. For modes other than D6, the number of possible dots will be different. For example with D15 dominos, each half can have 15 dots, making it basically hexadecimal, so you'd use `0` to `f` to represent them)*
 
 **Example:**
 
-
 <pre class="ds i">
-# The below code NO-OPs forever because
-# The IP can always move to a new domino
+TITLE
+=====
+
+The below code NO-OPs forever because
+The IP can always move to a new domino
 
 . . . . . . . .
 
@@ -126,6 +129,10 @@ A text based format is used to represent domino pieces.
 . 6—6 6—6 6—6 .
 
 . . . . . . . . 
+
+
+You can also comment below the code.
+But not inbetween it.
 
 
 </pre>
@@ -1198,59 +1205,59 @@ Wiith DominoScript you can output unicode characters to the console. Here is a l
 
 | CHARACTER                           | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
 |-------------------------------------|---------------|---------|-------|-----------|
-| `NUL` *(null character)*            | U+0000        | 0       | 0     | `0—0 0—0` |
-| `SOH` *(start of heading)*          | U+0001        | 1       | 1     | `0—0 0—1` |
-| `STX` *(start of text)*             | U+0002        | 2       | 2     | `0—0 0—2` |
-| `ETX` *(end of text)*               | U+0003        | 3       | 3     | `0—0 0—3` |
-| `EOT` *(end of transmission)*       | U+0004        | 4       | 4     | `0—0 0—4` |
-| `ENQ` *(enquiry)*                   | U+0005        | 5       | 5     | `0—0 0—5` |
-| `ACK` *(acknowledge)*               | U+0006        | 6       | 6     | `0—0 0—6` |
-| `BEL` *(bell)*                      | U+0007        | 7       | 10    | `0—0 1—0` |
-| `BS` *(backspace)*                  | U+0008        | 8       | 11    | `0—0 1—1` |
-| `HT` *(horizontal tab)*             | U+0009        | 9       | 12    | `0—0 1—2` |
-| `LF` *(line feed)*                  | U+000A        | 10      | 13    | `0—0 1—3` |
-| `VT` *(vertical tab)*               | U+000B        | 11      | 14    | `0—0 1—4` |
-| `FF` *(form feed)*                  | U+000C        | 12      | 15    | `0—0 1—5` |
-| `CR` *(carriage return)*            | U+000D        | 13      | 16    | `0—0 1—6` |
-| `SO` *(shift out)*                  | U+000E        | 14      | 20    | `0—0 2—0` |
-| `SI` *(shift in)*                   | U+000F        | 15      | 21    | `0—0 2—1` |
-| `DLE` *(data link escape)*          | U+0010        | 16      | 22    | `0—0 2—2` |
-| `DC1` *(device control 1)*          | U+0011        | 17      | 23    | `0—0 2—3` |
-| `DC2` *(device control 2)*          | U+0012        | 18      | 24    | `0—0 2—4` |
-| `DC3` *(device control 3)*          | U+0013        | 19      | 25    | `0—0 2—5` |
-| `DC4` *(device control 4)*          | U+0014        | 20      | 26    | `0—0 2—6` |
-| `NAK` *(negative acknowledge)*      | U+0015        | 21      | 30    | `0—0 3—0` |
-| `SYN` *(synchronous idle)*          | U+0016        | 22      | 31    | `0—0 3—1` |
-| `ETB` *(end of transmission block)* | U+0017        | 23      | 32    | `0—0 3—2` |
-| `CAN` *(cancel)*                    | U+0018        | 24      | 33    | `0—0 3—3` |
-| `EM` *(end of medium)*              | U+0019        | 25      | 34    | `0—0 3—4` |
-| `SUB` *(substitute)*                | U+001A        | 26      | 35    | `0—0 3—5` |
-| `ESC` *(escape)*                    | U+001B        | 27      | 36    | `0—0 3—6` |
-| `FS` *(file separator)*             | U+001C        | 28      | 40    | `0—0 4—0` |
-| `GS` *(group separator)*            | U+001D        | 29      | 41    | `0—0 4—1` |
-| `RS` *(record separator)*           | U+001E        | 30      | 42    | `0—0 4—2` |
-| `US` *(unit separator)*             | U+001F        | 31      | 43    | `0—0 4—3` |
+| `NUL` *(null character)*            | U+0000        | 0       | 0     | `0—0`     |
+| `SOH` *(start of heading)*          | U+0001        | 1       | 1     | `0—1`     |
+| `STX` *(start of text)*             | U+0002        | 2       | 2     | `0—2`     |
+| `ETX` *(end of text)*               | U+0003        | 3       | 3     | `0—3`     |
+| `EOT` *(end of transmission)*       | U+0004        | 4       | 4     | `0—4`     |
+| `ENQ` *(enquiry)*                   | U+0005        | 5       | 5     | `0—5`     |
+| `ACK` *(acknowledge)*               | U+0006        | 6       | 6     | `0—6`     |
+| `BEL` *(bell)*                      | U+0007        | 7       | 10    | `1—0 1—0` |
+| `BS` *(backspace)*                  | U+0008        | 8       | 11    | `1—0 1—1` |
+| `HT` *(horizontal tab)*             | U+0009        | 9       | 12    | `1—0 1—2` |
+| `LF` *(line feed)*                  | U+000A        | 10      | 13    | `1—0 1—3` |
+| `VT` *(vertical tab)*               | U+000B        | 11      | 14    | `1—0 1—4` |
+| `FF` *(form feed)*                  | U+000C        | 12      | 15    | `1—0 1—5` |
+| `CR` *(carriage return)*            | U+000D        | 13      | 16    | `1—0 1—6` |
+| `SO` *(shift out)*                  | U+000E        | 14      | 20    | `1—0 2—0` |
+| `SI` *(shift in)*                   | U+000F        | 15      | 21    | `1—0 2—1` |
+| `DLE` *(data link escape)*          | U+0010        | 16      | 22    | `1—0 2—2` |
+| `DC1` *(device control 1)*          | U+0011        | 17      | 23    | `1—0 2—3` |
+| `DC2` *(device control 2)*          | U+0012        | 18      | 24    | `1—0 2—4` |
+| `DC3` *(device control 3)*          | U+0013        | 19      | 25    | `1—0 2—5` |
+| `DC4` *(device control 4)*          | U+0014        | 20      | 26    | `1—0 2—6` |
+| `NAK` *(negative acknowledge)*      | U+0015        | 21      | 30    | `1—0 3—0` |
+| `SYN` *(synchronous idle)*          | U+0016        | 22      | 31    | `1—0 3—1` |
+| `ETB` *(end of transmission block)* | U+0017        | 23      | 32    | `1—0 3—2` |
+| `CAN` *(cancel)*                    | U+0018        | 24      | 33    | `1—0 3—3` |
+| `EM` *(end of medium)*              | U+0019        | 25      | 34    | `1—0 3—4` |
+| `SUB` *(substitute)*                | U+001A        | 26      | 35    | `1—0 3—5` |
+| `ESC` *(escape)*                    | U+001B        | 27      | 36    | `1—0 3—6` |
+| `FS` *(file separator)*             | U+001C        | 28      | 40    | `1—0 4—0` |
+| `GS` *(group separator)*            | U+001D        | 29      | 41    | `1—0 4—1` |
+| `RS` *(record separator)*           | U+001E        | 30      | 42    | `1—0 4—2` |
+| `US` *(unit separator)*             | U+001F        | 31      | 43    | `1—0 4—3` |
 
 ### ASCI Printable Characters
 
 | CHARACTER     | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
 |---------------|---------------|---------|-------|-----------|
-| *space*       | U+0020        | 32      | 44    | `0—0 4—4` |
-| `!`           | U+0021        | 33      | 45    | `0—0 4—5` |
-| `"`           | U+0022        | 34      | 46    | `0—0 4—6` |
-| `#`           | U+0023        | 35      | 50    | `0—0 5—0` |
-| `$`           | U+0024        | 36      | 51    | `0—0 5—1` |
-| `%`           | U+0025        | 37      | 52    | `0—0 5—2` |
-| `&`           | U+0026        | 38      | 53    | `0—0 5—3` |
-| `'`           | U+0027        | 39      | 54    | `0—0 5—4` |
-| `(`           | U+0028        | 40      | 55    | `0—0 5—5` |
-| `)`           | U+0029        | 41      | 56    | `0—0 5—6` |
-| `*`           | U+002A        | 42      | 60    | `0—0 6—0` |
-| `+`           | U+002B        | 43      | 61    | `0—0 6—1` |
-| `,`           | U+002C        | 44      | 62    | `0—0 6—2` |
-| `-`           | U+002D        | 45      | 63    | `0—0 6—3` |
-| `.`           | U+002E        | 46      | 64    | `0—0 6—4` |
-| `/`           | U+002F        | 47      | 65    | `0—0 6—5` |
+| *space*       | U+0020        | 32      | 44    | `1—0 4—4` |
+| `!`           | U+0021        | 33      | 45    | `1—0 4—5` |
+| `"`           | U+0022        | 34      | 46    | `1—0 4—6` |
+| `#`           | U+0023        | 35      | 50    | `1—0 5—0` |
+| `$`           | U+0024        | 36      | 51    | `1—0 5—1` |
+| `%`           | U+0025        | 37      | 52    | `1—0 5—2` |
+| `&`           | U+0026        | 38      | 53    | `1—0 5—3` |
+| `'`           | U+0027        | 39      | 54    | `1—0 5—4` |
+| `(`           | U+0028        | 40      | 55    | `1—0 5—5` |
+| `)`           | U+0029        | 41      | 56    | `1—0 5—6` |
+| `*`           | U+002A        | 42      | 60    | `1—0 6—0` |
+| `+`           | U+002B        | 43      | 61    | `1—0 6—1` |
+| `,`           | U+002C        | 44      | 62    | `1—0 6—2` |
+| `-`           | U+002D        | 45      | 63    | `1—0 6—3` |
+| `.`           | U+002E        | 46      | 64    | `1—0 6—4` |
+| `/`           | U+002F        | 47      | 65    | `1—0 6—5` |
 | `0`           | U+0030        | 48      | 66    | `1—0 6—6` |
 | `1`           | U+0031        | 49      | 100   | `1—1 0—0` |
 | `2`           | U+0032        | 50      | 101   | `1—1 0—1` |

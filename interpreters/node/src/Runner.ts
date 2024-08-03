@@ -3,33 +3,39 @@ import { DSInterpreterError } from "./errors.js";
 import { instructionsByOpcode } from "./instructions/index.js";
 import { parseDominoValue } from "./instructions/Misc.js";
 import { step } from "./step.js";
-  
-export function run(source: string): void {
-  const timeStart = Date.now();
+
+export interface DominoScriptRunner {
+  run(): void;
+  onStdout(fn: (msg: string) => void): void;
+  // onStderr(fn: (msg: string) => void): void;
+}
+
+export function createRunner(source: string): DominoScriptRunner {
   const ctx = createContext(source);
+  return {
+    run: () => run(ctx, source),
+    onStdout: fn => ctx.onStdout(fn),
+    // onStderr: fn => ctx.onStderr(fn)
+  };
+}
   
+function run(ctx: Context, source: string): void {
+  const timeStart = Date.now();
   let i = 0;
+
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
+    instructionsByOpcode[opcode](ctx);
     i++;
-    // if (i++ > 50) break; // TODO remove this is only to prevent infinite loops while developing 
-
-    const instruction = instructionsByOpcode[opcode];
-    // console.log(opcode, instruction.name, ctx.currentCell?.address);
-    instruction(ctx);
-    // console.log(Array.from(ctx.stack.data));
   }
-
+  
   const timeEnd = Date.now();
-  console.log('Time taken:', timeEnd - timeStart, 'ms', 'Instructions:', i);
-  // console.log(ctx.board)
+  console.log('\n\nTime taken:', timeEnd - timeStart, 'ms', 'total instructions:', i);
   ctx.stack.clear();
 }
 
 function nextOpcode(ctx: Context): number | null {
   const c1 = step(ctx);
   const c2 = step(ctx);
-
-  // console.log(c1?.value, c2?.value);
 
   if (!c1 && !c2) {
     ctx.isFinished = true;
@@ -41,12 +47,3 @@ function nextOpcode(ctx: Context): number | null {
   ctx.lastOpcode = opcode;
   return opcode;
 }
-
-// run(`\
-// . . 0-1 0-1 0-1
-               
-// . . . . . 6 1-0
-//           |    
-// . . . 1-6 6 . .
-               
-// . . . . . . . .`);

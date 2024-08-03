@@ -75,6 +75,6 @@ export const instructionsByOpcode: Instruction[] = [
   NOOP
 ];
 
-export function INVALID() {
+export function INVALID(ctx: Context) {
   throw new Error('Invalid instruction');
 }

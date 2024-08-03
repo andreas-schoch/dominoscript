@@ -11,23 +11,18 @@ export function POP(ctx: Context): void {
 
 function parseNum(ctx: Context): number {
   const firstHalf = step(ctx);
-  // console.log(firstHalf);
   if (!firstHalf) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
   if (firstHalf.value === null) throw new DSUnexpectedEndOfNumberError(firstHalf.address);
 
   const numberHalfs = (firstHalf.value * 2) + 1;
-  // console.log(numberHalfs);
 
   let base7 = '';
   for (let i = 0; i < numberHalfs; i++) {
     const half = step(ctx);
-    // console.log(half);
     if (!half) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
     if (half.value === null) throw new DSUnexpectedEndOfNumberError(half.address);
     base7 += half.value;
   }
-
-  // console.log(base7, parseInt(base7, 7));
 
   return parseInt(base7, 7);
 }
@@ -35,10 +30,10 @@ function parseNum(ctx: Context): number {
 // Pushes 1 number to the stack using up to 7 dominoes
 export function NUM(ctx: Context) {
   const number = parseNum(ctx);
-  // console.log('Number:', number);
   ctx.stack.push(number);
 }
 
+// Pushes numbers representing unicode characters to the stack until a NULL character is found
 export function STR(ctx: Context): void {
   const numbers: number[] = [];
   while (true) {
@@ -47,7 +42,7 @@ export function STR(ctx: Context): void {
     if (unicode === 0) break;
   }
 
-  numbers.forEach(n => ctx.stack.push(n));
+  numbers.reverse().forEach(n => ctx.stack.push(n));
 }
 
 export function DUP(ctx: Context): void {

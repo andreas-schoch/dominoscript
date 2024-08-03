@@ -7,16 +7,34 @@ export interface Grid {
   height: number;
 }
 
+const AllowedValueCharsByDMode = {
+  D3: '0123.',
+  D6: '0123456.',
+  D9: '0123456789.',
+  D12: '0123456789abc.',
+  D15: '0123456789abcdef.',
+};
+
+const allowedValueChars = AllowedValueCharsByDMode.D6; // TODO for now D6 mode is hardcoded
+const allowedHorizontalConnectorChars = '—-=═ ';
+const allowedVerticalConnectorChars = '|║ ';
+
 export function gridToSource(grid: Grid): string {
   throw new Error('Not implemented');
 }
 
-// TODO Need to support empty lines above and below the grid
 export function sourceToGrid(source: string): Grid {
-  const lines = source
-    .split('\n')
-    .filter(line => !line.trim().startsWith('#')); // Remove comments
+  let lines = source.split('\n');
 
+  // We need to figure out where the code actually starts in the source file
+  const boardStart = lines.findIndex(line => allowedValueChars.includes(line[0]));
+  const boardEnd = lines.findLastIndex(line => allowedValueChars.includes(line[0]));
+
+  if (boardStart === -1 || boardEnd === -1) throw new DSInvalidGridError();
+
+  // This gets rid of all the non-code
+  lines.splice(boardEnd + 1);
+  lines.splice(0, boardStart);
   
   const maxCharsPerLine = Math.max(...lines.map(line => line.length));
   const minCharsPerLine = Math.min(...lines.map(line => line.length));
@@ -44,10 +62,6 @@ export function sourceToGrid(source: string): Grid {
     height: (lines.length + 1) / 2,
     cells: cells,
   }
-
-  const allowedValueChars = AllowedValueCharsByDMode.D6; // TODO for now D6 mode is hardcoded
-  const allowedHorizontalConnectorChars = '—-=═ ';
-  const allowedVerticalConnectorChars = '|║ ';
 
   let totalCellsSoFar = 0;
 
@@ -100,14 +114,6 @@ export function sourceToGrid(source: string): Grid {
 
   return grid;
 }
-
-const AllowedValueCharsByDMode = {
-  D3: '0123.',
-  D6: '0123456.',
-  D9: '0123456789.',
-  D12: '0123456789abc.',
-  D15: '0123456789abcdef.',
-};
 
 function getDimensions(lines: string[]): [number, number] {
   const maxCharsPerLine = Math.max(...lines.map(line => line.length));

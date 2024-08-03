@@ -13,6 +13,13 @@ export class DSInvalidGridError extends Error {
   }
 }
 
+export class DSForbiddenCharacterError extends Error {
+  constructor(token: string, line: number, column: number) {
+    super(`Forbidden token '${token}' at line ${line}, column ${column}. Use # to prefix comments`);
+    this.name = 'ForbiddenCharacterError';
+  }
+}
+
 export class DSMultiConnectionError extends Error {
   constructor(line: number, column: number, type: 'Vertical' | 'Horizontal') {
     super(`${type} connection at line ${line}, column ${column} is trying to connect a cell that is already connected`);

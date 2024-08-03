@@ -597,7 +597,28 @@ Alternates secondary and tertiary direction ever single time but resets it when 
 Basically the same as either inclusive or exclusive flipflop but the alternation occured only every 2, 3, 4 etc. times.
 
 
+## Node interpreter preformance
 
+**Benchmark 001:**
+
+The current unfinished version of the node interpreter was able to perform about **1.5 million instructions per second** on an HP aero 13 laptop with an AMD Ryzen 5 5625U CPU, single core, doing very basic operations.
+
+The following dominoScript was used for the benchmark: `0-1 3-6 6-6 6-6 6-6 0-3 1-2 0-0` it is the equivalent of `PUSH 823543 DUPE MULT POP`.
+
+I created a file with a total of 2'395'008 instructions doing the above operations over and over again on a single line. On average it took about 1400-1600ms to execute.
+
+```js
+const fs = await import("fs");
+const { run } = await import("./dist/Runner.js")
+
+const script = fs.readFileSync('./dist/bin/test.txt', 'utf8');
+run(script)
+```
+
+It is not a good benchmark as it does not use a wide enough variety of instructions, does not change directions, jump, call and GET and SET the grid, push strings, output strings etc...
+In a real world scenario the performance will probably be somewhat slower.
+
+However, even if 5 times slower, it would probably be good enough for a simple game running at 30-60fps. I could perform about 5-10k instructions per frame which seems good enough for a simple breakout game rendering to the terminal in a grid of e.g. 64x32 ascii chars, simple physics, AABB collision, breakable blocks and player input.
 
 <style>
   /* dominoscript looks a bit more readable when slightly styled */

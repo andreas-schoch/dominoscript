@@ -7,8 +7,7 @@ export function step(ctx: Context): Cell | null {
   
   if (ctx.isFirstDomino) {
     findFirstDomino(ctx);
-    if (ctx.isFinished) return null;
-    else return ctx.currentCell;
+    return ctx.isFinished ? null : ctx.currentCell;
   }
 
   if (ctx.isFinished) return null;
