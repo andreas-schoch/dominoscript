@@ -2,7 +2,122 @@
 
 I have not much practical experience with low level programming so I am not quite sure what I am doing. This document is really just a notebook where I write down ideas or concepts I don't want to forget regardless of how good or bad they are or if they make any sense at all.
 
-> **This will not be kept up to date. Some things here are already outdated or have been implemented differently.**
+> **This will not be kept up to date. Some things here are already outdated or have been implemented differently. Spelling errors included :)**
+
+It is mostly meant for myself but it may give others an idea of how the language evolved and what kind of thought process went into it.
+
+
+
+## Very first notes I made on my phone 
+
+For completedness sake Here are the original notes that I wrote after watching dylan beatties "The art of code". These were written sometime in late June 2024 during a long hiking trip in moments of rest.
+
+For some of the notes, I have no idea what I was thinking when I wrote them. Some of the ideas I had were just plain stupid haha.
+
+At the start I didn't think too much about the "DX" so came up with wacky ideas because I wanted the code to look like an actual game of regular dominos where you only place dominos to dominos with the same number.
+
+Only once I gave up on that idea I started to think about more practical ways to implement the language. Which may explain why I only thought of using a matrix for opcodes and base7 encoding for numbers a few days into brainstorming...
+
+```
+I want to create an esolang inspired by Piet which uses pixels/codels instead of text. My lang will use regular domino pieces with the 0-6 dots on each side.
+
+Piet has 17 instructions, can do conditional logic by changing the direction pointer or the changing the "codel chooser". I guess with the same methods it can do loops or mimick subroutines (direction manipulation). In piet numbers can be oushed onto the stack by having "colorblocks" of the same color be direct neighbours. Hue and color ch
+
+So how can I use some of these concepts for my  domino esolang?
+
+Some points to think about:
+
+---------------------------------------
+how to decide what instruction to run?
+---------------------------------------
+- Use the product of the multiplication of the numbers of each side of a single piece. Max 19 opcodes  ranging from 0-36. Will have "gaps" due to impossibility to obtain prime numbers: 7, 11, 13, 17, 19, 23, 29, 31
+- Use the sum of the numbers of a single piece.  Max 13 opcodes. 0+0 to 6+6
+- Use layers of opcodes. Lets say first opcode on each layer is a SHIFT. After a SHIFT the next domino piece's sum determines the layer. This allows 12*12=144 opcodes and more than enough redundancy to extend the language later on.
+- Treat dominos like base 7 numbers. So [6|6] is 66 in base7 and equals 6*7^1+6*7^2=48. I think I love this approach. Did only realize when I saw this post mentioning it: https://www.johndcook.com/blog/2022/09/22/dominoes-in-unicode/. 
+- Layers seem over the top. The above of using base7 would work but 
+
+---------------------------------------
+how to push a specific number to the stack?
+---------------------------------------
+- Similar to "codelblocks" in piet we take uninterupted blocks of the same number by direct neighbouring pieces and sum them up. So if we have a center piece [6|6] followed by a [6|5], we push the number 18 to the stack (6+6+6 ignoring 5).
+- Same as previous but multiply instead of sum to allow higher numbers with less domino pieces. Maybe annoying to construct specific numbers. 6*6*6*6=1296, 5*5*5*5=625, how tf do I get e.g 877 onto the stack? also what about prime numbers?
+- Best to use a mix of multiplication and addition. Lets consider the block uninterupted as long as it is a "valid" domino placement so given [2|5][5|6], we do could do either 2*5+5*6=40 or (2+5)*(5+6)=77. Both would probably work somewhat well. The first requires more pieces as each piece can only add 36 to the total. the secons grows the number exponentially faster allowing huge integers with merely a handful of pieces
+- Use base7: A single domino can represent up to 48, two can represent up to 2400, 3 can go up to 117648. 6*7⁵ + 6*7⁴ + 6*7³ + 6*7² + 6*7¹ + 6*7⁰. With 6 dominos we can represent 13.84 billion. But how do we know when the number is finished and the next opcode begins? Either make it a reasonable default like always take 3 or 4 dominos (117k or 5.7mio) or have multiple push instructions like PUSH1, PUSH2, PUSH6. I can see both as as viable options.
+- Instead of multiple PUSH instructions we have a single one. The end of the number is determined once it cannot flow to the primary direction anymore but jas to go secondary or tertiary
+- If I use base13 and treat a single domino as 1 digit (so 12 is largest num per piece) I can achieve much larger numbers with fewer dominos. 407mio vs 5.7mio with 4 dominos and ...  THIS IS WRONG. BASE7 IS BETTER
+- 
+
+---------------------------------------
+how to represent negative numbers?
+---------------------------------------
+- In Piet you cannot place negative numbers as codeblocks. You would push 0 then subtract a positive number from it to get a negative number onto the stack. I could do the same but not sure if I like that. I like that it forces devs to be more creative but might be annoying over time.
+- Use a sign bit like in binary for base7 dominos. Probably need to think of an equivalent of the "two's complement" and will end up with -0 and +0 . It will add much more complexity but may be worthwhile
+- Have a dedicated PUSH_NEG opcode that pushes a number as negative (basically does a <num> * -1). Dont like this as it bloats the spec with something that can already be achieved.
+- Probably will just require devs to push 0 and subtract the num from zero. This requires 3 dominos (1 for push, 1 for zero number, 1 for subtract)
+
+---------------------------------------
+how to iterate
+---------------------------------------
+- We can "steer" the direction pointer similarly to piet by having an instruction which pops an element from the stack and if negative goes left, if zero continues forward, if positive goes right
+- We can jump similar to a "relative goto" by having an instruction which by popping 2 elements (one for x and another for y axis) moves the Instruction pointer (IP) relative to the current position
+- We can jump to a specific coord from origin block by having an instruction which again pops 2 elements bit instead of relative from current pos it moves "absolute". This would be more like a real goto and maybe more useful to imitate subroutines
+- I think combinations of branch and dir can also ve used to iterate. For a while loop simply layout dominos so the flow goes back to beginning of loop  body. Within the body include a branch which changes the flow. This can be either a break or the while condition
+---------------------------------------
+how to have subroutines
+---------------------------------------
+- kind of available by using the "goto" or "steer" instructions I guess
+
+---------------------------------------
+do we allow Placement in the middle
+---------------------------------------
+- In a real domino game you can usually place "doubles" like [6|6] so both sides touch previous block. It might be interesting for this esolang but would probably make the parsing a nightmare and more complex.
+- I am inclined to disallow it at this early stage. Need to play around with dominos and see what kind of shapes I can create. It might look visually more interesting when we have dominos in offset grids. And you can always return to the "main" grid by doing another middle placement.
+- I was thinking of using it for opcodes and normal placing for numbers as it makes a nice visual distinction of the two. Not sure yet. Having no distinction allows more freedom in how to place tiles.
+
+---------------------------------------
+How to handle strings?
+---------------------------------------
+- In piet you push a single char, output it, then push next, then output it. I want to be able to push a whole string to the stack. Maybe using 2 dominos per char (can do all of ascii and up to 2400 of unicode) then output the whole string. To know when string ends, Use null delimiter 0x0 ascii.
+- We can use 1.5 dominos per char but that may cause issues. If num chars is even and we use Null to delimit there is 1 half left. Null (the number zero) is also used as a shift opcode, so this adds complexity and might make things more annoying. I could stop distincting between whole dominoa and use halfs as base of all things so opcodes will always read 2 halfs regardless of they are part of the same piece. This may allow more freedom in placing dominos but I am unsure if a good idea. I like to think of a single domino as a "unit" like a byte.
+
+---------------------------------------
+How to handle pixels and tiles
+---------------------------------------
+- Using 8x8 sprites with 8 bit color per pixel would make sense to remain somewhat standard but its a pain to deal with when we can only represent numbers between 0-48 using a single domino
+- Using sprite sizes of 7x7 and  49 colors for color means we need 49 dominos to encode a single sprite. Seems like a lot... If we limit the colors to a side of a domino we have 6 colors to work with and an extra half piece. which is also annoying...
+- I think what makes the most sense is to use 8x8 sprites and use half a domino to encode color. So we "only" need 32 dominos for a single sprite 
+
+
+---------------------------------------
+How to not clutter the spec?
+---------------------------------------
+- I am already thinking about things that might be irrelevant at the language level like sprites and pixel output. How can I support these but not clutter the spec with them?
+- One way is to make use of the empty shift opcodes. I could make it possible to assign empty opcodes to custom code which can do whatever. There could be an inbuilt opcode which links an empty opcode to some code. it is kind of like declaring a function if you think about it. The function would have no name but is "called" via the opcode. You can think of the inbuilt opcode as part of the standard library while the rest are extensions. I just make pixel output possible in the standard library and the rest can be implemented via extension. So the domlang can support various graphics from per pixel to 8x8 or 16x16 sprites in various colors. Its not the job of the lang to limit that. that is the job of the machine (fantasy console)  it is running on. I probably just need the opcodes LOAD_EXTENSION and RUN_EXTENSION. The load extension is like an import in JS. Just need to think how to identify what to load (is it an image, binary file or a text file representing my dominos? does it come from local or some sort of registry - I would love to build a registry like npm for domino code where user specifies the name and version) 
+
+---------------------------------------
+Self overwriting code!!!!
+---------------------------------------
+- Just read about the "p" instruction in befunge. This could be sooooo fking cool and remove the need to work with pixels and other output.
+- The program modifies sections of itself. E.g. a command which pops 3 elements from the stack. 2 represent xy coords and the third what domino to put instead at those coords
+- Apart from usage as a display it can also alter code being executed. This would be a nightmare to compile. With user input it might be impossible to compile ahead of time so probably needs to be interpreted on the fly or use some clever JIT compilation whenever a domino is modified
+
+
+--------------------------------------
+Conditional code
+---------------------------------------
+- There will probably be a dedicated branch instruction which works exactly like an if-else. It pops the top of the stack and if number is falsy the flow continues left, if truthy it goes right regardless of what direction mode is set. Maybe I will make it depend on dir mode. Dir mode sets primary, secondary and tertiary direction priorities.
+- There is a direction instruction with which you could implement conditional behaviour but that is not its main usecase. With DIR you set a state which affects the program flow (more concretely it sets the priorities for the 3 possible flow directions. It is quite powerful and could potentially work instead of BRANCH depending on how I design it. I'd rather have a single powerful instruction if possible but without branch things might be more confusing and branch and dir kinda work well together I think.
+- There will also be a single JUMP instruction. I was thinking to have multiple which replace comparison operators but I'd rather be able to use  >, >= and == without immediately jumping ao dev can decide if to jump or branch.
+
+--------------------------------------
+How to define variables?
+--------------------------------------
+- We could have an instruction which works like a VAR or LET. Either with proper labels or numeric labels (requires less dominos than ascii labels. 1 ascii char requires 2 dominos while 2 dominos can represent numbers up to 2400. The label could be defined like with a push so we have over a billion possible labels 
+- The more funky way to store variables is inspired by befunge which allows overriding its own source code. With just a GET and a PUT op we can store data anywhere on the playing field. This is great as it can be used to represent variables, display matrices, and who knows what else.
+- 
+
+```
+
 
 ## Instruction Planes
 A single "plane" can have 49 instructions. We can increase that if we have an instruction to switch between planes.
