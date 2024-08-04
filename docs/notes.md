@@ -688,15 +688,70 @@ I discarded this idea a month ago but now it seems the most practical solution t
 I like the way of using current direction of IP to decide which direction to GET and SET to, so that will remain the same
 
 
+## DominoScript replacing JS
 
+It would be funny to create a webapp similar to e.g. codepen which shows 3 columns for HTML, CSS and JS but instead of JS it would shows DS. The only way to script is using DominoScript. Well, under the hood it is JS obviously, but for the user only DS. I'd probably add the following directly to the language:
 
+- `querySelector(selector: string): DSID`
+  - pseudocode: `PUSH ".my-el" PUSH "querySelector" CALL`
+  - result: pushes a `DSID` to the stack that identifies the element. This is not the real id of the element but rather an internal thing to be able to perform operations on it since we can only do it indirectly. It is sort of how selenium does it with web elements. When you find an element it maps this internal id to the real element.
 
+- `setInnerHTML(id: DSID, html: string): void`
+  - pseudocode: `PUSH "<div>hello</div>" PUSH <id> PUSH "setInnerHTML" CALL`
 
+- many more functions that work similarly on an element, setAttribute, setClass, addEventListener
 
+- `fetch(method: 'get' | 'post' | 'put' | 'delete', url: string): JSONID`
+  - pseudocode: `PUSH "https://jsonplaceholder.typicode.com/todos/1" PUSH 'get' PUSH "fetch" CALL`
+  - result: pushes the JSONID to the stack which can be used to access the json data. This limits the fetch to just json based responses but that is fine for this joke project
+- `getJSONValue(jsonId: JSONID, key: string): string | number | boolean | null`
+  - pseudocode: `PUSH <jsonId> PUSH "title" PUSH "getJSON" CALL`
+  - result: pushes the value of the key to the stack. You need to know yourself what type it is. A string type will result in multiple items being pushed for each character. A boolean will just be a 0 or 1, a null will be a 0 (maybe -1 not sure).
+- `setJSONValue(jsonId: JSONID, key: string, value: string | number | boolean | null): void`
+  - pseudocode: `PUSH <jsonId> PUSH "title" PUSH "new title" PUSH "setJSON" CALL`
 
+## Opcode layer mapping reconsidered**
 
+I have been thinking about his since the beginning of DS but kind of hesitate implementing since I prefer using "D-Modes" to extend the language.
+Layers will be annoying to deal with
 
+In D6 mode one opcode layer can have up to 49 opcodes because that is the number that 1 single domino can represent. Up till now I always imagined opcode layers to be alternative mappings to the same opcodes. The practical usecase of this is questionable it was mainly to be able to remap some opcodes to something else so when you create DS "art" you can have the IP just NOOP over dominos that would otherwise trigger various instructions.
 
+The problem with layers is that they just aren't that useful and there are better alternatives:
+- using double-9 dominos instead of double-6 dominos extends the opcode range from 49 to 100. With double-15 dominos you hav 256 opcodes.
+- If you don't want certain dominos to do anything just jump over them.
+
+What if instead of opcode layering like that we can switch between normal and extended opcode mode?
+- Normal mode: 1 domino used per instruction ----> 49 opcodes
+- Extended mode: 2 dominos used per instruction ----> 49*49=2401 opcodes
+
+The instruction that toggles between modes doesn't have to take any arguments, so it just takes 1 domino to switch to extended mode and 2 dominos to switch back to normal mode. 
+
+In extended mode you retain access to the whole 0-48 opcode range. The only difference is that you "waste" 1 domino per instruction as you always need to use 2 dominos to execute them.
+
+I could reserve the first 1000 opcodes for future language extensions and use opcode range 1001-2401 to map to LABELS!
+- Label -1 would be opcode 1001
+- Label -50 would be opcode 1050
+- etc ...
+
+This gives you the option to call procedures in 2 ways
+- Using CALL instruction which pops the label from the stack and jumps to the address. `0—1 0—1 1—5 4—4` or in pseudocode: `NUM 1 NEG CALL` 
+- Switching to extended mode and just using the opcode directly. The domino sequence representing 1001 is `2—6 3—0` since -1 is the label we want to call 1001 is the opcode it is mapped to automatically
+
+This also opens up the possiblity to extend the language spec without having to change from double-six dominos to D9, D12 or D15.
+I'd probably still want to be able to use dominos other than double-sixes but all they would really do is extend the range available in normal mode from 0-48 using d6 to 0-256 using d15 dominos.
+
+When doing IMPORT the IP would move to the new board. There you'd setup all the labels you want to be available on the main board. You can imagine them as exports
+- First import "exports" 10 labels.
+- Second import "exports" 10 more labels.
+
+Now if the IMPORT happended before any LABEL was set on the main board, the exported labels from first import are -1 to -10, the second import would be -11 to -20.
+Now when you LABEL something more on the main board itself the next label will be -21. You can either use CALL or just switch to extended mode to be able to execute them like any regular opcode.
+Imports will never have conflicts. The authors of "extensions" that can be imported would write down what each label does, when you import the extension, you'd habe to keep track of what was labeled and imported before.
+
+If I were to make a game engine I would implement all higher level functionality in dominoscript and then use label-less calls internally for all "private" functions and label only the "public" functions which will be avaialble to wherever imported.
+
+I think this ties multiple concepts up in a fairly elegant way and allows 3rd party extensions to be used like they are part of the language itself.
 
 
 <style>
