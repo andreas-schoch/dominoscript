@@ -6,7 +6,8 @@ export function NUMIN(ctx: Context): void {
 }
 
 export function NUMOUT(ctx: Context): void {
-  // TODO
+  const value = ctx.stack.pop();
+  ctx.stdout(String(value));
 }
 
 export function STRIN(ctx: Context): void {

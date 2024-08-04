@@ -13,17 +13,19 @@ export function step(ctx: Context): Cell | null {
   if (ctx.isFinished) return null;
 
   // perform jump
-  if (ctx.jumpLabel !== null) {
-    ctx.currentCell = ctx.board.getOrThrow(ctx.jumpLabel);
-    ctx.jumpLabel = null;
+  if (ctx.nextJumpAddress !== null) {
+    const address = ctx.nextJumpAddress < 0 ? ctx.labels[ctx.nextJumpAddress] : ctx.nextJumpAddress;
+    ctx.currentCell = ctx.board.getOrThrow(address);
+    ctx.nextJumpAddress = null;
     return ctx.currentCell;
   }
 
   // perform call
-  if (ctx.callLabel !== null) {
+  if (ctx.nextCallAddress !== null) {
     ctx.returnStack.push(ctx.currentCell!.address); // FIXME this should be the address after the CALL instruction, not the current address or is this ok?
-    ctx.currentCell = ctx.board.getOrThrow(ctx.callLabel);
-    ctx.callLabel = null;
+    const address = ctx.nextCallAddress < 0 ? ctx.labels[ctx.nextCallAddress] : ctx.nextJumpAddress;
+    ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
+    ctx.nextCallAddress = null;
     return ctx.currentCell;
   }
 

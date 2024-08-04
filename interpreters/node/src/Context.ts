@@ -7,14 +7,16 @@ export interface Context {
 
   board: Board;
   stack: Stack;
-  returnStack: Stack;
+  returnStack: Stack; // to know where to go back after a CALL
   
   navMode: number;
   navModeOverrides: number[];
   
-  labels: Record<number, Address>;
-  jumpLabel: number | null;
-  callLabel: number | null;
+  labels: Record<number, Address>; // label keys are always negative numbers
+  
+  // jump and call address can either refer to a real address or a label if negative
+  nextJumpAddress: number | null;
+  nextCallAddress: number | null;
 
   isFirstDomino: boolean;
   isFinished: boolean;
@@ -42,8 +44,8 @@ export function createContext(source: string): Context {
     navMode: 0,
     navModeOverrides: [],
     labels: {},
-    jumpLabel: null,
-    callLabel: null,
+    nextJumpAddress: null,
+    nextCallAddress: null,
     isFirstDomino: true,
     isFinished: false,
     lastOpcode: null,

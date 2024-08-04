@@ -13,16 +13,17 @@ export function BRANCH(ctx: Context): void {
 
 export function LABEL(ctx: Context): void {
   const address = ctx.stack.pop();
-  const label = ctx.stack.pop();
-  ctx.labels[label] = address;
+  const keys = Object.keys(ctx.labels).map(o => parseInt(o));
+  const nextLabel = keys.length ? Math.min(...keys) - 1 : -1;
+  ctx.labels[nextLabel] = address;
 }
 
-export function JUMP(ctx: Context): void {
-  const label = ctx.stack.pop();
-  ctx.jumpLabel = label;
+export function JUMP(ctx: Context): void {2
+  const addressOrLabel = ctx.stack.pop();
+  ctx.nextJumpAddress = addressOrLabel;
 }
 
 export function CALL(ctx: Context): void {
-  const label = ctx.stack.pop();
-  ctx.callLabel = label;
+  const addressOrLabel = ctx.stack.pop();
+  ctx.nextCallAddress = addressOrLabel;
 }

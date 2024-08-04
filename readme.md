@@ -645,11 +645,13 @@ You might think that since internally numbers are int32s, that we parse from bas
 
 **To push the number -10 and -5 to the stack you would use the following dominos:**
 - In pseudo code:  `PUSH 10 NEG PUSH 5 NEG`
-- In DominoScript: `0—1 1—0 1—3 0—1 0—5` 
+- In DominoScript: `0—1 1—0 1—3 1-5 0—1 0—5 1-5` 
   - `0—1` is PUSH
   - `1—0 1—3` is 13 in base7 which is 10 in decimal
+  - `1—5` is NEG
   - `0—1` is PUSH again
   - `0—5` is 5 in both base7 and decimal
+  - `1—5` is NEG
 
 <br>
 
@@ -760,7 +762,7 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `MODULO`
 <img src="assets/horizontal/1-4.png" alt="Domino" width="128">
 
-#### `NEGATE`
+#### `NEG`
 <img src="assets/horizontal/1-5.png" alt="Domino" width="128">
 
 Pops the top item off the stack. Negates it. Then pushes the negated version back onto the stack. Essentially a `num  * -1` operation.
@@ -839,9 +841,29 @@ See [Navigation Modes](#navigation-modes) to see all possible nav modes and thei
 #### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
 
-It maps a specific address on the grid with a label. The label is the address of the domino.
+A label is like a bookmark or an alternative identifier of a specific Cell address. It is used by the `JUMP`, `CALL`, `GET` and `SET` instructions. You can call it a pointer if you want.
 
-Both the 
+> Labels are probably not what you expect them to be. 
+> - They are <ins>not</ins> a strings, but negative numbers.
+> - They are auto generated and self decrementing: `-1`, `-2`, `-3`, etc. ...
+>
+> I know, a bit strange but let me explain:
+>- **Flexibility**: I wanted JUMP, CALL, GET and SET to work with both; labels and the actual addresses.
+>- **Less dominos needed**: 
+>   - `String-based`: For a 2 char string you'd need a total of 6 dominos (1 for STR instruction, 2 per char, 1 for NULL). Using alphanumeric chars you'd be able to have 3906 unique 1-2 character labels and you'd have to label every cell you need to jump to.
+>   - `number-based`: With 4 dominos you can have 342 unique negative labels (1 for NUM instruction, 2 for number, 1 to negate). And since you don't need to negate these, can address 823,543 real addresses directly. Plus you save space on the grid for not having to even label the cells if not needed.
+>- **Readability**:
+>   - Either way you'll have a hard time reading DominoScript and will likely end up with a reference sheet that tells you what dominos represent what labels and what they do when you jump to them etc.
+> 
+> I am open for suggestions on how to improve this. I am not 100% happy with it but it was the best compromise I could think of. The language could do without labels, BUT they will become handy for the `IMPORT` instruction that I plan to add to the language.
+
+Soooo, LABEL gets the address of the cell you want to label from the stack and assigns it to a negative number.
+
+The negative number label will <ins>NOT</ins> be pushed to the stack. It is always decrementing so first label will be `-1`, second label will be `-2`, etc.
+
+
+
+
 
 #### `JUMP`
 <img src="assets/horizontal/4-3.png" alt="Domino" width="128">

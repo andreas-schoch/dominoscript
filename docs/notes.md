@@ -599,7 +599,7 @@ Basically the same as either inclusive or exclusive flipflop but the alternation
 
 ## Node interpreter preformance
 
-**Benchmark 001:**
+### **Benchmark 001:**
 
 The current unfinished version of the node interpreter was able to perform about **1.5 million instructions per second** on an HP aero 13 laptop with an AMD Ryzen 5 5625U CPU, single core, doing very basic operations.
 
@@ -618,7 +618,86 @@ run(script)
 It is not a good benchmark as it does not use a wide enough variety of instructions, does not change directions, jump, call and GET and SET the grid, push strings, output strings etc...
 In a real world scenario the performance will probably be somewhat slower.
 
-However, even if 5 times slower, it would probably be good enough for a simple game running at 30-60fps. I could perform about 5-10k instructions per frame which seems good enough for a simple breakout game rendering to the terminal in a grid of e.g. 64x32 ascii chars, simple physics, AABB collision, breakable blocks and player input.
+However, even if 5 times slower, it would probably be good enough for a simple game running at 30-60fps. I could perform about 5-10k instructions per frame which seems good enough for a simple breakout game rendering to the terminal in a grid of e.g. 64x32 ascii chars,( simple physics, AABB collision, breakable blocks and player input.
+
+### **Benchmark 002:**
+
+The following code loops around 1 million times and prints a decrementing number to stdout every iteration until the number reaches zero.
+
+This is a better test as it uses a larger variety of instructions. It is a slightly adjusted version of the [example 005](../examples/005_loop_using_jump.md)
+
+<pre class="ds">
+. 0 . . . . . . . . . . . . . . . . . . . . . . . . . . .
+  |                                                      
+. 1 . . . . . . . . . . . . . . . . . . . 3—4 0—6 1—1 1 .
+                                                      |  
+. 4 . . . . . . . . . . . . . . . . . . . . . . . . . 0 .
+  |                                                      
+. 0 1—1 0—3 5—1 0—2 1—0 1—3 0—0 5—3 0—1 0—1 1—1 0—3 4—1 .
+                                                         
+. 1 3 . . . . . . . . . . . . . . . . . . . . . . . . 0 .
+  | |                                                 |  
+. 1 3 . . . . . 5 0—0 6—2 1—1 1—4 1—1 2—4 1—1 5—2 1—1 2 .
+                |                                        
+. 3-3 . . . . . 3 . . . . . . . . . . . . . . . . . . . .
+</pre>
+
+- Time taken: 10673 ms total instructions: 10000001
+- Time taken: 10998 ms total instructions: 10000001
+- Time taken: 10372 ms total instructions: 10000001
+
+So About 900-950k instructions per second for this benchmark. A bit slower than the first one but that was to be expected considering we print \n and the number every single iteration. If I replace the NUMOUT and STROUNT with just POP, it becomes quite a bit faster:
+
+<pre class="ds">
+. 0 . . . . . . . . . . . . . . . . . . . . . . . . . . .
+  |                                                      
+. 1 . . . . . . . . . . . . . . . . . . . 3—4 0—6 1—1 1 .
+                                                      |  
+. 4 . . . . . . . . . . . . . . 0 0 . . . . . . . . . 0 .
+  |                             | |                      
+. 0 1—1 0—3 0—0 0—2 1—0 1—3 0—0 0 0 0—1 0—1 1—1 0—3 4—1 .
+                                                         
+. 1 3 . . . . . . . . . . . . . . . . . . . . . . . . 0 .
+  | |                                                 |  
+. 1 3 . . . . . 5 0—0 6—2 1—1 1—4 1—1 2—4 1—1 5—2 1—1 2 .
+                |                                        
+. 3-3 . . . . . 3 . . . . . . . . . . . . . . . . . . . .
+</pre>
+
+- Time taken: 2228 ms total instructions: 11000001
+- Time taken: 2171 ms total instructions: 11000001
+- Time taken: 2266 ms total instructions: 11000001
+
+So without printing to the terminal within each interation it is about 4.5x faster and able to perform about 4.4mio ops/sec. Didn't expect it to be that drastic of a difference but I guess it makes sense. I cannot really explain why the very first benchmark was so slow in comparison. Maybe the `PUSH 823543` is that badly optimized? Or it could just be the board size? I did just copy paste the same 4 instructions over and over and over again there.
+
+
+## About deep stack access necessity and pseudo registers
+
+I was thinking a lot about what stack manipulation instructions to add to the language. In the end I didn't add any for deep stack manipulation like a PICK or piet-like ROLL. I figured I'd at least need the DUP, SWAP and ROTL instructions and could add 1 more for deep stack access eventually. I thought it wouldn't be necessary as long as I can store data on the board but now I changed how I planed GET and SET to work. They got more convenient to set individual dominos to specific values and less convenient to be used as pseudo registers. I wanted to keep the number of arguments for SET to only 2 (address and value) and get to 1 (only address) BUT 1 extra argument would fix these problems.
+
+It would be great if GET and SET could continue to do 1 thing but in reality I need GETNUM, GETSTR, GETONE SETNUM, SETSTR, SETONE and I just don't have enough opcodes available in d6 mode for all the things I still want to cram into it... (like IMPORT, BTN, METAINFO, REMAPPLANE, SWITCHPLANE)
+
+So the extra argument to GET and SET would be the "parseStrategy". With that I can have all of these 6 instructions in 2:
+
+- `parsemode 0`: get/set the value as opcode (0-48, single domino updated). I need this capability to be able to set dominos individually. I realized that with my "first domino half determins the total dominos parsing strategy" I would never be able to set individual cells to anything other than `0-0` to `0-6` because the parser would expect 1 to 6 more dominos to follow for both STR and NUM
+- `parsemode 1`: get/set the value as number. Just like with `NUM` to push a number to the stack. `GET` with parsemode 1 will push 1 number to the stack.
+- `parsemode 2`: get/set the value as string. Just like with `STR` to push a string to the stack. `GET` with parsemode 2 will push multiple numbers to the stack until a NULL terminator is found.
+
+I discarded this idea a month ago but now it seems the most practical solution to the problem. I can have both pseudo registers for ints and strings (so I don't need deep stack access) and ability to set individual dominos exactly how I want them to.
+
+I like the way of using current direction of IP to decide which direction to GET and SET to, so that will remain the same
+
+
+
+
+
+
+
+
+
+
+
+
 
 <style>
   /* dominoscript looks a bit more readable when slightly styled */
