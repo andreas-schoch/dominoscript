@@ -29,6 +29,7 @@ This repository contains the reference implementation written in TypeScript as w
   - [How to represent floating point numbers](#how-to-represent-floating-point-numbers)
   - [How the Instruction Pointer Moves](#how-the-instruction-pointer-moves)
   - [How Navigation Modes work](#how-navigation-modes-work)
+  - [How to read DominoScript manually](#how-to-read-dominoscript-manually)
 
 - **[Instructions](#instructions)**
   - [Stack Management](#stack-management)
@@ -65,7 +66,7 @@ This repository contains the reference implementation written in TypeScript as w
 
 - **`Stack-Oriented`**: There is a single global stack to be used for data manipulation and to pass parameters. It only stores signed 32-bit Integers. The interpreter will preallocate all the memory required to maintain the stack, therefore its size is limited. For now, assume that the stack can contain up to `512` items. It will likely be configurable in future versions.
 
-- **`Concatenative`**: DominoScript at its core is just another concatenative reverse-polish language similar to Forth. The following DominoScript `0—1 0—5 0—1 0-5 1—0 0—3 1—2 5—1` is the same as `PUSH 5 PUSH 5 ADD DUP MULT OUT` *(Note: what you see is the text based representation of 8 domino pieces)*
+- **`Concatenative`**: DominoScript at its core is just another concatenative reverse-polish language similar to Forth. The following DominoScript `0—1 0—5 0—1 0—5 1—0 0—3 1—2 5—1` is the same as `PUSH 5 PUSH 5 ADD DUP MULT OUT` *(Note: what you see is the text based representation of 8 domino pieces)*
 
 - **`Two-Dimensional`**: The code is represented on a rectangle grid. The instruction pointer can move in any cardinal direction. Kind of like in Befunge or Piet but not quite as it doesn't wrap around and the direction changes work differently. keep in mind that 1 domino takes 2x1 cells (when horizontal) or 1x2 cells (when vertical) so with a 64x64 grid you can have 32x64 dominos. There is a hard limit of 65408 total cells which will likely be configurable in future versions.
 
@@ -183,6 +184,7 @@ The grid doesn't have to be a square but it must have a consistent number of col
 
 </div>
 
+<br>
 
 Connecting to a domino half which is already connected results in `MultiConnectionError`:
 
@@ -220,6 +222,8 @@ Connecting to a domino half which is already connected results in `MultiConnecti
 
 </div>
 
+<br>
+
 Having a domino half that is not connected to anything results in `MissingConnectionError`:
 
 <div class="side-by-side">
@@ -255,6 +259,8 @@ Having a domino half that is not connected to anything results in `MissingConnec
 </div>
 
 </div>
+
+<br>
 
 Having a connection where 1 or both ends are empty results in a `ConnectionToEmptyCellError`:
 
@@ -339,7 +345,7 @@ The instruction pointer (`IP`) keeps track of the current cell address that will
 
 - <span id="rule_03">**`Rule_03`**:</span>  If the IP cannot move to a new domino, the program is considered finished. If a `JUMP` happens to move to an empty cell, a `JumpToEmptyCellError` is thrown and the program exits with a non-zero code
 
-- <span id="rule_04">**`Rule_04`**:</span> At the exit half of a domino, the IP will never move back to the entry half. It will always try to move to a new domino. That means there are 0-3 potential options for the IP to move.
+- <span id="rule_04">**`Rule_04`**:</span> At the exit half of a domino, the IP will never move back to the entry half. It will always try to move to a new domino. That means there are 0 to 3 potential options for the IP to move.
 
 - <span id="rule_05">**`Rule_05`**:</span>  When the IP needs to move to a new domino, it is possible that there are no valid moves despite there being dominos around. The [Navigation Mode](#how-navigation-modes-work) decides where the IP can and cannot move next.
 
@@ -372,8 +378,9 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 *The "index" here is the argument for the `NAVM`instruction but also refers to the current Navigation Mode*
 
+<br>
 
-Take this snippet for example:
+**If we imagine the `6` to be the exit half, what will be the next domino the IP moves to?:**
 
 <div class="side-by-side">
   <div class="title">East</div>
@@ -433,15 +440,16 @@ Take this snippet for example:
 
 *(All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show)*
 
-If we imagine the `6` to be the exit half, what will be the next domino the IP moves to?
-
 - `index 0` the IP will move to `1—1` (Primary, Forward)
-- `index 1` the IP will move to `1-1` (Primary, Forward)
+- `index 1` the IP will move to `1—1` (Primary, Forward)
 - `index 2` the IP will move to `2—2` (Primary, Left)
 - `index 3` the IP will move to `2—2` (Primary, Left)
 - `index 4` the IP will move to `3—3` (Primary, Right)
 - `index 5` the IP will move to `3—3` (Primary, Right)
 
+<br>
+
+**What if we remove the `1—1` domino? Where will the IP go to then?:**
 
 <div class="side-by-side">
   <div class="title">East</div>
@@ -499,14 +507,16 @@ If we imagine the `6` to be the exit half, what will be the next domino the IP m
 
 </div>
 
-What if we remove the `1—1` domino? Where will the IP go to then?
-
 - `index 0` the IP will move to `2—2` (Secondary, Left)
 - `index 1` the IP will move to `3—3` (Secondary, Right)
 - `index 2` the IP will move to `2—2` (Primary, Left)
 - `index 3` the IP will move to `2—2` (Primary, Left)
 - `index 4` the IP will move to `3—3` (Primary, Right)
 - `index 5` the IP will move to `3—3` (Primary, Right)
+
+<br>
+
+**And what if we remove both the `1—1` and the `2—2` domino?:**
 
 <div class="side-by-side">
   <div class="title">East</div>
@@ -564,8 +574,6 @@ What if we remove the `1—1` domino? Where will the IP go to then?
 
 </div>
 
-And what if we remove both the `1—1` and the `2—2` domino?
-
 - `index 0` the IP will move to `3—3` (Tertiary, Right)
 - `index 1` the IP will move to `3—3` (Secondary, Right)
 - `index 2` the IP will move to `3—3` (Tertiary, Right)
@@ -574,24 +582,141 @@ And what if we remove both the `1—1` and the `2—2` domino?
 - `index 5` the IP will move to `3—3` (Primary, Right)
 
 <br>
-<br>
 
 Again, these are only the very basic navigation modes. See the [reference](#navigation-modes-reference) for all the different modes and how they work.
+
+## How to read DominoScript manually
+
+DS isn't meant to be human readable but there are deterministic patterns that will make it much easier to follow along once you know them.
+
+All of these patterns revolve around how the `NUM` and `STR` instructions behave differently than any other instruction.
+
+Once you understand their differences, reading the rest of DominoScript is mostly a matter of keeping track of how the other instructions affect:
+- the Stack (most of them do)
+- the Instruction Pointer (JUMP, CALL, NAVM).
+
+<br>
+
+Here are the pattern and some examples:
+
+> <ins>**PATTERN 1**<ins>:
+>
+> Look out for `0—1` and `0—2` dominos.
+>
+> These are the opcodes for the `NUM` and `STR` instructions respectively. They are used to push numbers or strings to the stack so you will see them a lot.
+>
+> They are the <ins>ONLY 2 instructions</ins> that don't get their arguments from the stack but from the board.
+
+> <ins>**PATTERN 2**<ins>:
+>
+> Look out for the first half of a domino right after a `NUM` instruction.
+>
+> It will decide how many more dominos will be part of the argument before the next instruction is executed. 
+
+**The below code results in the number 6 being pushed and popped of the stack:**
+<pre class="ds i">
+0—1 0—6 6—6
+</pre>
+
+- `0—1` is the `NUM` instruction (**PATTERN 1**)
+- `0—6` is the argument for NUM
+  - first half is 0 which means no more dominos will follow and only second half is parsed as number (see **PATTERN 2**)
+  - Second half is 6 in both base7 and decimal so the number 6 is pushed to the stack
+- `0—0` is the next instruction. We know that because the first half of previous domino told us that no more dominos will be part of the argument. (see **PATTERN 2**)
+
+**The below code results in the number 1000 being pushed and popped off the stack:**
+<pre class="ds i">
+0—1 2—0 2—6 2—6 0—0
+</pre>
+
+- `0—1` is the `NUM` instruction (see **PATTERN 1**)
+- `2—0 2—6 2—6` is the argument for NUM representing 1000 in base7
+  - the first half is 2 which means 2 more dominos will be part of the argument (see **PATTERN 2**)
+  - the remaining 2.5 dominos are parsed as 2626 in base7 which is 1000 in decimal.
+  - `0—0` is the next instruction. We know that because the first half of the domino after `NUM` told us that 2 more dominos will be parsed as part of the number so 3rd one after will be an instruction(see **PATTERN 2**).
+
+<br>
+
+> <ins>**PATTERN 3**<ins>:
+>
+> Look out for the first half of a domino right after a `STR` instruction.
+>
+> For the same reason as after a `NUM` instruction. It will decide how many more dominos will be part of the <ins> character</ins> before the next character is parsed.
+
+> <ins>**PATTERN 4**<ins>:
+>
+> Look out for the NULL terminator `0—0` during a `STR` instruction.
+>
+> It indicates the the string is complete and will be pushed to the stack and that next domino will be a new instruction.
+
+**The below code results in the string "abc" being pushed to the stack.**
+<pre class="ds i">
+0—2 1—1 6—6 1—2 0—0 1—2 0—1 0—0 0—1 0—6 0—0
+</pre>
+- `0—2` is the `STR` instruction
+- `1—1 6—6` is the unicode value for "a"
+- `1—2 0—0` is the unicode value for "b"
+- `1—2 0—1` is the unicode value for "c"
+-  `0—0` is the null terminator and not the `POP` instruction as in the previous 2 examples. We know that because `STR` only ends once it encounters a `0—0` (see **PATTERN 4**)
+- `0—1 0—6 0—0` is the code from the first example above. It will push the number 6 to the stack and then pop it off again.
+
+<br>
+
+All these patterns are deterministic but it doesn't mean that every `0—0`, `0—1`, `0—2` you see is a NULL terminator, a `NUM` instruction or a `STR` instruction respectively *(as you can see in the examples above!)*
+
+**It all depends on the context and how the IP moves:**
+- A `0—0` can be part of a number, the NULL terminator or the `POP` instruction
+- A `0—1` can be part of a number, the `NUM` instruction or the `ADD` instruction if the IP moves in a different direction
+- A `0—2` can be part of a number, the `STR` instruction or the `NOT` instruction if the IP moves in a different direction
+
+<br>
+
+The patterns are universal for all cardinal directions the Instruction Pointer can move in.
+
+I only showed examples where the IP moves from left to right but you have to understand that the same domino can either mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
+
+<div class="side-by-side">
+
+<pre class="ds i">
+0—1
+
+. .
+</pre>
+
+<pre class="ds i">
+. .
+
+1—0
+</pre>
+
+<pre class="ds i">
+1 .
+|
+0 .
+</pre>
+
+<pre class="ds i">
+. 0
+  |
+. 1
+</pre>
+
+</div>
 
 <br>
 
 ## Instructions
 
-A single "double-six" domino can represent numbers from 0-6 twice giving us a 7x7 matrix of possible instructions. The first number represents the row and the second number represents the column. This gives us 49 possible instructions.
+A single "double-six" domino can represent numbers from 0 to 6 twice giving us a 7x7 matrix of possible instructions. The first number represents the row and the second number represents the column. This gives us 49 possible instructions.
 
 (Note: These are the instructions for the default D6-mode. Other D-modes might extend it as they will have a larger opcode range. The dominos are presented as if the IP moves eastwards - See [Rule_01](#rule_01))
 
 |     |     0     |     1     |     2     |     3     |     4     |     5     |     6     |    CATEGORY     |
 |-----|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
-|  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotate_left) | [—](#reserved_0_6) | [Stack Management](#stack-management) |
-|  **1** | [ADD](#add) | [SUB](#subtract) | [MULT](#multiply) | [DIV](#divide) | [MOD](#modulo) | [NEG](#neg) | [—](#reserved_1_6) | [Arithmetic](#arithmetic) |
-|  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#equals) | [GTR](#greater) | [—](#reserved_2_5) | [—](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
-|  **3** | [BNOT](#bitwise_not) | [BAND](#bitwise_and) | [BOR](#bitwise_or) | [BXOR](#bitwise_xor) | [BSL](#bitwise_shift_left) | [BSR](#bitwise_shift_right) | [—](#reserved_3_6) | [Bitwise](#bitwise) |
+|  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotl) | [—](#reserved_0_6) | [Stack Management](#stack-management) |
+|  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [—](#reserved_1_6) | [Arithmetic](#arithmetic) |
+|  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [—](#reserved_2_5) | [—](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
+|  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [BSL](#bsl) | [BSR](#bsr) | [—](#reserved_3_6) | [Bitwise](#bitwise) |
 |  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [—](#reserved_4_5) | [—](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [—](#reserved_5_4) | [—](#reserved_5_5) | [—](#reserved_5_6) | [Input & Output](#input-and-output) |
 |  **6** | [GET](#get) | [SET](#set) | [—](#reserved_6_2) | [—](#reserved_6_3) | [—](#reserved_6_4) | [—](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
@@ -635,21 +760,21 @@ You might think that since internally numbers are int32s, that we parse from bas
 
 
 **To push the number 10 and 5 to the stack you would use the following dominos:**
-- In pseudo code:  `PUSH 10 PUSH 5`
-- In DominoScript: `0—1 1—0 1—3 0—1 0-5`
-  - `0—1` is PUSH
+- In pseudo code: `NUM 10 NUM 5`
+- In DominoScript: `0—1 1—0 1—3 0—1 0—5`
+  - `0—1` is NUM
   - `1—0 1—3` is the number 13 in base7 which is 10 in decimal
-  - `0—1` is PUSH again
+  - `0—1` is NUM again
   - `0—5` is the number 5 in both base7 and decimal
 
 
 **To push the number -10 and -5 to the stack you would use the following dominos:**
-- In pseudo code:  `PUSH 10 NEG PUSH 5 NEG`
-- In DominoScript: `0—1 1—0 1—3 1-5 0—1 0—5 1-5` 
-  - `0—1` is PUSH
+- In pseudo code: `NUM 10 NEG NUM 5 NEG`
+- In DominoScript: `0—1 1—0 1—3 1—5 0—1 0—5 1—5` 
+  - `0—1` is NUM
   - `1—0 1—3` is 13 in base7 which is 10 in decimal
   - `1—5` is NEG
-  - `0—1` is PUSH again
+  - `0—1` is NUM again
   - `0—5` is 5 in both base7 and decimal
   - `1—5` is NEG
 
@@ -675,7 +800,7 @@ Only once the interpreter does encounter the NULL character, will it push the ch
 
 This is how you push the string `"hi!"` to the stack and output it:
 <pre class="ds i">
-0—2 1—2 0—4 1—2 1—0 0—0 4—5 0—0 5—3
+0—2 1—2 0—6 1—2 1—0 1-0 4—5 0—0 5—3
 </pre>
 
 It equals the following pseudo code: `STR "hi!" STROUT`
@@ -683,9 +808,9 @@ It equals the following pseudo code: `STR "hi!" STROUT`
 - `0—2` is the `STR` instruction
 - `1—2 0—4` is the unicode value for the character `h`
 - `1—2 1—0` is the unicode value for the character `i`
-- `0-0 4—5` is the unicode value for the character `!`
-- `0-0` is the unicode value for the NULL character which terminates the string.
-- `5-3` is the [STROUT](#strout) instruction. It will pop items from the stack, parse them as unicode chars and once it encounters the NULL character, it will output the string to stdout all at once.
+- `0—0 4—5` is the unicode value for the character `!`
+- `0—0` is the unicode value for the NULL character which terminates the string.
+- `5—3` is the [STROUT](#strout) instruction. It will pop items from the stack, parse them as unicode chars and once it encounters the NULL character, it will output the string to stdout all at once.
 
 This is the resulting stack: 
 
@@ -697,18 +822,18 @@ Keep in mind that the IP can move in 4 cardinal direction so the following varia
 
 IP moves right to left:
 <pre class="ds i">
-3—5 0—0 5—4 0—0 0—1 2—1 4—0 2—1 2—0
+3—5 0—0 5—4 0-1 0—1 2—1 6—0 2—1 2—0
 </pre>
 
 IP moves in multiple directions:
 <pre class="ds i">
-0 . . . . 5 0—0
+0 . . . . 0 4—5
 |         |
-2 . . . . 4 . .
-         
-1 . . 3 0—0 . .
+2 . . . . 1 . 0
+              |
+1 . . 2 1—0 . 0
 |     | 
-2 1—0 1 . . . .
+2 0—6 1 . . 3-5
 </pre>
 
 #### `DUPE`
@@ -732,7 +857,7 @@ Swap the top 2 items on the stack.
 #### `ROTL`
 <img src="assets/horizontal/0-5.png" alt="Domino" width="128">
 
-Rotate the top 3 items on the stack to the left. The top item becomes the third item, the second item becomes the top item and the third item becomes the second item.
+Rotate the top 3 items on the stack to the left. The third item becomes the top, the top becomes the second and the second becomes the third.
 
 | Stack Before    | Stack After    |
 |-----------------|----------------|
@@ -750,16 +875,16 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `ADD`
 <img src="assets/horizontal/1-0.png" alt="Domino" width="128">
 
-#### `SUBTRACT`
+#### `SUB`
 <img src="assets/horizontal/1-1.png" alt="Domino" width="128">
 
-#### `MULTIPLY`
+#### `MULT`
 <img src="assets/horizontal/1-2.png" alt="Domino" width="128">
 
-#### `DIVIDE`
+#### `DIV`
 <img src="assets/horizontal/1-3.png" alt="Domino" width="128">
 
-#### `MODULO`
+#### `MOD`
 <img src="assets/horizontal/1-4.png" alt="Domino" width="128">
 
 #### `NEG`
@@ -778,17 +903,27 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `NOT`
 <img src="assets/horizontal/2-0.png" alt="Domino" width="128">
 
+Pops the top item off the stack. If it is larger than `0`, it pushes `1` to the stack. Otherwise it pushes `1`.
+
 #### `AND`
 <img src="assets/horizontal/2-1.png" alt="Domino" width="128">
+
+Pops the top 2 items off the stack, performs the logical AND operation and pushes the result back onto the stack.
 
 #### `OR`
 <img src="assets/horizontal/2-2.png" alt="Domino" width="128">
 
-#### `EQUALS`
+Pops the top 2 items off the stack, performs the logical OR operation and push the result back onto the stack.
+
+#### `EQL`
 <img src="assets/horizontal/2-3.png" alt="Domino" width="128">
 
-#### `GREATER`
+Pops the top 2 items off the stack, compares them and pushes the result back onto the stack. If the items are equal, it pushes `1` to the stack, otherwise `0`.
+
+#### `GTR`
 <img src="assets/horizontal/2-4.png" alt="Domino" width="128">
+
+Pops the top 2 items off the stack, compares them and pushes the result back onto the stack. If the first item is greater than the second, it pushes `1` to the stack, otherwise `0`.
 
 #### `RESERVED_2_5`
 <img src="assets/horizontal/2-5.png" alt="Domino" width="128">
@@ -803,23 +938,35 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 <br>
 <h3 id="bitwise">Bitwise</h3>
 
-#### `BITWISE_AND`
+#### `BNOT`
 <img src="assets/horizontal/3-0.png" alt="Domino" width="128">
 
-#### `BITWISE_OR`
+Bitwise NOT. Pops the top item off the stack, inverts all bits and pushes the result back onto the stack.
+
+#### `BAND`
 <img src="assets/horizontal/3-1.png" alt="Domino" width="128">
 
-#### `BITWISE_XOR`
+Bitwise AND. Pops the top 2 items off the stack, performs bitwise AND and pushes the result back onto the stack.
+
+#### `BOR`
 <img src="assets/horizontal/3-2.png" alt="Domino" width="128">
 
-#### `BITWISE_NOT`
+Bitwise OR. Pops the top 2 items off the stack, performs bitwise OR and pushes the result back onto the stack.
+
+#### `BXOR`
 <img src="assets/horizontal/3-3.png" alt="Domino" width="128">
 
-#### `BITWISE_SHIFT_LEFT`
+Bitwise XOR. Pops the top 2 items off the stack, performs bitwise XOR and pushes the result back onto the stack.
+
+#### `BSL`
 <img src="assets/horizontal/3-4.png" alt="Domino" width="128">
 
-#### `BITWISE_SHIFT_RIGHT`
+Bitwise Shift Left. Pops the top 2 items off the stack, performs bitwise shift left and pushes the result back onto the stack.
+
+#### `BSR`
 <img src="assets/horizontal/3-5.png" alt="Domino" width="128">
+
+Bitwise Shift Right. Pops the top 2 items off the stack, performs bitwise shift right and pushes the result back onto the stack.
 
 #### `RESERVED_3_6`
 <img src="assets/horizontal/3-6.png" alt="Domino" width="128">
@@ -837,6 +984,42 @@ See [Navigation Modes](#navigation-modes) to see all possible nav modes and thei
 
 #### `BRANCH`
 <img src="assets/horizontal/4-1.png" alt="Domino" width="128">
+
+Like an IF-ELSE statement. It pops the top of the stack as a condition:
+- When `true`: The IP will move **LEFT**
+- When `false`: The IP will move **RIGHT**
+
+> It ignores the current Navigation Mode, so you can be assured that it will always either go left or right.
+>
+> Keep in mind that: <ins>all non-zero numbers are considered true</ins>. Only `0` is false! `-1`, `-2` etc. is true
+
+**Here we push 1 to the stack which will cause the IP to move <ins>LEFT</ins>:**
+
+<pre class="ds i">
+. . . . . <span style="color:yellow;">6</span> . .
+          <span style="color:yellow;">|</span>
+. . . . . <span style="color:yellow;">6</span> . .
+
+<span style="color:yellow;">0-1 0-0 4-1</span> . .
+          
+. . . . . 6 . .
+          |
+. . . . . 6 . .
+</pre>
+
+**Here we push 0 to the stack which will cause the IP to move <ins>RIGHT</ins>:**
+
+<pre class="ds i">
+. . . . . 6 . .
+          |
+. . . . . 6 . .
+
+<span style="color:yellow;">0-1 0-1 4-1</span> . .
+          
+. . . . . <span style="color:yellow;">6</span> . .
+          <span style="color:yellow;">|</span>
+. . . . . <span style="color:yellow;">6</span> . .
+</pre>
 
 #### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
@@ -952,9 +1135,9 @@ Get the value of a single whole domino at a specific address on the grid.
 Pops an item from the stack representing the address of the <ins>first</ins> domino half, then gets the number of dots on that first half and the other half. Out of both halves it forms a number the same way it does when parsing opcodes. The resulting decimal value will then be pushed to the stack.
 
 **For example:**
-- `0-6`: First half 0, second half 6 -> 6 in base7 -> 6 in decimal pushed to stack
-- `1-0`: First half 1, second half 0 -> 10 in base7 -> 7 in decimal pushed to stack
-- `6-6`: First half 6, second half 6 -> 66 in base7 -> 48 in decimal pushed to stack
+- `0—6`: First half 0, second half 6 -> 6 in base7 -> 6 in decimal pushed to stack
+- `1—0`: First half 1, second half 0 -> 10 in base7 -> 7 in decimal pushed to stack
+- `6—6`: First half 6, second half 6 -> 66 in base7 -> 48 in decimal pushed to stack
 
 **Errors:**
 - If the address is out of bounds, an `InvalidAddressError` is thrown.
@@ -1401,7 +1584,7 @@ D9 mode will likely extend DominoScript with instructions for floating point ari
       line-height: 1.25;
       letter-spacing: 5px;
       border: 1px solid gray;
-      margin-bottom: 2.5rem;
+      /* margin-bottom: 2.5rem; */
     }
 
     .i {
