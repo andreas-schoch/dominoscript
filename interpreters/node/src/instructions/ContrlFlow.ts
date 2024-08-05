@@ -18,12 +18,14 @@ export function LABEL(ctx: Context): void {
   ctx.labels[nextLabel] = address;
 }
 
-export function JUMP(ctx: Context): void {2
+export function JUMP(ctx: Context): void {
   const addressOrLabel = ctx.stack.pop();
-  ctx.nextJumpAddress = addressOrLabel;
+  const address = addressOrLabel < 0 ? ctx.labels[addressOrLabel] : addressOrLabel;
+  ctx.nextJumpAddress = address;
 }
 
 export function CALL(ctx: Context): void {
   const addressOrLabel = ctx.stack.pop();
-  ctx.nextCallAddress = addressOrLabel;
+  const address = addressOrLabel < 0 ? ctx.labels[addressOrLabel] : addressOrLabel;
+  ctx.nextCallAddress = address;
 }

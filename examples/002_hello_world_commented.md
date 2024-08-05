@@ -7,13 +7,13 @@ This is the most simple hello world example you can make in DominoScript as it i
 > 
 > How? Because it will simply discard everything above and below the actual code.  There are only 2 rules to be aware of:
 > 1. You cannot start a non-code line with a dot `.`
-> 2. You cannot start a non-code line with a number `0-6`
+> 2. You cannot start a non-code line with a number `0 to 6`
 > 
 > And of course, the lines containing code must follow the text format rules specified in the [README](../readme.md#text-format)
 
 ## Opcodes:
-- [**STR**](../readme.md#str) `0-2`
-- [**STROUT**](../readme.md#strout) `5-2`
+- [**STR**](../readme.md#str) `0—2`
+- [**STROUT**](../readme.md#strout) `5—2`
 
 ## Pseudo code: 
 ```
@@ -23,7 +23,7 @@ STR "hello world" STROUT
 ## DominoScript:
 
 <pre class="ds">
-0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0 5-3
+0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0 5—3
 </pre>
 
 ## Notes:

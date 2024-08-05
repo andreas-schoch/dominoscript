@@ -24,7 +24,8 @@ function run(ctx: Context, source: string): void {
   let i = 0;
 
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
-    instructionsByOpcode[opcode](ctx);
+    const instruction = instructionsByOpcode[opcode];
+    instruction(ctx);
     i++;
   }
   
@@ -39,9 +40,10 @@ function nextOpcode(ctx: Context): number | null {
 
   if (!c1 && !c2) {
     ctx.isFinished = true;
-    // ctx.lastOpcode = null; // Should I update this here?
     return null;
-  } else if (!c1 || !c2) throw new DSInterpreterError('The steps here should always return 2 cells as we expect to move to a new domino');
+  } else if (!c1 || !c2) {
+    throw new DSInterpreterError('The steps here should always return 2 cells as we expect to move to a new domino');
+  }
 
   const opcode = parseDominoValue(ctx, c1);
   ctx.lastOpcode = opcode;

@@ -7,33 +7,30 @@ Example 004 - Loop Simple
 This shows a very simple way how to loop in DominoScript by moving back the instruction pointer to the start of the loop.
 
 ## Opcodes:
-- [**NUM**](../readme.md#num) `0-1`
-- [**STR**](../readme.md#str) `0-2`
-- [**DUPE**](../readme.md#dupe) `0-3`
-- [**SUB**](../readme.md#sub) `1-1`
-- [**BRANCH**](../readme.md#branch) `4-1`
-- [**NUMOUT**](../readme.md#numout) `5-1`
-- [**STROUT**](../readme.md#strout) `5-3`
-- [**NOOP**](../readme.md#noop) `6-6`
+- [**NUM**](../readme.md#num) `0—1`
+- [**STR**](../readme.md#str) `0—2`
+- [**DUPE**](../readme.md#dupe) `0—3`
+- [**SUB**](../readme.md#sub) `1—1`
+- [**BRANCH**](../readme.md#branch) `4—1`
+- [**NUMOUT**](../readme.md#numout) `5—1`
+- [**STROUT**](../readme.md#strout) `5—3`
+- [**NOOP**](../readme.md#noop) `6—6`
 
 ## Pseudocode:
 Before the loop we push a number to the stack to act as index. Each iteration we print the index and decrement it. When the index reaches 0, the [BRANCH](../readme.md#branch) instruction will eventually break out of the loop.
-- **PUSH** `48`
+- **NUM** `48`
 - **<ins>LOOP_START</ins>**:
   - **DUPE**
   - **NUMOUT**
-  - **PUSH** `'\n'`
-  - **STROUT**
+  - **STR** `'\n'` **STROUT**
   - **DUPE**
-  - **PUSH** `1`
-  - **SUB**
+  - **NUM** `1`**SUB**
   - **DUPE**
   - **BRANCH**
     - true: **NOOP** until Instruction Pointer is back at **<ins>LOOP_START</ins>**
     - false: Continue after **<ins>LOOP_END</ins>**
 - **<ins>LOOP_END</ins>**
-- **PUSH** `'DONE'`
-- **STROUT**
+- **STR** `'DONE'` **STROUT**
 
 
 ## DominoScript:
@@ -41,7 +38,7 @@ Before the loop we push a number to the stack to act as index. Each iteration we
 <pre class="ds">
 . 0 . . . . . . . . . . . . . . . . . . . . . . . . . . .
   |                                                      
-. 1 . . 6 6-6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6 .
+. 1 . . 6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6 .
         |                                             |  
 . 1 . . 6 . . . . . . . . . . . . . . . . . . . . . . 6 .
   |                                                      
@@ -64,5 +61,5 @@ In that case, take a look at the [next example](005_loop_using_jump.md) that use
 
 
 <style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
+  .ds {position: relative;line-height: 1.2;letter-spacing: 2px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
 </style>

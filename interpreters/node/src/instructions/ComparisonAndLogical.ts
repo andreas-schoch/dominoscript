@@ -13,9 +13,13 @@ export function OR(ctx: Context) {
 }
 
 export function EQL(ctx: Context) {
-  ctx.stack.push(ctx.stack.pop() === ctx.stack.pop() ? 1 : 0);
+  const a = ctx.stack.pop();
+  const b = ctx.stack.pop();
+  ctx.stack.push(a === b ? 1 : 0);
 }
 
 export function GTR(ctx: Context) {
-  ctx.stack.push(ctx.stack.pop() > ctx.stack.pop() ? 1 : 0);
+  const a = ctx.stack.pop();
+  const b = ctx.stack.pop();
+  ctx.stack.push(a > b ? 1 : 0);
 }

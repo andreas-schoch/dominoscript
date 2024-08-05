@@ -14,16 +14,14 @@ export function step(ctx: Context): Cell | null {
 
   // perform jump
   if (ctx.nextJumpAddress !== null) {
-    const address = ctx.nextJumpAddress < 0 ? ctx.labels[ctx.nextJumpAddress] : ctx.nextJumpAddress;
-    ctx.currentCell = ctx.board.getOrThrow(address);
+    ctx.currentCell = ctx.board.getOrThrow(ctx.nextJumpAddress);
     ctx.nextJumpAddress = null;
     return ctx.currentCell;
   }
 
   // perform call
   if (ctx.nextCallAddress !== null) {
-    ctx.returnStack.push(ctx.currentCell!.address); // FIXME this should be the address after the CALL instruction, not the current address or is this ok?
-    const address = ctx.nextCallAddress < 0 ? ctx.labels[ctx.nextCallAddress] : ctx.nextJumpAddress;
+    ctx.returnStack.push(ctx.currentCell!.address);
     ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
     ctx.nextCallAddress = null;
     return ctx.currentCell;
@@ -34,9 +32,7 @@ export function step(ctx: Context): Cell | null {
 
   const currentCell = ctx.currentCell;
   if (!currentCell || currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
-  const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== currentCell.connection;
-
-  // if (navModeOverride !== undefined && isOnEntryHalf) throw new DSInterpreterError('Cannot override nav mode when on entry half of a domino');
+  let isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== currentCell.connection;
 
   // The IP will always go from one half (entry) of a domino to the other half (exit) of the same domino before moving to the next domino.
   // If the IP is on the entry of a domino, the movement mode is irrelevant. It only matters when we need to decide what the next domino will be.
@@ -94,9 +90,10 @@ export function step(ctx: Context): Cell | null {
 
   if (!ctx.returnStack.isEmpty()) {
     const returnCell = ctx.board.getOrThrow(ctx.returnStack.pop());
-    // TODO for this to work we need a way to determine the cell which will be visited after a CALL instruction without
-    //  causing the IP to move. Beware of recursion. It is possible that a "function" executes CALL with its own identifier.
-    return moveIP(ctx, returnCell);
+    const entryCell = ctx.board.getOrThrow(returnCell.connection);
+    ctx.lastCell = entryCell;
+    ctx.currentCell = returnCell;
+    return step(ctx);
   }
 
   // if it reaches here it means that according to the direction mode, the IP had no valid moves (despite there being 1 or more neighbours)

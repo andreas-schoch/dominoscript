@@ -8,8 +8,8 @@ This is still just a hello world example, but this time the instruction pointer 
 See [previous](002_hello_world_commented.md) example for a simpler version.
 
 ## Opcodes:
-- [**STR**](../readme.md#str) `0-2`
-- [**STROUT**](../readme.md#strout) `5-2`
+- [**STR**](../readme.md#str) `0—2`
+- [**STROUT**](../readme.md#strout) `5—2`
 
 ## Pseudo code: 
 ```
@@ -43,7 +43,7 @@ STR "hello world" STROUT
 ## Notes:
 
 
-The IP always starts scanning the board from <ins>top-left to top-right and down</ins> until it finds the first non-empty cell *(In this case on the second code line the `0-1` is the first domino that is gonna be found)*.
+The IP always starts scanning the board from <ins>top-left to top-right and down</ins> until it finds the first non-empty cell *(In this case on the second code line the `0—1` is the first domino that is gonna be found)*.
 
 In this particular example, the IP changes cardinal directions constantly but it mostly moves in the "forward" direction relative to the current direction it is facing.
 
