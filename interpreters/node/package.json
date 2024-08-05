@@ -1,12 +1,17 @@
 {
-  "name": "domino-script",
-  "version": "0.0.1",
+  "name": "dominoscript",
+  "version": "0.0.2",
   "description": "A recreational stack-oriented concatenative two-dimensional non-linear self-modifying esoteric programming language that uses the dots on domino pieces to represent code.",
   "type": "module",
-  "main": "./src/run.ts",
+  "main": "./dist/Runner.js",
+  "module": "./dist/Runner.js",
+  "types": "./dist/Runner.d.ts",
   "bin": {
-    "dominoscript": "./dist/bin/cli.js"
+    "dominoscript": "dist/bin/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "ds": "node dist/bin/cli.js",
     "build": "rimraf dist && tsc",

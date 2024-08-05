@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.0.1`**
+**Current version `0.0.2`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -21,6 +21,8 @@ This repository contains the reference implementation written in TypeScript as w
 
 ## Table of Contents
 - **[Core Concepts](#core-concepts)**
+
+- **[How to run DominoScript](#how-to-run-dominoscript)**
 
 - **[How does it work](#how-does-it-work)**
   - [Text Format](#text-format)
@@ -77,6 +79,34 @@ This repository contains the reference implementation written in TypeScript as w
 - **`Òbfuscated`**: You cannot really tell what is going on just by looking at the code. This seems to be inherent with most esolangs but in Dominoscript you can't really be sure if a domino is an opcode or a number. It can be both depending on how the IP moves. Hell, you cannot even be sure that the same opcode will trigger the same instruction as instructions can be remapped on a different layer where they have different opcodes. I don't think it is nearly as 'evil' as Malbolge but it is hard to follow.
 
 - **`Int32 Based`** The stack only stores signed 32-bit Integers. There are no inbuilt data structures. Floats don't exist. Strings don't exist but are supported in the sense that you can treat the Integers as UNICODE and output them as such *(Well I guess you could maybe represent floats similarly to how pico8 does it using 16.16 fixed point arithmetic)*.
+
+<br>
+
+## How to run DominoScript
+
+> Be warned that the interpreter is still in its early stages and might not always work as expected.
+
+The reference interpreter is here in this repo. See the [here](./interpreters/node/readme.md) for details.
+
+If you want to use dominoscript via the command line, you can install it globally like this:
+```
+npm install -g dominoscript
+```
+
+Then you can run it like this:
+
+```
+dominoscript path/to/your/file.ds
+```
+
+Or you can use npx to run it without installing it:
+```
+npx dominoscript path/to/your/file.ds
+```
+
+Eventually there will be an online editor where you can write and run it directly in the browser.
+
+Maybe even a repository of user submitted DominoScript programs.
 
 <br>
 
