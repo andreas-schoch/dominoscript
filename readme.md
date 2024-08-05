@@ -175,14 +175,14 @@ It is the equivalent of this (well, minus the padding and comments):
 
 The grid doesn't have to be a square but it must have a consistent number of columns and rows, otherwise an `InvalidGridError` will be thrown before execution starts:
 
-
-<div class="side-by-side">
-
-<div>
-
-<div class="title">GOOD ✅</div>
-
-
+<table>
+<tr>
+<th>GOOD ✅</th>
+<th>BAD ❌</th>
+</tr>
+<tr>
+<td>
+  
 <pre class="ds i">
 . . . . . . . .
 
@@ -192,13 +192,9 @@ The grid doesn't have to be a square but it must have a consistent number of col
 
 . . . . . . . .
 </pre>
-
-</div>
-<div>
-
-
-<div class="title">BAD ❌</div>
-
+  
+</td>
+<td>
 
 <pre class="ds i">
  . . . . . . .
@@ -210,20 +206,19 @@ The grid doesn't have to be a square but it must have a consistent number of col
 . . .  . . . .
 </pre>
 
-</div>
-
-</div>
-
-<br>
+</td>
+</tr>
+</table>
 
 Connecting to a domino half which is already connected results in `MultiConnectionError`:
 
-<div class="side-by-side">
-
-<div>
-
-<div class="title">GOOD ✅</div>
-
+<table>
+<tr>
+<th>GOOD ✅</th>
+<th>BAD ❌</th>
+</tr>
+<tr>
+<td>
 
 <pre class="ds i">
 6—6 6—6 .
@@ -232,13 +227,9 @@ Connecting to a domino half which is already connected results in `MultiConnecti
 |
 6 . . . .
 </pre>
-
-</div>
-<div>
-
-
-<div class="title">BAD ❌</div>
-
+  
+</td>
+<td>
 
 <pre class="ds i">
 6—6—6—6 .
@@ -248,20 +239,20 @@ Connecting to a domino half which is already connected results in `MultiConnecti
 6 . . . .
 </pre>
 
-</div>
+</td>
+</tr>
+</table>
 
-</div>
-
-<br>
 
 Having a domino half that is not connected to anything results in `MissingConnectionError`:
 
-<div class="side-by-side">
-
-<div>
-
-<div class="title">GOOD ✅</div>
-
+<table>
+<tr>
+<th>GOOD ✅</th>
+<th>BAD ❌</th>
+</tr>
+<tr>
+<td>
 
 <pre class="ds i">
 . . 6—6 .
@@ -270,13 +261,9 @@ Having a domino half that is not connected to anything results in `MissingConnec
   |
 . 6 . . .
 </pre>
-
-</div>
-<div>
-
-
-<div class="title">BAD ❌</div>
-
+  
+</td>
+<td>
 
 <pre class="ds i">
 . . 6 6 .
@@ -286,20 +273,19 @@ Having a domino half that is not connected to anything results in `MissingConnec
 . 6 . . .
 </pre>
 
-</div>
-
-</div>
-
-<br>
+</td>
+</tr>
+</table>
 
 Having a connection where 1 or both ends are empty results in a `ConnectionToEmptyCellError`:
 
-<div class="side-by-side">
-
-<div>
-
-<div class="title">GOOD ✅</div>
-
+<table>
+<tr>
+<th>GOOD ✅</th>
+<th>BAD ❌</th>
+</tr>
+<tr>
+<td>
 
 <pre class="ds i">
 6—6 . 6—6
@@ -308,13 +294,9 @@ Having a connection where 1 or both ends are empty results in a `ConnectionToEmp
 |       |
 6 . . . 6
 </pre>
-
-</div>
-<div>
-
-
-<div class="title">BAD ❌</div>
-
+  
+</td>
+<td>
 
 <pre class="ds i">
 6—. . .—6
@@ -324,9 +306,10 @@ Having a connection where 1 or both ends are empty results in a `ConnectionToEmp
 . . . . 6
 </pre>
 
-</div>
+</td>
+</tr>
+</table>
 
-</div>
 
 ### About the stack
 
@@ -412,14 +395,15 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 **If we imagine the `6` to be the exit half, what will be the next domino the IP moves to?:**
 
-<div class="side-by-side">
-  <div class="title">East</div>
-  <div class="title">West</div>
-  <div class="title">South</div>
-  <div class="title">North</div>
-</div>
-
-<div class="side-by-side">
+<table>
+<tr>
+<th>East</th>
+<th>West</th>
+<th>South</th>
+<th>North</th>
+</tr>
+<tr>
+<td>
 
 <pre class="ds i">
 . 2 . . .
@@ -432,6 +416,10 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
   |
 . 3 . . .
 </pre>
+  
+</td>
+<td>
+
 <pre class="ds i">
 . . . 3 .
       |
@@ -443,6 +431,10 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
       |
 . . . 2 .
 </pre>
+
+</td>
+<td>
+
 <pre class="ds i">
 . . <span class="current-domino">5</span> . .
     <span class="current-domino">|</span>
@@ -454,6 +446,10 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 . . . . .
 </pre>
+
+</td>
+<td>
+
 <pre class="ds i">
 . . . . .
 
@@ -466,9 +462,11 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 . . <span class="current-domino">5</span> . .
 </pre>
 
-</div>
+</td>
+</tr>
+</table>
 
-*(All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show)*
+*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show (Colors unfortunately not visible with githubs markdown viewer)*
 
 - `index 0` the IP will move to `1—1` (Primary, Forward)
 - `index 1` the IP will move to `1—1` (Primary, Forward)
@@ -481,14 +479,15 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 **What if we remove the `1—1` domino? Where will the IP go to then?:**
 
-<div class="side-by-side">
-  <div class="title">East</div>
-  <div class="title">West</div>
-  <div class="title">South</div>
-  <div class="title">North</div>
-</div>
-
-<div class="side-by-side">
+<table>
+<tr>
+<th>East</th>
+<th>West</th>
+<th>South</th>
+<th>North</th>
+</tr>
+<tr>
+<td>
 
 <pre class="ds i">
 . 2 . . .
@@ -501,6 +500,10 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
   |
 . 3 . . .
 </pre>
+  
+</td>
+<td>
+
 <pre class="ds i">
 . . . 3 .
       |
@@ -512,22 +515,30 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
       |
 . . . 2 .
 </pre>
+
+</td>
+<td>
+
 <pre class="ds i">
 . . <span class="current-domino">5</span> . .
     <span class="current-domino">|</span>
 3—3 <span class="current-domino">6</span> 2—2
 
 . . . . .
-    
+     
 . . . . .
 
 . . . . .
 </pre>
+
+</td>
+<td>
+
 <pre class="ds i">
 . . . . .
 
 . . . . .
-    
+     
 . . . . .
 
 2—2 <span class="current-domino">6</span> 3—3
@@ -535,7 +546,9 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 . . <span class="current-domino">5</span> . .
 </pre>
 
-</div>
+</td>
+</tr>
+</table>
 
 - `index 0` the IP will move to `2—2` (Secondary, Left)
 - `index 1` the IP will move to `3—3` (Secondary, Right)
@@ -548,18 +561,19 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 **And what if we remove both the `1—1` and the `2—2` domino?:**
 
-<div class="side-by-side">
-  <div class="title">East</div>
-  <div class="title">West</div>
-  <div class="title">South</div>
-  <div class="title">North</div>
-</div>
-
-<div class="side-by-side">
+<table>
+<tr>
+<th>East</th>
+<th>West</th>
+<th>South</th>
+<th>North</th>
+</tr>
+<tr>
+<td>
 
 <pre class="ds i">
 . . . . .
-  
+   
 . . . . .
 
 <span class="current-domino">5—6</span> . . .
@@ -568,6 +582,10 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
   |
 . 3 . . .
 </pre>
+  
+</td>
+<td>
+
 <pre class="ds i">
 . . . 3 .
       |
@@ -576,25 +594,33 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 . . . <span class="current-domino">6—5</span>
 
 . . . . .
-      
+       
 . . . . .
 </pre>
+
+</td>
+<td>
+
 <pre class="ds i">
 . . <span class="current-domino">5</span> . .
     <span class="current-domino">|</span>
 3—3 <span class="current-domino">6</span> . .
 
 . . . . .
-    
+     
 . . . . .
 
 . . . . .
 </pre>
+
+</td>
+<td>
+
 <pre class="ds i">
 . . . . .
 
 . . . . .
-    
+     
 . . . . .
 
 . . <span class="current-domino">6</span> 3—3
@@ -602,7 +628,9 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 . . <span class="current-domino">5</span> . .
 </pre>
 
-</div>
+</td>
+</tr>
+</table>
 
 - `index 0` the IP will move to `3—3` (Tertiary, Right)
 - `index 1` the IP will move to `3—3` (Secondary, Right)
@@ -705,33 +733,11 @@ The patterns are universal for all cardinal directions the Instruction Pointer c
 
 I only showed examples where the IP moves from left to right but you have to understand that the same domino can either mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
 
-<div class="side-by-side">
-
 <pre class="ds i">
-0—1
-
-. .
+0—1 . 1-0 . 1 . 0 . . .
+            |   |
+. . . . . . 0 . 1 . . .
 </pre>
-
-<pre class="ds i">
-. .
-
-1—0
-</pre>
-
-<pre class="ds i">
-1 .
-|
-0 .
-</pre>
-
-<pre class="ds i">
-. 0
-  |
-. 1
-</pre>
-
-</div>
 
 <br>
 
@@ -750,7 +756,6 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 |  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [—](#reserved_4_5) | [—](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [—](#reserved_5_4) | [—](#reserved_5_5) | [—](#reserved_5_6) | [Input & Output](#input-and-output) |
 |  **6** | [GET](#get) | [SET](#set) | [—](#reserved_6_2) | [—](#reserved_6_3) | [—](#reserved_6_4) | [—](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
-
 
 
 
@@ -1182,15 +1187,18 @@ It requires 2 arguments from the stack:
 - The address of the first cell (just like `GET`)
 - and then the value to set the domino to. 0-48 range is allowed for D6 mode. If
 
+<br>
+
 For example here we have a 10x3 grid:
 
-<div class="side-by-side">
-  <div class="title">before SET</div>
-  <div class="title">after SET</div>
-</div>
-
-<div class="side-by-side">
-
+<table>
+<tr>
+<th>Before SET</th>
+<th>After SET</th>
+</tr>
+<tr>
+<td>
+  
 <pre class="ds i">
 <span style="color: red;">0—1 1—0 6—0</span> <span style="color: green;">0—1 1—0</span>
                   
@@ -1198,6 +1206,9 @@ For example here we have a 10x3 grid:
 
 . . . . . . . . . .
 </pre>
+  
+</td>
+<td>
 
 <pre class="ds i">
 <span style="color: red;">0—1 1—0 6—0</span> <span style="color: green;">0—1 1—0</span>
@@ -1207,8 +1218,9 @@ For example here we have a 10x3 grid:
 . . . . . . . . . .
 </pre>
 
-</div>
-
+</td>
+</tr>
+</table>
 
 **What has happened?:**
 - We push the number 42 to the stack <span style="color: red;">(marked in red)
