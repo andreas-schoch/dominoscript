@@ -60,6 +60,8 @@ This repository contains the reference implementation written in TypeScript as w
   - [Unicode To Domino](#unicode-to-domino-lookup-table)
   - [Error Types](#error-types)
   - [Domino Modes](#domino-modes)
+  - [Examples](#examples)
+
 
 <br>
 
@@ -142,9 +144,18 @@ A text based format is used to represent domino pieces.
 
 **Example:**
 
-<pre class="ds i">
+```markdown
 TITLE
 =====
+
+You can write the soure code as a normal text file (.ds extension recommended) or as a .md file with markdown comments like here.
+
+There are only 3 rules to be aware of:
+> 1. You cannot start a non-code line with a dot `.`
+> 2. You cannot start a non-code line with a number `0 to 6`
+> 3. You cannot comment within the code. Only above and below it.
+
+## DominoScript
 
 The below code NO-OPs forever because
 The IP can always move to a new domino
@@ -162,13 +173,29 @@ The IP can always move to a new domino
 . . . . . . . . 
 
 
-You can also comment below the code.
-But not inbetween it.
+## Some Notes
 
+Bla bla bla
+  
+```
 
+When the source code is parsed it ignores everything except the actual code:
+
+<pre class="ds i">
+. . . . . . . .
+
+. 6 6 6—6 6 6 .
+  | |     | |
+. 6 6 6 6 6 6 .
+      | |
+. 6—6 6 6 6—6 .
+
+. 6—6 6—6 6—6 .
+
+. . . . . . . . 
 </pre>
 
-It is the equivalent of this (well, minus the padding and comments):
+Which is the equivalent of these dominos:
 
 <img style="margin: 0.5rem 0 2rem;" src="docs/example-001-noop.png" alt="Dominos" width="400">
 
@@ -309,7 +336,6 @@ Having a connection where 1 or both ends are empty results in a `ConnectionToEmp
 </td>
 </tr>
 </table>
-
 
 ### About the stack
 
@@ -466,7 +492,7 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 </tr>
 </table>
 
-*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show (Colors unfortunately not visible with githubs markdown viewer)*
+*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show (Colors unfortunately not visible with githubs markdown viewer. TODO replace with images)*
 
 - `index 0` the IP will move to `1—1` (Primary, Forward)
 - `index 1` the IP will move to `1—1` (Primary, Forward)
@@ -749,13 +775,13 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 
 |     |     0     |     1     |     2     |     3     |     4     |     5     |     6     |    CATEGORY     |
 |-----|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
-|  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotl) | [—](#reserved_0_6) | [Stack Management](#stack-management) |
-|  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [—](#reserved_1_6) | [Arithmetic](#arithmetic) |
-|  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [—](#reserved_2_5) | [—](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
-|  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [BSL](#bsl) | [BSR](#bsr) | [—](#reserved_3_6) | [Bitwise](#bitwise) |
-|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [—](#reserved_4_5) | [—](#reserved_4_6) | [Control Flow](#control-flow) |
-|  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [—](#reserved_5_4) | [—](#reserved_5_5) | [—](#reserved_5_6) | [Input & Output](#input-and-output) |
-|  **6** | [GET](#get) | [SET](#set) | [—](#reserved_6_2) | [—](#reserved_6_3) | [—](#reserved_6_4) | [—](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
+|  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotl) | [_](#reserved_0_6) | [Stack Management](#stack-management) |
+|  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [_](#reserved_1_6) | [Arithmetic](#arithmetic) |
+|  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [_](#reserved_2_5) | [_](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
+|  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [BSL](#bsl) | [BSR](#bsr) | [_](#reserved_3_6) | [Bitwise](#bitwise) |
+|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [_](#reserved_4_5) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
+|  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
+|  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [_](#reserved_6_4) | [_](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
 
 
 
@@ -1037,17 +1063,17 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
 
 <span style="color:yellow;">0-1 0-0 4-1</span> . .
           
-. . . . . 6 . .
+. . . . . X . .
           |
-. . . . . 6 . .
+. . . . . X . .
 </pre>
 
 **Here we push 0 to the stack which will cause the IP to move <ins>RIGHT</ins>:**
 
 <pre class="ds i">
-. . . . . 6 . .
+. . . . . X . .
           |
-. . . . . 6 . .
+. . . . . X . .
 
 <span style="color:yellow;">0-1 0-1 4-1</span> . .
           
@@ -1618,6 +1644,21 @@ All modes above `D6` will build on top of the previous one. So `D6` will be the 
 The only exception is `D3` which will use the most important instructions and map them to the 0-8 range.
 
 D9 mode will likely extend DominoScript with instructions for floating point arithmetic, trigonometric functions and helpful math functions. Not sure yet if floats will be true IEEE754 floats or just fixed point numbers like in pico-8.
+
+### Examples
+
+A list of examples to help you understand the language better.
+
+1. [Hello World minimal](./examples/001_hello_world_minimal.ds)
+2. [Hello World Commented](./examples/002_hello_world_commented.md)
+3. [Hello World 2D](./examples/003_hello_world_2d.md)
+4. [Loop Simple](./examples/004_loop_simple.md)
+5. [Loop using jump](./examples/005_loop_using_jump.md)
+6. [Loop using jump and label](./examples/006_loop_using_jump_and_label.md)
+7. [Call function by address](./examples/007_calling_functions_by_address.md)
+8. [Call function by label](./examples//008_calling_functions_by_label.md)
+9. [Recursion: Factorial](./examples/009_recursive_factorial.md)
+
 
 <style>
   /* dominoscript looks a bit more readable when slightly styled */
