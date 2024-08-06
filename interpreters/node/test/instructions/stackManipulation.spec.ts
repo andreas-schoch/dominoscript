@@ -1,5 +1,5 @@
+import {DSEmptyStackError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
 import {strictEqual, throws} from 'node:assert';
-import {DSEmptyStackError} from '../../src/errors.js';
 import {createRunner} from '../../src/Runner.js';
 
 describe('StackManipulations', () => {

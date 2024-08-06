@@ -114,7 +114,7 @@ function findFirstDomino(ctx: Context): void {
   for (let i = 0; i < len; i++) {
     const cell = ctx.board.getOrThrow(i);
     if (cell.value !== null) {
-      moveIP(ctx, cell);
+      ctx.currentCell = cell;
       ctx.isFirstDomino = false;
       return;
     }
