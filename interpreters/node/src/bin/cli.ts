@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-import { createRunner } from '../Runner.js';
+import {createRunner} from '../Runner.js';
+import {readFileSync} from 'fs';
+import {resolve} from 'path';
 
 const filePath = process.argv[2];
 

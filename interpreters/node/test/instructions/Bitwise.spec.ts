@@ -1,10 +1,10 @@
-import { strictEqual } from "node:assert";
-import { createRunner } from "../../src/Runner.js";
+import {createRunner} from '../../src/Runner.js';
+import {strictEqual} from 'node:assert';
 
-describe("Bitwise", () => {
+describe('Bitwise', () => {
 
-  describe("BNOT", () => {
-    it("should flip all bits in a int32 number", () => {
+  describe('BNOT', () => {
+    it('should flip all bits in a int32 number', () => {
       // NUM: 00000000000000000000000010111011 is 187 in decimal and 355 in base7
       // RES: 11111111111111111111111101000100 is -188 in decimal
       const ds = createRunner('0-1 1-3 5-5 3-0');
@@ -13,8 +13,8 @@ describe("Bitwise", () => {
     });
   });
 
-  describe("BAND", () => {
-    it("should perform bitwise AND on A and B", () => {
+  describe('BAND', () => {
+    it('should perform bitwise AND on A and B', () => {
       // A: 00000000000000000000000000001001 is 9 in decimal and 12 in base7
       // B: 00000000000000000000000000001010 is 10 in decimal and 13 in base7
       // =: 00000000000000000000000000001000 is 8 in decimal
@@ -24,8 +24,8 @@ describe("Bitwise", () => {
     });
   });
 
-  describe("BOR", () => {
-    it("should perform bitwise OR on A and B", () => {
+  describe('BOR', () => {
+    it('should perform bitwise OR on A and B', () => {
       // A: 00000000000000000000000000001001 is 9 in decimal and 12 in base7
       // B: 00000000000000000000000000001010 is 10 in decimal and 13 in base7
       // =: 00000000000000000000000000001011 is 11 in decimal
@@ -35,8 +35,8 @@ describe("Bitwise", () => {
     });
   });
 
-  describe("BXOR", () => {
-    it("should perform bitwise XOR on A and B", () => {
+  describe('BXOR', () => {
+    it('should perform bitwise XOR on A and B', () => {
       // A: 00000000000000000000000000001001 is 9 in decimal and 12 in base7
       // B: 00000000000000000000000000001010 is 10 in decimal and 13 in base7
       // =: 00000000000000000000000000000011 is 3 in decimal
@@ -46,8 +46,8 @@ describe("Bitwise", () => {
     });
   });
 
-  describe("LSL", () => {
-    it("should perform a logical shift left (rightmost becomes leftmost bit)", () => {
+  describe('LSL', () => {
+    it('should perform a logical shift left (rightmost becomes leftmost bit)', () => {
       // NUM: 00000000000000000000000000000001 is 1 in decimal and 1 in base7
       // RES: 10000000000000000000000000000000 is -2147483648 in decimal
       const ds = createRunner('0-1 0-1 0-1 1-0 4-3 3-4');
@@ -56,8 +56,8 @@ describe("Bitwise", () => {
     });
   });
 
-  describe("LSR", () => {
-    it("should perform a logical shift right (leftmost bit becomes rightmost)", () => {
+  describe('LSR', () => {
+    it('should perform a logical shift right (leftmost bit becomes rightmost)', () => {
       // NUM: 10000000000000000000000000000000 is -2147483648 in decimal and 104134211162 in base7
       // RES: 00000000000000000000000000000001 is 1 in decimal
       const ds = createRunner('0-1 6-0 1-0 4-1 3-4 2-1 1-1 6-2 1-5 0-1 1-0 4-3 3-5');
@@ -66,8 +66,8 @@ describe("Bitwise", () => {
     });
   });
 
-  describe("ASR", () => {
-    it("should perform an arithmetic shift right", () => {
+  describe('ASR', () => {
+    it('should perform an arithmetic shift right', () => {
       // NUM: 10000000000000000000000000000000 is -2147483648 in decimal and 104134211162 in base7
       // RES: 11111111111111111111111111111111 is -1 in decimal
       const ds = createRunner('0-1 6-0 1-0 4-1 3-4 2-1 1-1 6-2 1-5 0-1 1-0 4-3 3-6');

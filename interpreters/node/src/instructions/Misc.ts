@@ -1,6 +1,6 @@
-import { Cell, CellValue } from "../Board.js";
-import { Context } from "../Context.js";
-import { DSInterpreterError } from "../errors.js";
+import {Cell, CellValue} from '../Board.js';
+import {Context} from '../Context.js';
+import {DSInterpreterError} from '../errors.js';
 
 export function GET(ctx: Context): void {
   const address = ctx.stack.pop();
@@ -36,7 +36,7 @@ export function NOOP(_ctx: Context): void {
 }
 
 export function parseDominoValue(ctx: Context, cell: Cell): number {
-  if (cell.value === null) return -1
+  if (cell.value === null) return -1;
   if (cell.connection === null) throw new DSInterpreterError('There cannot be a Cell without a connection');
   const otherCell = ctx.board.getOrThrow(cell.connection);
   if (otherCell.value === null) throw new DSInterpreterError('The other cell cannot be empty');

@@ -1,4 +1,4 @@
-import { DSEmptyStackError, DSFullStackError } from "./errors.js";
+import {DSEmptyStackError, DSFullStackError} from './errors.js';
 
 export class Stack {
   public data: Int32Array;
@@ -14,10 +14,10 @@ export class Stack {
   }
 
   pop(): number {
-  if (this.isEmpty()) throw new DSEmptyStackError();
-  const value = this.data[--this.length];
-  this.data.fill(0, this.length);
-  return value;
+    if (this.isEmpty()) throw new DSEmptyStackError();
+    const value = this.data[--this.length];
+    this.data.fill(0, this.length);
+    return value;
   }
 
   peek(): number | undefined {

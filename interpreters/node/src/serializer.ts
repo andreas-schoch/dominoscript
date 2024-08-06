@@ -1,5 +1,5 @@
-import { Cell, CellValue } from "./Board.js";
-import { DSConnectionToEmptyCellError, DSInvalidGridError, DSMultiConnectionError, DSMissingConnectionError, DSSyntaxError } from "./errors.js";
+import {Cell, CellValue} from './Board.js';
+import {DSConnectionToEmptyCellError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from './errors.js';
 
 export interface Grid {
   cells: Cell[];
@@ -35,11 +35,11 @@ export function sourceToGrid(source: string): Grid {
   // This gets rid of all the non-code
   lines.splice(boardEnd + 1);
   lines.splice(0, boardStart);
-  
+
   const maxCharsPerLine = Math.max(...lines.map(line => line.length));
   const minCharsPerLine = Math.min(...lines.map(line => line.length));
   if (maxCharsPerLine !== minCharsPerLine) throw new DSInvalidGridError();
-  
+
   const [width, height] = getDimensions(lines);
   const totalCells = width * height;
   const cells: Cell[] = [];
@@ -61,7 +61,7 @@ export function sourceToGrid(source: string): Grid {
     width: (minCharsPerLine + 1) / 2,
     height: (lines.length + 1) / 2,
     cells: cells,
-  }
+  };
 
   let totalCellsSoFar = 0;
 

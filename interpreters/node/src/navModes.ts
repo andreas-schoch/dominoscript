@@ -1,4 +1,4 @@
-import { Cell } from "./Board.js";
+import {Cell} from './Board.js';
 
 export type PriorityDirection = 'Primary' | 'Secondary' | 'Tertiary';
 export type CardinalDirection = 'north' | 'east' | 'south' | 'west';
@@ -46,15 +46,14 @@ export const navModes: (NavModeMapping | NavModeGetter)[] = [
   // inclusiveFlopGetterFactory([LEFT, RIGHT, FORWARD], [LEFT, FORWARD, RIGHT]),
   // inclusiveFlopGetterFactory([RIGHT, FORWARD, LEFT], [RIGHT, LEFT, FORWARD]),
   // inclusiveFlopGetterFactory([RIGHT, LEFT, FORWARD], [RIGHT, FORWARD, LEFT]),
-]
-
+];
 
 // function exclusiveFlopGetterFactory(flip: NavModeMapping, flop: NavModeMapping): NavModeGetter {
 //   if (flip[0] !== flop[0]) throw new Error('Primary direction must be the same in both mappings');
 //   if (flip[1] !== flop[2]) throw new Error('Secondary direction of flip must be the same as the tertiary direction of flop');
 //   if (flip[2] !== flop[1]) throw new Error('Tertiary direction of flip must be the same as the secondary direction of flop');
 //   let current = flip;
-  
+
 //   // Flip-flop exclusively when moving in non-primary direction
 //   return (f, l, r) => {
 //     if (f?.value !== null) return current; 

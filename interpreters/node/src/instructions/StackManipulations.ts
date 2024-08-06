@@ -1,6 +1,6 @@
-import { Context } from "../Context.js";
-import { DSUnexpectedEndOfNumberError } from "../errors.js";
-import { step } from "../step.js";
+import {Context} from '../Context.js';
+import {DSUnexpectedEndOfNumberError} from '../errors.js';
+import {step} from '../step.js';
 
 // stack effect diagram ---> ( before -- after )
 

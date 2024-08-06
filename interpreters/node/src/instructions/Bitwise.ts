@@ -1,5 +1,4 @@
-import { Context } from "../Context.js";
-
+import {Context} from '../Context.js';
 
 export function BNOT(ctx: Context) {
   ctx.stack.push(~ctx.stack.pop());

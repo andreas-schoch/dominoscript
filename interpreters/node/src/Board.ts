@@ -1,5 +1,5 @@
-import { DSAddressError, DSInterpreterError } from "./errors.js";
-import { Grid, sourceToGrid } from "./serializer.js";
+import {DSAddressError, DSInterpreterError} from './errors.js';
+import {Grid, sourceToGrid} from './serializer.js';
 
 export type Address = number;
 export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | null;
@@ -8,10 +8,10 @@ export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | null;
 export interface Cell {
   // The amount of dots. null if empty
   value: CellValue;
-  
+
   // the index of this cell within a 1D array
   address: Address;
-  
+
   // the other half of a domino. Cannot be null if `value` is not null
   connection: Address | null;
 
@@ -49,20 +49,20 @@ export class Board {
 
     const cellA = this.getOrThrow(addressA);
     const cellB = this.getOrThrow(addressB);
-    
+
     // Cleanup: if either cell is already connected to another cell, empty that other cell
     if (cellA.connection !== null && cellA.connection !== addressB) {
       const cellToDisconnect = this.grid.cells[cellA.connection];
       cellToDisconnect.value = null;
       cellToDisconnect.connection = null;
     }
-    
+
     if (cellB.connection !== null && cellB.connection !== addressA) {
       const cellToDisconnect = this.grid.cells[cellB.connection];
       cellToDisconnect.value = null;
       cellToDisconnect.connection = null;
     }
-    
+
     // set the values and connections
     cellA.value = valueA;
     cellB.value = valueB;

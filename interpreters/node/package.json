@@ -14,7 +14,9 @@
   ],
   "c8": {
     "include": "src",
-    "exclude": ["**/*.spec.ts"]
+    "exclude": [
+      "**/*.spec.ts"
+    ]
   },
   "scripts": {
     "lint": "eslint",
@@ -37,6 +39,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.8.0",
+    "@stylistic/eslint-plugin": "^2.6.1",
     "@types/eslint__js": "^8.42.3",
     "@types/mocha": "^10.0.7",
     "@types/node": "^22.1.0",

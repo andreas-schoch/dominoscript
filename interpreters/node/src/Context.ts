@@ -1,5 +1,5 @@
-import { Address, Board, Cell } from "./Board.js";
-import { Stack } from "./Stack.js";
+import {Address, Board, Cell} from './Board.js';
+import {Stack} from './Stack.js';
 
 export interface Context {
   currentCell: Cell | null;
@@ -8,12 +8,12 @@ export interface Context {
   board: Board;
   stack: Stack;
   returnStack: Stack; // to know where to go back after a CALL
-  
+
   navMode: number;
   navModeOverrides: number[];
-  
+
   labels: Record<number, Address>; // label keys are always negative numbers
-  
+
   // jump and call address can either refer to a real address or a label if negative
   nextJumpAddress: number | null;
   nextCallAddress: number | null;

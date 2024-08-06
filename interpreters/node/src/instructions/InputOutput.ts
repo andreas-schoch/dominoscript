@@ -1,4 +1,4 @@
-import { Context } from "../Context.js";
+import {Context} from '../Context.js';
 
 export function NUMIN(_ctx: Context): void {
   // TODO
@@ -18,7 +18,7 @@ export function STROUT(ctx: Context): void {
   while (true) {
     const value = ctx.stack.pop();
     if (value === 0) break;
-    chars.push(String.fromCharCode(value));  
+    chars.push(String.fromCharCode(value));
   }
 
   const str = chars.join('');

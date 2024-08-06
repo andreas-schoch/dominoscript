@@ -1,10 +1,10 @@
-import { strictEqual } from "node:assert";
-import { createRunner } from "../../src/Runner.js";
+import {createRunner} from '../../src/Runner.js';
+import {strictEqual} from 'node:assert';
 
-describe("Arithmetic", () => {
+describe('Arithmetic', () => {
 
-  describe("ADD", () => {
-    it("should add a and b", () => {
+  describe('ADD', () => {
+    it('should add a and b', () => {
       const ds = createRunner('0-1 0-3 0-1 0-5 1-0');
       const ctx = ds.run();
       const result = ctx.stack.pop();
@@ -12,8 +12,8 @@ describe("Arithmetic", () => {
     });
   });
 
-  describe("SUB", () => {
-    it("should subtract A from B", () => {
+  describe('SUB', () => {
+    it('should subtract A from B', () => {
       const ds = createRunner('0-1 0-3 0-1 0-5 1-1');
       const ctx = ds.run();
       const result = ctx.stack.pop();
@@ -21,8 +21,8 @@ describe("Arithmetic", () => {
     });
   });
 
-  describe("MULT", () => {
-    it("should multiply A and B", () => {
+  describe('MULT', () => {
+    it('should multiply A and B', () => {
       const ds = createRunner('0-1 0-3 0-1 0-5 1-2');
       const ctx = ds.run();
       const result = ctx.stack.pop();
@@ -30,14 +30,14 @@ describe("Arithmetic", () => {
     });
   });
 
-  describe("DIV", () => {
-    it("should divide A by B", () => {
+  describe('DIV', () => {
+    it('should divide A by B', () => {
       const ds = createRunner('0-1 0-5 0-1 0-2 1-3');
       const ctx = ds.run();
       const result = ctx.stack.pop();
       strictEqual(result, 2, '5 2 DIV should be 2 (integer division!)');
     });
-    it("should divide A by B", () => {
+    it('should divide A by B', () => {
       const ds = createRunner('0-1 0-6 0-1 0-2 1-3');
       const ctx = ds.run();
       const result = ctx.stack.pop();
@@ -45,14 +45,14 @@ describe("Arithmetic", () => {
     });
   });
 
-  describe("MOD", () => {
-    it("should return the remainder of A divided by B", () => {
+  describe('MOD', () => {
+    it('should return the remainder of A divided by B', () => {
       const ds = createRunner('0-1 0-5 0-1 0-2 1-4');
       const ctx = ds.run();
       const result = ctx.stack.pop();
       strictEqual(result, 1, '5 2 MOD should be 1');
     });
-    it ("should return the remainder of A divided by B", () => {
+    it ('should return the remainder of A divided by B', () => {
       const ds = createRunner('0-1 0-6 0-1 0-2 1-4');
       const ctx = ds.run();
       const result = ctx.stack.pop();
@@ -60,8 +60,8 @@ describe("Arithmetic", () => {
     });
   });
 
-  describe("NEG", () => {
-    it("should negate A", () => {
+  describe('NEG', () => {
+    it('should negate A', () => {
       const ds = createRunner('0-1 0-5 1-5');
       const ctx = ds.run();
       const result = ctx.stack.pop();

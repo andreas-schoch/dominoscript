@@ -1,8 +1,8 @@
-import { Context, createContext } from "./Context.js";
-import { DSInterpreterError } from "./errors.js";
-import { instructionsByOpcode } from "./instructions/index.js";
-import { parseDominoValue } from "./instructions/Misc.js";
-import { step } from "./step.js";
+import {Context, createContext} from './Context.js';
+import {DSInterpreterError} from './errors.js';
+import {instructionsByOpcode} from './instructions/index.js';
+import {parseDominoValue} from './instructions/Misc.js';
+import {step} from './step.js';
 
 export interface DominoScriptRunner {
   run(): Context;
@@ -18,7 +18,7 @@ export function createRunner(source: string): DominoScriptRunner {
     // onStderr: fn => ctx.onStderr(fn)
   };
 }
-  
+
 function run(ctx: Context): Context {
   const start = performance.now();
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {

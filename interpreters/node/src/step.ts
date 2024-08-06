@@ -1,11 +1,11 @@
-import { Cell } from "./Board.js";
-import { Context } from "./Context.js";
-import { DSInterpreterError, DSStepToEmptyCellError } from "./errors.js";
-import { FORWARD, LEFT, navModes, RIGHT } from "./navModes.js";
+import {DSInterpreterError, DSStepToEmptyCellError} from './errors.js';
+import {FORWARD, LEFT, RIGHT, navModes} from './navModes.js';
+import {Cell} from './Board.js';
+import {Context} from './Context.js';
 
 export function step(ctx: Context): Cell | null {
   ctx.debug.totalSteps++;
-  
+
   if (ctx.isFirstDomino) {
     findFirstDomino(ctx);
     return ctx.isFinished ? null : ctx.currentCell;
@@ -66,7 +66,6 @@ export function step(ctx: Context): Cell | null {
     leftCell = ctx.board.getOrNull(west);
     rightCell = ctx.board.getOrNull(east);
   } else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
-
 
   // If all possible directions are empty, the program is finished.
   if (!forwardCell && !leftCell && !rightCell) {

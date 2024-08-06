@@ -8,7 +8,7 @@ export class DSSyntaxError extends Error {
 
 export class DSInvalidGridError extends Error {
   constructor() {
-    super(`Invalid grid. All lines containing code must be the same length (for now)`);
+    super('Invalid grid. All lines containing code must be the same length (for now)');
     this.name = 'InvalidGridError';
   }
 }
@@ -44,8 +44,8 @@ export class DSConnectionToEmptyCellError extends Error {
 // Early on I will be using this error a lot to test things at runtime instead of writing unit tests for things that may likely change.
 export class DSInterpreterError extends Error {
   constructor(message: string) {
-  super('Something wrong with the Interpreter: ' + message);
-      this.message = 'InterpreterError'
+    super('Something wrong with the Interpreter: ' + message);
+    this.message = 'InterpreterError';
   }
 }
 
@@ -70,7 +70,6 @@ export class DSStepToEmptyCellError extends Error {
   }
 }
 
-
 export class DSUnexpectedEndOfNumberError extends Error {
   constructor(address: number) {
     super(`Unexpected end of number at address ${address}`);
@@ -80,14 +79,14 @@ export class DSUnexpectedEndOfNumberError extends Error {
 
 export class DSEmptyStackError extends Error {
   constructor() {
-    super(`Cannot pop from an empty stack`);
+    super('Cannot pop from an empty stack');
     this.name = 'StackUnderflowError';
   }
 }
 
 export class DSFullStackError extends Error {
   constructor() {
-    super(`Cannot push to a full stack`);
+    super('Cannot push to a full stack');
     this.name = 'StackOverflowError';
   }
 }

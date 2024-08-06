@@ -1,4 +1,4 @@
-import { Context } from "../Context.js";
+import {Context} from '../Context.js';
 
 export function ADD(ctx: Context): void {
   ctx.stack.push(ctx.stack.pop() + ctx.stack.pop());

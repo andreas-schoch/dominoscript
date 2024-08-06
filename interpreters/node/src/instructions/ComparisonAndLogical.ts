@@ -1,4 +1,4 @@
-import { Context } from "../Context.js";
+import {Context} from '../Context.js';
 
 export function NOT(ctx: Context) {
   ctx.stack.push(ctx.stack.pop() === 0 ? 1 : 0);

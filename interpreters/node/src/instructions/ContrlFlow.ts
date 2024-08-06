@@ -1,4 +1,4 @@
-import { Context } from "../Context.js";
+import {Context} from '../Context.js';
 
 export function NAVM(ctx: Context): void {
   const index = ctx.stack.pop();
