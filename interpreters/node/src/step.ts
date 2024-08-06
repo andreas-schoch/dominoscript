@@ -4,6 +4,7 @@ import { DSInterpreterError, DSStepToEmptyCellError } from "./errors.js";
 import { FORWARD, LEFT, navModes, RIGHT } from "./navModes.js";
 
 export function step(ctx: Context): Cell | null {
+  ctx.debug.totalSteps++;
   
   if (ctx.isFirstDomino) {
     findFirstDomino(ctx);
@@ -16,6 +17,7 @@ export function step(ctx: Context): Cell | null {
   if (ctx.nextJumpAddress !== null) {
     ctx.currentCell = ctx.board.getOrThrow(ctx.nextJumpAddress);
     ctx.nextJumpAddress = null;
+    ctx.debug.totalJumps++;
     return ctx.currentCell;
   }
 
@@ -24,6 +26,7 @@ export function step(ctx: Context): Cell | null {
     ctx.returnStack.push(ctx.currentCell!.address);
     ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
     ctx.nextCallAddress = null;
+    ctx.debug.totalCalls++;
     return ctx.currentCell;
   }
 
@@ -93,6 +96,7 @@ export function step(ctx: Context): Cell | null {
     const entryCell = ctx.board.getOrThrow(returnCell.connection);
     ctx.lastCell = entryCell;
     ctx.currentCell = returnCell;
+    ctx.debug.totalReturns++;
     return step(ctx);
   }
 

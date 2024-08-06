@@ -12,11 +12,14 @@
   "files": [
     "dist"
   ],
+  "c8": {
+    "include": "src",
+    "exclude": ["**/*.spec.ts"]
+  },
   "scripts": {
     "ds": "node dist/bin/cli.js",
-    "build": "rimraf dist && tsc",
-    "watch": "tsc -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "test": "c8 --reporter=lcov mocha"
   },
   "keywords": [
     "esoteric programming language",
@@ -32,8 +35,12 @@
   "author": "Andreas Schoch",
   "license": "MIT",
   "devDependencies": {
+    "@types/mocha": "^10.0.7",
     "@types/node": "^22.1.0",
+    "c8": "^10.1.2",
+    "mocha": "^10.7.0",
     "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
   }
 }

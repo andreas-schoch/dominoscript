@@ -5,7 +5,7 @@ import { parseDominoValue } from "./instructions/Misc.js";
 import { step } from "./step.js";
 
 export interface DominoScriptRunner {
-  run(): void;
+  run(): Context;
   onStdout(fn: (msg: string) => void): void;
   // onStderr(fn: (msg: string) => void): void;
 }
@@ -19,19 +19,18 @@ export function createRunner(source: string): DominoScriptRunner {
   };
 }
   
-function run(ctx: Context, source: string): void {
-  const timeStart = Date.now();
-  let i = 0;
-
+function run(ctx: Context, source: string): Context {
+  const start = performance.now();
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
     const instruction = instructionsByOpcode[opcode];
+    ctx.debug.totalInstructions++;
+    ctx.debug.totalInstructionExecution[instruction.name] = (ctx.debug.totalInstructionExecution[instruction.name] || 0) + 1;
     instruction(ctx);
-    i++;
   }
-  
-  const timeEnd = Date.now();
-  console.log('\n\nTime taken:', timeEnd - timeStart, 'ms', 'total instructions:', i);
-  ctx.stack.clear();
+  ctx.debug.executionTimeSeconds = (performance.now() - start) / 1000;
+  console.debug('\n\n DEBUG INFO:');
+  console.debug(ctx.debug);
+  return ctx;
 }
 
 function nextOpcode(ctx: Context): number | null {

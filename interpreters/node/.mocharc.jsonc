@@ -1,0 +1,8 @@
+{
+  "extension": ["ts"],
+  "spec": "test/**/*spec.ts",
+  "reporter": "spec",
+  // "loader": "ts-node/esm", // works but gives experimental warning to use require instead
+  "require": ["ts-node/register", "./test/register-loader.js"],
+  "timeout": 5000
+}

@@ -778,7 +778,7 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 |  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotl) | [_](#reserved_0_6) | [Stack Management](#stack-management) |
 |  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [_](#reserved_1_6) | [Arithmetic](#arithmetic) |
 |  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [_](#reserved_2_5) | [_](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
-|  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [BSL](#bsl) | [BSR](#bsr) | [_](#reserved_3_6) | [Bitwise](#bitwise) |
+|  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [LSL](#lsl) | [LSR](#lsr) | [ASR](#asr) | [Bitwise](#bitwise) |
 |  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [_](#reserved_4_5) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
 |  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [_](#reserved_6_4) | [_](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
@@ -964,7 +964,7 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `NOT`
 <img src="assets/horizontal/2-0.png" alt="Domino" width="128">
 
-Pops the top item off the stack. If it is larger than `0`, it pushes `1` to the stack. Otherwise it pushes `1`.
+Pops the top item off the stack. If it is `0`, it pushes `1` to the stack. Otherwise it pushes `0`.
 
 #### `AND`
 <img src="assets/horizontal/2-1.png" alt="Domino" width="128">
@@ -1019,20 +1019,20 @@ Bitwise OR. Pops the top 2 items off the stack, performs bitwise OR and pushes t
 
 Bitwise XOR. Pops the top 2 items off the stack, performs bitwise XOR and pushes the result back onto the stack.
 
-#### `BSL`
+#### `LSL`
 <img src="assets/horizontal/3-4.png" alt="Domino" width="128">
 
-Bitwise Shift Left. Pops the top 2 items off the stack, performs bitwise shift left and pushes the result back onto the stack.
+Logical Shift Left. Performs the equivalent of `argA << argB` and pushes the result back onto the stack.
 
-#### `BSR`
+#### `LSR`
 <img src="assets/horizontal/3-5.png" alt="Domino" width="128">
 
-Bitwise Shift Right. Pops the top 2 items off the stack, performs bitwise shift right and pushes the result back onto the stack.
+Logical Shift Right. Performs the equivalent of `argA >>> argB` and pushes the result back onto the stack.
 
-#### `RESERVED_3_6`
+#### `ASR`
 <img src="assets/horizontal/3-6.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Arithmetic Shift Right. Performs the equivalent of `argA >> argB` and pushes the result back onto the stack.
 
 <h3 id="control-flow">Control Flow</h3>
 

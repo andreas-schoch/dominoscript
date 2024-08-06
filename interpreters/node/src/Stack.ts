@@ -21,13 +21,12 @@ export class Stack {
   }
 
   peek(): number | undefined {
-    // if (this.length === 0) throw new Error('Stack underflow');
     return this.data[this.length - 1];
   }
 
   duplicate(): void {
     const value = this.peek();
-    if (value === undefined) throw new Error('Stack underflow');
+    if (value === undefined) throw new DSEmptyStackError();
     this.push(value);
   }
 

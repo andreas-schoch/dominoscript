@@ -16,9 +16,7 @@ export function STRIN(ctx: Context): void {
 
 export function STROUT(ctx: Context): void {
   const chars: string[] = [];
-  let i = 0;
   while (true) {
-    if (++i > 128) throw new DSInterpreterError('Infinite loop detected'); // TODO remove
     const value = ctx.stack.pop();
     if (value === 0) break;
     chars.push(String.fromCharCode(value));  

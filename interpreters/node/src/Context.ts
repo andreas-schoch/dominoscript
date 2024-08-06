@@ -27,6 +27,15 @@ export interface Context {
   onStdout: (cb: (msg: string) => void) => void;
   // stderr: (msg: string) => void;
   // onStderr: (cb: (msg: string) => void) => void;
+  debug: {
+    executionTimeSeconds: number;
+    totalInstructions: number;
+    totalSteps: number;
+    totalJumps: number;
+    totalCalls: number;
+    totalReturns: number;
+    totalInstructionExecution: Record<string, number>;
+  }
 }
 
 export function createContext(source: string): Context {
@@ -54,5 +63,14 @@ export function createContext(source: string): Context {
     onStdout: (cb) => listeners.stdout = cb,
     // stderr: msg => listeners.stderr(msg),
     // onStderr: (cb) => listeners.stderr = cb,
+    debug: {
+      executionTimeSeconds: 0,
+      totalInstructions: 0,
+      totalSteps: 0,
+      totalJumps: 0,
+      totalCalls: 0,
+      totalReturns: 0,
+      totalInstructionExecution: {}
+    }
   };
 }

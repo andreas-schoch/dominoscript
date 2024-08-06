@@ -6,13 +6,22 @@
     "sourceMap": false,
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    // "rootDir": "./src",
     "removeComments": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitAny": true,
     "allowUnreachableCode": false,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "types": ["node", "mocha"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
