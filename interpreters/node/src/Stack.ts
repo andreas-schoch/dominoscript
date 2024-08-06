@@ -2,9 +2,9 @@ import { DSEmptyStackError, DSFullStackError } from "./errors.js";
 
 export class Stack {
   public data: Int32Array;
-  private length: number = 0;
+  private length = 0;
 
-  constructor(private maxLength: number = 1024) {
+  constructor(private maxLength = 1024) {
     this.data = new Int32Array(maxLength);
   }
 

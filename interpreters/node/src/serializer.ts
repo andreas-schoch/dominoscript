@@ -19,12 +19,12 @@ const allowedValueChars = AllowedValueCharsByDMode.D6; // TODO for now D6 mode i
 const allowedHorizontalConnectorChars = '—-=═ ';
 const allowedVerticalConnectorChars = '|║ ';
 
-export function gridToSource(grid: Grid): string {
+export function gridToSource(_grid: Grid): string {
   throw new Error('Not implemented');
 }
 
 export function sourceToGrid(source: string): Grid {
-  let lines = source.split('\n');
+  const lines = source.split('\n');
 
   // We need to figure out where the code actually starts in the source file
   const boardStart = lines.findIndex(line => allowedValueChars.includes(line[0]));

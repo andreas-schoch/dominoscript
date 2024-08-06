@@ -13,13 +13,13 @@ export interface DominoScriptRunner {
 export function createRunner(source: string): DominoScriptRunner {
   const ctx = createContext(source);
   return {
-    run: () => run(ctx, source),
+    run: () => run(ctx),
     onStdout: fn => ctx.onStdout(fn),
     // onStderr: fn => ctx.onStderr(fn)
   };
 }
   
-function run(ctx: Context, source: string): Context {
+function run(ctx: Context): Context {
   const start = performance.now();
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
     const instruction = instructionsByOpcode[opcode];

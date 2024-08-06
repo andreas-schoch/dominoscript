@@ -31,7 +31,7 @@ export function SET(ctx: Context): void {
   ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
 }
 
-export function NOOP(ctx: Context): void {
+export function NOOP(_ctx: Context): void {
   // Do nothing
 }
 

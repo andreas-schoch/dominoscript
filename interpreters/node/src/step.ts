@@ -23,19 +23,17 @@ export function step(ctx: Context): Cell | null {
 
   // perform call
   if (ctx.nextCallAddress !== null) {
-    ctx.returnStack.push(ctx.currentCell!.address);
+    if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to call a cell without a current cell');
+    ctx.returnStack.push(ctx.currentCell.address);
     ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
     ctx.nextCallAddress = null;
     ctx.debug.totalCalls++;
     return ctx.currentCell;
   }
 
-  // if at the end `startAddress` is still false, the program is finished.
-  let startAddress = ctx.currentCell?.address;
-
   const currentCell = ctx.currentCell;
   if (!currentCell || currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
-  let isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== currentCell.connection;
+  const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== currentCell.connection;
 
   // The IP will always go from one half (entry) of a domino to the other half (exit) of the same domino before moving to the next domino.
   // If the IP is on the entry of a domino, the movement mode is irrelevant. It only matters when we need to decide what the next domino will be.
@@ -88,9 +86,6 @@ export function step(ctx: Context): Cell | null {
     else if (direction === RIGHT && rightCell && rightCell.value !== null) return moveIP(ctx, rightCell);
   }
 
-  // TODO write tests instead of asserting faulty interpreter behaviour at runtime...
-  if (startAddress !== ctx.currentCell?.address) throw new DSInterpreterError('should have returned already if IP could move');
-
   if (!ctx.returnStack.isEmpty()) {
     const returnCell = ctx.board.getOrThrow(ctx.returnStack.pop());
     const entryCell = ctx.board.getOrThrow(returnCell.connection);
@@ -106,7 +101,8 @@ export function step(ctx: Context): Cell | null {
 }
 
 function moveIP(ctx: Context, cell: Cell): Cell {
-  if (cell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell!.address, cell.address);
+  if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to move the IP to a cell without a current cell');
+  if (cell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, cell.address);
   if (ctx.currentCell && ctx.lastCell && ctx.currentCell.address !== -1 && ctx.currentCell === ctx.lastCell) throw new DSInterpreterError('IP address and previous are the same');
   ctx.lastCell = ctx.currentCell;
   ctx.currentCell = cell;

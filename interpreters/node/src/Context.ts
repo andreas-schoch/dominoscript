@@ -40,7 +40,7 @@ export interface Context {
 
 export function createContext(source: string): Context {
   const listeners = {
-    stdout: (msg: string) => {},
+    stdout: (_msg: string): void => void 0,
     // stderr: (msg: string) => {}
   };
 

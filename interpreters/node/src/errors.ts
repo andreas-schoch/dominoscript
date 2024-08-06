@@ -73,7 +73,7 @@ export class DSStepToEmptyCellError extends Error {
 
 export class DSUnexpectedEndOfNumberError extends Error {
   constructor(address: number) {
-    super(`Unexpected end of number`);
+    super(`Unexpected end of number at address ${address}`);
     this.name = 'UnexpectedEndOfNumberError';
   }
 }

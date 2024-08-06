@@ -1,7 +1,6 @@
 import { Context } from "../Context.js";
-import { DSInterpreterError } from "../errors.js";
 
-export function NUMIN(ctx: Context): void {
+export function NUMIN(_ctx: Context): void {
   // TODO
 }
 
@@ -10,7 +9,7 @@ export function NUMOUT(ctx: Context): void {
   ctx.stdout(String(value));
 }
 
-export function STRIN(ctx: Context): void {
+export function STRIN(_ctx: Context): void {
   // TODO
 }
 
