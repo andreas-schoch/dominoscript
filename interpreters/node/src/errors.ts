@@ -41,6 +41,13 @@ export class DSConnectionToEmptyCellError extends Error {
   }
 }
 
+export class DSConnectionToEmptyCellsError extends Error {
+  constructor() {
+    super('There are connectors that are not connected to anything (Cannot give you the exact location of the error atm)');
+    this.name = 'ConnectionToEmptyCellsError';
+  }
+}
+
 // Early on I will be using this error a lot to test things at runtime instead of writing unit tests for things that may likely change.
 export class DSInterpreterError extends Error {
   constructor(message: string) {
@@ -63,10 +70,31 @@ export class DSAddressError extends Error {
   }
 }
 
+export class DSInvalidLabelError extends Error {
+  constructor(label: number | null) {
+    super(`Label '${label}' is not a valid label`);
+    this.name = 'InvalidLabelError';
+  }
+}
+
 export class DSStepToEmptyCellError extends Error {
   constructor(currentAddress: number, emptyAddress: number) {
     super(`Trying to step from cell ${currentAddress} to empty cell ${emptyAddress}`);
     this.name = 'StepToEmptyCellError';
+  }
+}
+
+export class DSJumpToItselfError extends Error {
+  constructor(address: number) {
+    super(`Jumping to itself at address ${address} is forbidden as it results in an infinite loop`);
+    this.name = 'JumpToItselfError';
+  }
+}
+
+export class DSCallToItselfError extends Error {
+  constructor(address: number) {
+    super(`Calling to itself at address ${address} is forbidden as it results in an infinite loop`);
+    this.name = 'CallToItselfError';
   }
 }
 

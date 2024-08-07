@@ -1,5 +1,5 @@
 import {Cell, CellValue} from './Board.js';
-import {DSConnectionToEmptyCellError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from './errors.js';
+import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from './errors.js';
 
 export interface Grid {
   cells: Cell[];
@@ -36,10 +36,6 @@ export function sourceToGrid(source: string): Grid {
   lines.splice(boardEnd + 1);
   lines.splice(0, boardStart);
 
-  const maxCharsPerLine = Math.max(...lines.map(line => line.length));
-  const minCharsPerLine = Math.min(...lines.map(line => line.length));
-  if (maxCharsPerLine !== minCharsPerLine) throw new DSInvalidGridError();
-
   const [width, height] = getDimensions(lines);
   const totalCells = width * height;
   const cells: Cell[] = [];
@@ -57,13 +53,10 @@ export function sourceToGrid(source: string): Grid {
     });
   }
 
-  const grid: Grid = {
-    width: (minCharsPerLine + 1) / 2,
-    height: (lines.length + 1) / 2,
-    cells: cells,
-  };
+  const grid: Grid = {width, height, cells};
 
   let totalCellsSoFar = 0;
+  let totalConnectors = 0;
 
   for (let y = 0; y < lines.length; y += 1) {
     const line = lines[y];
@@ -83,6 +76,7 @@ export function sourceToGrid(source: string): Grid {
         if (leftCell.connection !== null || rightCell.connection !== null) throw new DSMultiConnectionError(y+1, x, 'Horizontal');
         leftCell.connection = rightCell.address;
         rightCell.connection = leftCell.address;
+        totalConnectors++;
       } else if (y % 2 === 1 && x % 2 === 0) {
         // SET VERTICAL CONNECTIONS
         if (!allowedVerticalConnectorChars.includes(line[x])) throw new DSSyntaxError(line[x], y+1, x);
@@ -94,11 +88,12 @@ export function sourceToGrid(source: string): Grid {
         if (topCell.connection !== null || bottomCell.connection !== null) throw new DSMultiConnectionError(y+1, x, 'Vertical');
         topCell.connection = bottomCell.address;
         bottomCell.connection = topCell.address;
+        totalConnectors++;
       }
     }
   }
 
-  // At the end of the process we check that all non-empty cells have a connection
+  // check that all non-empty cells have a connection
   for (let y = 0; y < lines.length; y += 2) {
     const line = lines[y];
     for (let x = 0; x < line.length; x += 2) {
@@ -111,6 +106,11 @@ export function sourceToGrid(source: string): Grid {
       }
     }
   }
+
+  // Check that there are twice as many non-empty cells as there are connectors
+  // TODO provide exact location of of the rogue connector
+  const nonEmptyCells = grid.cells.filter(cell => cell.value !== null).length;
+  if (totalConnectors !== nonEmptyCells / 2) throw new DSConnectionToEmptyCellsError();
 
   return grid;
 }

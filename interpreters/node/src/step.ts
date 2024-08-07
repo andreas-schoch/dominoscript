@@ -1,4 +1,4 @@
-import {DSInterpreterError, DSStepToEmptyCellError} from './errors.js';
+import {DSCallToItselfError, DSInterpreterError, DSJumpToItselfError, DSStepToEmptyCellError} from './errors.js';
 import {FORWARD, LEFT, RIGHT, navModes} from './navModes.js';
 import {Cell} from './Board.js';
 import {Context} from './Context.js';
@@ -12,10 +12,14 @@ export function step(ctx: Context): Cell | null {
   }
 
   if (ctx.isFinished) return null;
+  if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to step when currentCell is null');
 
   // perform jump
   if (ctx.nextJumpAddress !== null) {
-    ctx.currentCell = ctx.board.getOrThrow(ctx.nextJumpAddress);
+    const nextCell = ctx.board.getOrThrow(ctx.nextJumpAddress);
+    if (nextCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, ctx.nextJumpAddress);
+    if (nextCell.address === ctx.currentCell.connection || nextCell.address === ctx.currentCell.address) throw new DSJumpToItselfError(nextCell.address);
+    ctx.currentCell = nextCell;
     ctx.nextJumpAddress = null;
     ctx.debug.totalJumps++;
     return ctx.currentCell;
@@ -23,7 +27,10 @@ export function step(ctx: Context): Cell | null {
 
   // perform call
   if (ctx.nextCallAddress !== null) {
-    if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to call a cell without a current cell');
+    const nextCell = ctx.board.getOrThrow(ctx.nextCallAddress);
+    if (nextCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, ctx.nextCallAddress);
+    if (ctx.currentCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, ctx.nextCallAddress);
+    if (ctx.nextCallAddress === ctx.currentCell.connection || ctx.nextCallAddress === ctx.currentCell.address) throw new DSCallToItselfError(ctx.nextCallAddress);
     ctx.returnStack.push(ctx.currentCell.address);
     ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
     ctx.nextCallAddress = null;
@@ -31,16 +38,15 @@ export function step(ctx: Context): Cell | null {
     return ctx.currentCell;
   }
 
-  const currentCell = ctx.currentCell;
-  if (!currentCell || currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
-  const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== currentCell.connection;
+  if (ctx.currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
+  const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== ctx.currentCell.connection;
 
   // The IP will always go from one half (entry) of a domino to the other half (exit) of the same domino before moving to the next domino.
   // If the IP is on the entry of a domino, the movement mode is irrelevant. It only matters when we need to decide what the next domino will be.
-  if (isOnEntryHalf) return moveIP(ctx, ctx.board.getOrThrow(currentCell.connection));
+  if (isOnEntryHalf) return moveIP(ctx, ctx.board.getOrThrow(ctx.currentCell.connection));
 
   // forward, left and right here are relative to the perspective of the current domino.
-  const {connection, north, east, south, west} = currentCell;
+  const {connection, north, east, south, west} = ctx.currentCell;
   let forwardCell: Cell | null;
   let leftCell: Cell | null;
   let rightCell: Cell | null;
@@ -110,7 +116,7 @@ function moveIP(ctx: Context, cell: Cell): Cell {
 
 function findFirstDomino(ctx: Context): void {
   // It scans the board from top left to the right and down until it finds the first domino.
-  const len = ctx.board.width * ctx.board.height;
+  const len = ctx.board.grid.width * ctx.board.grid.height;
   for (let i = 0; i < len; i++) {
     const cell = ctx.board.getOrThrow(i);
     if (cell.value !== null) {

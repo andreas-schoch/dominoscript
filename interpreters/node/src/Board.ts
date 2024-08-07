@@ -24,10 +24,7 @@ export interface Cell {
 }
 
 export class Board {
-  public grid: Grid; // TODO make private again
-
-  get width(): number {return this.grid.width;}
-  get height(): number {return this.grid.height;}
+  grid: Grid; // TODO make private again
 
   constructor(source: string) {
     this.grid = sourceToGrid(source);

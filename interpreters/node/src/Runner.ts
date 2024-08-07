@@ -5,6 +5,7 @@ import {parseDominoValue} from './instructions/Misc.js';
 import {step} from './step.js';
 
 export interface DominoScriptRunner {
+  context: Context;
   run(): Context;
   onStdout(fn: (msg: string) => void): void;
   // onStderr(fn: (msg: string) => void): void;
@@ -13,6 +14,7 @@ export interface DominoScriptRunner {
 export function createRunner(source: string): DominoScriptRunner {
   const ctx = createContext(source);
   return {
+    context: ctx,
     run: () => run(ctx),
     onStdout: fn => ctx.onStdout(fn),
     // onStderr: fn => ctx.onStderr(fn)
@@ -28,8 +30,8 @@ function run(ctx: Context): Context {
     instruction(ctx);
   }
   ctx.debug.executionTimeSeconds = (performance.now() - start) / 1000;
-  console.debug('\n\n DEBUG INFO:');
-  console.debug(ctx.debug);
+  // console.debug('\n\n DEBUG INFO:');
+  // console.debug(ctx.debug);
   return ctx;
 }
 
