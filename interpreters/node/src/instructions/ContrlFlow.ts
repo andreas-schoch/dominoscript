@@ -8,8 +8,8 @@ export function NAVM(ctx: Context): void {
 
 export function BRANCH(ctx: Context): void {
   const condition = ctx.stack.pop();
-  if (condition) ctx.navModeOverrides.push(11); // left
-  else ctx.navModeOverrides.push(12); // right
+  if (condition) ctx.navModeOverrides.push(16); // left
+  else ctx.navModeOverrides.push(18); // right
 }
 
 export function LABEL(ctx: Context): void {

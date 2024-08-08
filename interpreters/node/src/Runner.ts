@@ -31,7 +31,6 @@ function run(ctx: Context): Context {
   }
   ctx.debug.executionTimeSeconds = (performance.now() - start) / 1000;
   // console.debug('\n\n DEBUG INFO:');
-  // console.debug(ctx.debug);
   return ctx;
 }
 
@@ -42,9 +41,11 @@ function nextOpcode(ctx: Context): number | null {
   if (!c1 && !c2) {
     ctx.isFinished = true;
     return null;
+    /* c8 ignore start */
   } else if (!c1 || !c2) {
     throw new DSInterpreterError('The steps here should always return 2 cells as we expect to move to a new domino');
   }
+  // /* c8 ignore end */
 
   const opcode = parseDominoValue(ctx, c1);
   ctx.lastOpcode = opcode;

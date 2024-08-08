@@ -13,7 +13,7 @@ This is the most simple hello world example you can make in DominoScript as it i
 
 ## Opcodes:
 - [**STR**](../readme.md#str) `0—2`
-- [**STROUT**](../readme.md#strout) `5—2`
+- [**STROUT**](../readme.md#strout) `5—3`
 
 ## Pseudo code: 
 ```

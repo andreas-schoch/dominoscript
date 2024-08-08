@@ -11,6 +11,7 @@ export function GET(ctx: Context): void {
 }
 
 export function SET(ctx: Context): void {
+  /* c8 ignore next */
   if (!ctx.currentCell || !ctx.lastCell) throw new DSInterpreterError('Not possible to call SET without the IP having moved before');
   const address = ctx.stack.pop();
   const value = ctx.stack.pop();
@@ -24,6 +25,7 @@ export function SET(ctx: Context): void {
   else if (connection === east) otherCell = ctx.board.getOrThrow(cell.west);
   else if (connection === north) otherCell = ctx.board.getOrThrow(cell.south);
   else if (connection === south) otherCell = ctx.board.getOrThrow(cell.north);
+  /* c8 ignore next */
   else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
 
   const cellValue = value % ctx.base as CellValue;
@@ -37,8 +39,10 @@ export function NOOP(_ctx: Context): void {
 
 export function parseDominoValue(ctx: Context, cell: Cell): number {
   if (cell.value === null) return -1;
+  /* c8 ignore next */
   if (cell.connection === null) throw new DSInterpreterError('There cannot be a Cell without a connection');
   const otherCell = ctx.board.getOrThrow(cell.connection);
+  /* c8 ignore next */
   if (otherCell.value === null) throw new DSInterpreterError('The other cell cannot be empty');
   return cell.value * ctx.base + otherCell.value;
 }

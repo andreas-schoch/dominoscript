@@ -1303,8 +1303,6 @@ No operation. The IP will move to the next domino without executing any instruct
 
  ## Navigation Modes
 
- TODO simplify
-
 *(F=Forward, L=Left, R=Right)*
 
 Navigation modes are bound to respect the [fundamental IP rules](#fundamental-instruction-pointer-rules).
@@ -1314,157 +1312,87 @@ For some modes the change in flow behaviour is quite subtle. For others it is dr
 The language could end up with hundred or even a thousand movement modes if I want to cover all variations. It will be a mayor pain in the ass to document, implement and test. Probably 95% of usecases could be covered by just a handful of modes. Most of them will be slight variations of a specific concept, which is why they are grouped by categories.
 
 **Categories**
-- [Basic Three Way](#basic-three-way)
-- [Basic Two Way](#basic-two-way)
-- [Basic One Way](#basic-one-way)
-- [Switch Three Way](#switch-three-way)
-- [Switch Two Way](#switch-two-way)
-- [Switch One Way](#switch-one-way)
-- 
 
+0. [Basic Three Way](#basic-three-way)
+0. [Basic Two Way](#basic-two-way)
+0. [Basic One Way](#basic-one-way)
+0. [Flopper Two Way](#flopper-two-way)
+0. [Flopper One Way](#flopper-one-way)
 
 ### Basic Three Way
 
-These just map the Relative Directions *(Forward, Left, Right)* to the Priority Directions  *(Primary, Secondary, Tertiary)*.
+Out of three directions, the IP will prioritize moving to the one with the highest priority.
 
-The IP will always prioritize the direction with the highest priority here.
+Index 6 will randomly choose between index 0-5 each time the IP moves to a new domino.
 
-| index | Primary  | Secondary | Tertiary |
-|-------|----------|-----------|----------|
-| 0     | Forward  | Left      | Right    |
-| 1     | Forward  | Right     | Left     |
-| 2     | Left     | Forward   | Right    |
-| 3     | Left     | Right     | Forward  |
-| 4     | Right    | Forward   | Left     |
-| 5     | Right    | Left      | Forward  |
+| index | Priorities *(high to low)*     | Domino -> |
+|-------|--------------------------------|------------
+| 0     | `Forward`, `Left`, `Right`     | `0-0`     |
+| 1     | `Forward`, `Right`, `Left`     | `0-1`     |
+| 2     | `Left`, `Forward`, `Right`     | `0-2`     |
+| 3     | `Left`, `Right`, `Forward`     | `0-3`     |
+| 4     | `Right`, `Forward`, `Left`     | `0-4`     |
+| 5     | `Right`, `Left`, `Forward`     | `0-5`     |
+| 6     | `Randomized`                   | `0-6`     |
 
 ### Basic Two Way
 
-Like "Basic Three Way" but with the tertiary direction blocked.
+Out of two directions, the IP will prioritize moving to the one with the highest priority.
 
-| index | Primary | Secondary |
-|-------|---------|-----------|
-| 6     | Forward | Left      |
-| 7     | Forward | Right     |
-| 8     | Left    | Forward   |
-| 9     | Left    | Right     |
-| 10    | Right   | Forward   |
-| 11    | Right   | Left      |
+Index 13 will randomly choose between index 7-12 each time the IP moves to a new domino.
+
+| index | Priorities *(high to low)*     | Domino -> |
+|-------|--------------------------------|------------
+| 7     | `Forward`, `Left`              | `1-0`     |
+| 8     | `Forward`, `Right`             | `1-1`     |
+| 9     | `Left`, `Forward`              | `1-2`     |
+| 10    | `Left`, `Right`                | `1-3`     |
+| 11    | `Right`, `Forward`             | `1-4`     |
+| 12    | `Right`, `Left`                | `1-5`     |
+| 13    | `Randomized`                   | `1-6`     |
 
 ### Basic One Way
 
-Only one relative direction is allowed. The other 2 are blocked. In a way these are the most basic modes.
+IP can only move in one direction.
 
-| index | Only possible direction |
-|-------|------------|
-| 12    | Forward    |
-| 13    | Left       |
-| 14    | Right      |
+Index 20 will randomly choose between index 14-19 each time the IP moves to a new domino.
 
-### Rotate Three Way
+| index | Primary      | Domino -> |
+|-------|--------------|-----------|
+| 14    | `Forward`    | `2-0`     |
+| 15    | `Forward`    | `2-1`     |
+| 16    | `Left`       | `2-2`     |
+| 17    | `Left`       | `2-3`     |
+| 18    | `Right`      | `2-4`     |
+| 19    | `Right`      | `2-5`     |
+| 20    | `Randomized` | `2-6`     |
 
-No direction is blocked, just the priorities are switched each step. Kind of like a round-robin with 2 fallbacks.
+### Flopper Two Way
 
-It takes 3 cycles to complete a full rotation.
+Out of two directions, the IP will prioritize moving to the one with the highest priority. The priorities will switch each step.
 
-| index | Cycle 1       | Cycle 2       | Cycle 3       | DESCRIPTION             |
-|-------|---------------|---------------|---------------|-------------------------|
-| 15    | `F` `L` `R`   | `L` `R` `F`   | `R` `F` `L`   | Rotate right            |
-| 17    | `L` `F` `R`   | `F` `L` `R`   | `R` `F` `L`   | Rotate right            |
-| 16    | `F` `L` `R`   | `R` `F` `L`   | `R` `F` `L`   | Rotate left             |
+| index | Flip               | Flop                | Domino -> |
+|-------|--------------------|---------------------|------------
+| 21    | `Forward`, `Left`  | `Left`, `Forward`   | `3-0`     |
+| 22    | `Forward`, `Right` | `Right`, `Forward`  | `3-1`     |
+| 23    | `Left`, `Forward`  | `Forward`, `Left`   | `3-2`     |
+| 24    | `Left`, `Right`    | `Right`, `Left`     | `3-3`     |
+| 25    | `Right`, `Forward` | `Forward`, `Right`  | `3-4`     |
+| 26    | `Right`, `Left`    | `Left`, `Right`     | `3-5`     |
+| 27    | (unmapped)         | (unmapped)          | `3-6`     |
 
-### Switch Two Way
+### Flopper One Way
 
-### Switch Three Way
+| index | Flip        | Flop                | Domino -> |
+|-------|-------------|---------------------|------------
+| 21    | `Forward`   | `Left`       | `4-0`     |
+| 22    | `Forward`   | `Right`      | `4-1`     |
+| 23    | `Left`      | `Forward`    | `4-2`     |
+| 24    | `Left`      | `Right`      | `4-3`     |
+| 25    | `Right`     | `Forward`    | `4-4`     |
+| 26    | `Right`     | `Left`       | `4-5`     |
+| 27    | (unmapped)  | (unmapped)   | `4-6`     |
 
-Alternates between two directions every single time. The third direction is blocked.
-
-One way here means that you can only move in primary direction and the other two are blocked. The primary direction is alternated each time.
-
-| index | Cycle 1       | Cycle 2       | Cycle 3       |
-|-------|---------------|---------------|---------------|
-| 15    | `F` `L` `R`   | `L` `R` `F`   | `R` `F` `L`   |
-
-
-### Basic Sequential Switch
-
-The priorities will switch each step.
-
-### Exclusive FlipFlop
-
-Alternates Non-primary direction mapping (Secondary and Tertiary) every single time it moves in Non-primary direction.
-
-**Why "exclusive"?** Because going into Primary direction doesn't cause the mapping to be alternated. It exclusively alternates when moving in non-primary directions.
-
-| index | Primary  | Pattern without Primary          | Pattern with Primary                |
-|-------|----------|----------------------------------|-------------------------------------|
-| 15    | Forward  | `L` `R` `L` `R` ...              | F `L` F F `R` F `L` `R` ...         |
-| 16    | Forward  | `R` `L` `R` `L` ...              | F `R` F F `L` F `R` `L` ...         |
-| 17    | Left     | `F` `R` `F` `R` ...              | L `F` L L `R` L `F` `R` ...         |
-| 18    | Left     | `R` `F` `R` `F` ...              | L `R` L L `F` L `R` `F` ...         |
-| 19    | Right    | `F` `L` `F` `L` ...              | R `F` R R `L` R `F` `L` ...         |
-| 20    | Right    | `L` `F` `L` `F` ...              | R `L` R R `F` R `L` `F` ...         |
-
-### Inclusive FlipFlop
-
-Alternates Non-primary direction mapping (Secondary and Tertiary) every single time.
-
-**Why "inclusive"?** Because going into Primary direction also causes the mapping to be alternated.
-
-| index | Primary  | Pattern without primary          | Pattern with Primary                |
-|-------|----------|----------------------------------|-------------------------------------|
-| 21    | Forward  | `L` `R` `L` `R` ...              | F `R` F F `L` F `L` F `L` ...       |
-| 22    | Forward  | `R` `L` `R` `L` ...              | F `L` F F `R` F `R` F `R` ...       |
-| 23    | Left     | `F` `R` `F` `R` ...              | L `R` L L `F` L `F` L `F` ...       |
-| 24    | Left     | `R` `F` `R` `F` ...              | L `F` L L `R` L `R` L `R` ...       |
-| 25    | Right    | `F` `L` `F` `L` ...              | R `L` R R `F` R `F` R `F` ...       |
-| 26    | Right    | `L` `F` `L` `F` ...              | R `F` R R `L` R `L` R `L` ...       |
-
-
-### Sequential Switch
-
-The priorities will switch each step.
-
-| index | Pattern                          | Explanation                                |
-|-------|----------------------------------|--------------------------------------------|
-| 27    | `F` `L` `R` `F` `L` `R` ...      | Forward, Left, Right, Forward, Left, Right |
-
-### Random Three Way
-
-The priority direction mappings are randomized each time the IP moves to a new domino.
-
-| index | Primary      | Secondary      | Tertiary         | Explanation                                                                |
-|-------|--------------|----------------|------------------|----------------------------------------------------------------------------|
-| 15    | F or L or R  | F or L or R    | F or L or R      | Picks Primary out of all, secondary out of remaining 2, tertiary remaining |
-| 16    | F            | L or R         | L or R           | Picks Secondary out of L or R, remaining one is Tertiary                   |
-| 17    | L            | F or R         | F or R           | Picks Secondary out of F or R, remaining one is Tertiary                   |
-| 18    | R            | F or L         | F or L           | Picks Secondary out of F or L, remaining one is Tertiary                   |
-| 19    | L or R       | F              | L or R           | Picks Primary out of L or R, remaining one is Tertiary                     |
-| 20    | F or R       | L              | F or R           | Picks Primary out of F or R, remaining one is Tertiary                     |
-| 21    | F or L       | R              | F or L           | Picks Primary out of F or L, remaining one is Tertiary                     |
-| 23    | L or R       | L or R         | F                | Picks Primary out of L or R, remaining one is Secondary                    |
-| 24    | F or R       | F or R         | L                | Picks Primary out of F or R, remaining one is Secondary                    |
-| 25    | F or L       | F or L         | R                | Picks Primary out of F or L, remaining one is Secondary                    |
-
-### Random Two Way
-This is basically the same as the "Random Three Way" but with the tertiary direction blocked.
-
-| index | Primary      | Secondary      | Explanation                                                 |
-|-------|--------------|----------------|-------------------------------------------------------------|
-| 15    | F or L or R  | F or L or R    | Picks Primary out of all, secondary out of remaining 2      |
-| 16    | F            | L or R         | Picks Secondary out of L or R                               |
-| 17    | L            | F or R         | Picks Secondary out of F or R                               |
-| 18    | R            | F or L         | Picks Secondary out of F or L                               |
-| 19    | L or R       | F              | Picks Primary out of L or R                                 |
-| 20    | F or R       | L              | Picks Primary out of F or R                                 |
-| 21    | F or L       | R              | Picks Primary out of F or L                                 |
-| 23    | L or R       | L or R         | Picks Primary out of L or R                                 |
-| 24    | F or R       | F or R         | Picks Primary out of F or R                                 |
-| 25    | F or L       | F or L         | Picks Primary out of F or L                                 |
-
-### Random One Way
-
-Only one direction is allowed. The other 2 are blocked. The direction is randomized each time the IP moves to a new domino.
 
 <br>
 

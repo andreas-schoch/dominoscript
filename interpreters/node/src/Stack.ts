@@ -46,15 +46,6 @@ export class Stack {
     this.push(c);
   }
 
-  rotateRight(): void {
-    const a = this.pop();
-    const b = this.pop();
-    const c = this.pop();
-    this.push(a);
-    this.push(c);
-    this.push(b);
-  }
-
   clear(): void {
     this.length = 0;
     this.data.fill(0);

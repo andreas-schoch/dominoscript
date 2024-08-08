@@ -19,8 +19,10 @@ const allowedValueChars = AllowedValueCharsByDMode.D6; // TODO for now D6 mode i
 const allowedHorizontalConnectorChars = '—-=═ ';
 const allowedVerticalConnectorChars = '|║ ';
 
+/* c8 ignore start */
 export function gridToSource(_grid: Grid): string {
   throw new Error('Not implemented');
+  /* c8 ignore end */
 }
 
 export function sourceToGrid(source: string): Grid {

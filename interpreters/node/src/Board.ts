@@ -24,7 +24,7 @@ export interface Cell {
 }
 
 export class Board {
-  grid: Grid; // TODO make private again
+  grid: Grid;
 
   constructor(source: string) {
     this.grid = sourceToGrid(source);
@@ -70,6 +70,7 @@ export class Board {
   setEmpty(address: Address): void {
     if (this.grid.cells[address].value === null) return; // already empty
     const cellA = this.grid.cells[address];
+    /* c8 ignore next */
     if (cellA.connection === null) throw new DSInterpreterError('A non-empty cell did not have a connection! This should never happen');
     const cellB = this.grid.cells[cellA.connection];
     cellA.value = null;

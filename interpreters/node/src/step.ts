@@ -1,10 +1,9 @@
-import {DSCallToItselfError, DSInterpreterError, DSJumpToItselfError, DSStepToEmptyCellError} from './errors.js';
+import {DSCallToItselfError, DSInterpreterError, DSInvalidNavigationModeError, DSJumpToItselfError, DSStepToEmptyCellError} from './errors.js';
 import {FORWARD, LEFT, RIGHT, navModes} from './navModes.js';
 import {Cell} from './Board.js';
 import {Context} from './Context.js';
 
 export function step(ctx: Context): Cell | null {
-  ctx.debug.totalSteps++;
 
   if (ctx.isFirstDomino) {
     findFirstDomino(ctx);
@@ -12,6 +11,7 @@ export function step(ctx: Context): Cell | null {
   }
 
   if (ctx.isFinished) return null;
+  /* c8 ignore next */
   if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to step when currentCell is null');
 
   // perform jump
@@ -37,7 +37,7 @@ export function step(ctx: Context): Cell | null {
     ctx.debug.totalCalls++;
     return ctx.currentCell;
   }
-
+  /* c8 ignore next */
   if (ctx.currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
   const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== ctx.currentCell.connection;
 
@@ -71,6 +71,7 @@ export function step(ctx: Context): Cell | null {
     forwardCell = ctx.board.getOrNull(north);
     leftCell = ctx.board.getOrNull(west);
     rightCell = ctx.board.getOrNull(east);
+  /* c8 ignore next */
   } else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
 
   // If all possible directions are empty, the program is finished.
@@ -84,6 +85,7 @@ export function step(ctx: Context): Cell | null {
   const overrideIndex = ctx.navModeOverrides.shift();
   const index = overrideIndex !== undefined ? overrideIndex : ctx.navMode;
   let mm = navModes[index];
+  if (!mm) throw new DSInvalidNavigationModeError(index);
   if (!Array.isArray(mm)) mm = mm(forwardCell, leftCell, rightCell);
   for (const direction of mm) {
     if (direction === FORWARD && forwardCell && forwardCell.value !== null) return moveIP(ctx, forwardCell);
@@ -92,6 +94,7 @@ export function step(ctx: Context): Cell | null {
   }
 
   if (!ctx.returnStack.isEmpty()) {
+    // We are within a function and there are no valid moves. We need to return to the caller.
     const returnCell = ctx.board.getOrThrow(ctx.returnStack.pop());
     const entryCell = ctx.board.getOrThrow(returnCell.connection);
     ctx.lastCell = entryCell;
@@ -106,11 +109,14 @@ export function step(ctx: Context): Cell | null {
 }
 
 function moveIP(ctx: Context, cell: Cell): Cell {
+  /* c8 ignore next */
   if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to move the IP to a cell without a current cell');
   if (cell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, cell.address);
+  /* c8 ignore next */
   if (ctx.currentCell && ctx.lastCell && ctx.currentCell.address !== -1 && ctx.currentCell === ctx.lastCell) throw new DSInterpreterError('IP address and previous are the same');
   ctx.lastCell = ctx.currentCell;
   ctx.currentCell = cell;
+  ctx.debug.totalSteps++;
   return cell;
 }
 
@@ -122,6 +128,7 @@ function findFirstDomino(ctx: Context): void {
     if (cell.value !== null) {
       ctx.currentCell = cell;
       ctx.isFirstDomino = false;
+      ctx.debug.totalSteps++;
       return;
     }
   }

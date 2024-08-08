@@ -13,13 +13,6 @@ export class DSInvalidGridError extends Error {
   }
 }
 
-export class DSForbiddenCharacterError extends Error {
-  constructor(token: string, line: number, column: number) {
-    super(`Forbidden token '${token}' at line ${line}, column ${column}. Use # to prefix comments`);
-    this.name = 'ForbiddenCharacterError';
-  }
-}
-
 export class DSMultiConnectionError extends Error {
   constructor(line: number, column: number, type: 'Vertical' | 'Horizontal') {
     super(`${type} connection at line ${line}, column ${column} is trying to connect a cell that is already connected`);
@@ -48,13 +41,15 @@ export class DSConnectionToEmptyCellsError extends Error {
   }
 }
 
-// Early on I will be using this error a lot to test things at runtime instead of writing unit tests for things that may likely change.
+// Should not really be possible to occur under normal circumstances unless there is a bug in the interpreter
+/* c8 ignore start */
 export class DSInterpreterError extends Error {
   constructor(message: string) {
     super('Something wrong with the Interpreter: ' + message);
     this.message = 'InterpreterError';
   }
 }
+/* c8 ignore end */
 
 export class DSUnexpectedEndOfInputError extends Error {
   constructor(line: number, column: number) {
@@ -123,5 +118,12 @@ export class DSInvalidInstructionError extends Error {
   constructor(opcode: number) {
     super(`Invalid instruction opcode ${opcode}`);
     this.name = 'InvalidInstructionError';
+  }
+}
+
+export class DSInvalidNavigationModeError extends Error {
+  constructor(mode: number) {
+    super(`Invalid navigation mode ${mode}`);
+    this.name = 'InvalidNavigationModeError';
   }
 }

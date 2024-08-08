@@ -9,7 +9,7 @@ See [previous](002_hello_world_commented.md) example for a simpler version.
 
 ## Opcodes:
 - [**STR**](../readme.md#str) `0—2`
-- [**STROUT**](../readme.md#strout) `5—2`
+- [**STROUT**](../readme.md#strout) `5—3`
 
 ## Pseudo code: 
 ```
