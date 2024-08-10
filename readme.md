@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.0.2`**
+**Current version `0.0.3`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -46,15 +46,10 @@ This repository contains the reference implementation written in TypeScript as w
   - [Basic Three Way](#basic-three-way)
   - [Basic Two Way](#basic-two-way)
   - [Basic One Way](#basic-one-way)
-  - [Rotate Three Way](#rotate-three-way)
-  - [Switch Two Way](#switch-two-way)
-  - [Switch Three Way](#switch-three-way)
-  - [Sequential Switch](#sequential-switch)
-  - [Exclusive FlipFlop](#exclusive-flipflop)
-  - [Inclusive FlipFlop](#inclusive-flipflop)
-  - [Random Three Way](#random-three-way)
-  - [Random Two Way](#random-two-way)
-  - [Random One Way](#random-one-way)
+  - [Cycle Three Way](#cycle-three-way)
+  - [Cycle Two Way](#cycle-two-way)
+  - [Cycle One Way](#cycle-one-way)
+  - [Flip Flop](#flip-flop)
 
 - **[Other References](#other-references)**
   - [Unicode To Domino](#unicode-to-domino-lookup-table)
@@ -801,7 +796,7 @@ Discards the top of the stack.
 
 Switch to "number mode". The first half of the next domino will indicate how many dominos to read as a number. Then the other halfs will all be read as base7 digits (in D6 mode) to form the number that will be pushed to the stack.
 
-With 7 dominos, 13 out of 14 halfs are used for the number. You can theoretically represent a number much larger than the max int32 value. However, if the number exceeds the maximum int32 value, it will wrap around from the minimum value, and vice versa (It will behave e)
+With 7 dominos, 13 out of 14 halfs are used for the number. You can theoretically represent a number much larger than the max int32 value. However, if the number exceeds the maximum int32 value, it will wrap around from the minimum value, and vice versa *(exactly the same as when doing bitwise operations in JS --> `(96889010406 | 0) === -1895237402`)*.
 
 You might think that since internally numbers are int32s, that we parse from base7 to two's complement. That is not the case. We simple push the decimal version of the positive base7 number to the stack
 
@@ -811,14 +806,13 @@ You might think that since internally numbers are int32s, that we parse from bas
 - `1—6 6—6` represents the number `342` in decimal and `666` in base7
 - `2—6 6—6 6—6` represents the number `16,806` in decimal and `6,666` in base7
 - `6—6 6—6 6—6 6—6 6—6 6—6` represents the number `1,977,326,742` in decimal and `66,666,666,666` in base7 (about 92.1% of the max int32 value)
-- `6—0 1—0 4—1 3—4 2—1 1—1 6—1` represents the number` 2,147,483,647` in decimal and `104,134,211,161` in base7 (exactly the max int32 value)
-- `6—6 6—6 6—6 6—6 6—6 6—6 6—6` represents the number -1,895,237,402. **WHY?**: In base7 it is ~45x larger than the max int32 value so it wraps around about that many times before it reaches the final value.
+- `6—0 1—0 4—1 3—4 2—1 1—1 6—1` represents the number `2,147,483,647` in decimal and `104,134,211,161` in base7 (exactly the max int32 value)
+- `6—6 6—6 6—6 6—6 6—6 6—6 6—6` represents the number -1,895,237,402. **WHY?**: The actual decimal number the dominos represent is `96,889,010,406` which is ~45x larger than the max int32 value. It wraps around about that many times before it reaches the final value.
 
 **What if numbers are read from the other direction?**
 - `1—1 1—1`, `2—2 2—2 2—2` for example will be exactly the same numbers (216 in decimal) eastwards and westwards.
 - `1—2 3—1` when parsed backwards is `1—3 2—1` and can therefore represent different numbers if the IP moves to the east or to the west.
 - `1—6 6—6` represents 666 in base7 (342 in decimal) but when parsed backwards the interpreter will raise an `UnexpectedEndOfNumberError`. Remember that the first half of the first domino indicates how many more will follow. In this case it expects to read 6 more dominos but the number ends prematurely after 1 domino.
-
 
 **To push the number 10 and 5 to the stack you would use the following dominos:**
 - In pseudo code: `NUM 10 NUM 5`
@@ -827,7 +821,6 @@ You might think that since internally numbers are int32s, that we parse from bas
   - `1—0 1—3` is the number 13 in base7 which is 10 in decimal
   - `0—1` is NUM again
   - `0—5` is the number 5 in both base7 and decimal
-
 
 **To push the number -10 and -5 to the stack you would use the following dominos:**
 - In pseudo code: `NUM 10 NEG NUM 5 NEG`
@@ -867,17 +860,36 @@ This is how you push the string `"hi!"` to the stack and output it:
 It equals the following pseudo code: `STR "hi!" STROUT`
 
 - `0—2` is the `STR` instruction
-- `1—2 0—4` is the unicode value for the character `h`
-- `1—2 1—0` is the unicode value for the character `i`
-- `0—0 4—5` is the unicode value for the character `!`
+- `1—2 0—6` is the unicode value 105 representing the character `h`
+- `1—2 1—0` is the unicode value 105 representing the character `i`
+- `0—0 4—5` is the unicode value 33 representing the character `!`
 - `0—0` is the unicode value for the NULL character which terminates the string.
 - `5—3` is the [STROUT](#strout) instruction. It will pop items from the stack, parse them as unicode chars and once it encounters the NULL character, it will output the string to stdout all at once.
 
 This is the resulting stack: 
 
+<table>
+<tr>
+<th>Imaginative</th>
+<th>Reality</th>
+</tr>
+<tr>
+<td>
+  
 <pre class="i">
-[..., 0, 45, 213, 210]
+[..., 'NUL', '!', 'i', 'h']
 </pre>
+  
+</td>
+<td>
+
+<pre class="i">
+[..., 0, 33, 105, 104]
+</pre>
+
+</td>
+</tr>
+</table>
 
 Keep in mind that the IP can move in 4 cardinal direction so the following variations would also push the string `"hi!"` to the stack:
 
@@ -1305,100 +1317,129 @@ No operation. The IP will move to the next domino without executing any instruct
 
 *(F=Forward, L=Left, R=Right)*
 
-Navigation modes are bound to respect the [fundamental IP rules](#fundamental-instruction-pointer-rules).
+There are `49` total navigation modes in DominoScript. This section is a reference for all of them.
 
-For some modes the change in flow behaviour is quite subtle. For others it is dramatic or outright insane. I want a good mix of useful, weird, silly and insane modes. This section will list them all. The basic ones you have already seen in the previous section.
-
-The language could end up with hundred or even a thousand movement modes if I want to cover all variations. It will be a mayor pain in the ass to document, implement and test. Probably 95% of usecases could be covered by just a handful of modes. Most of them will be slight variations of a specific concept, which is why they are grouped by categories.
-
-**Categories**
-
-0. [Basic Three Way](#basic-three-way)
-0. [Basic Two Way](#basic-two-way)
-0. [Basic One Way](#basic-one-way)
-0. [Flopper Two Way](#flopper-two-way)
-0. [Flopper One Way](#flopper-one-way)
+- `Basic`: The IP will prioritize moving in specific directions
+  - [Basic Three Way](#basic-three-way)
+  - [Basic Two Way](#basic-two-way)
+  - [Basic One Way](#basic-one-way)
+- `Cycle`: The IP will prioritize moving in specific directions but the priority will change every cycle.
+  - [Cycle Three Way](#cycle-three-way)
+  - [Cycle Two Way](#cycle-two-way)
+  - [Cycle One Way](#cycle-one-way)
+- `Flip Flop`: The IP will alternate between two primary directions.
+  - [Flip Flop](#flip-flop)
 
 ### Basic Three Way
 
 Out of three directions, the IP will prioritize moving to the one with the highest priority.
 
-Index 6 will randomly choose between index 0-5 each time the IP moves to a new domino.
-
-| index | Priorities *(high to low)*     | Domino -> |
-|-------|--------------------------------|------------
-| 0     | `Forward`, `Left`, `Right`     | `0-0`     |
-| 1     | `Forward`, `Right`, `Left`     | `0-1`     |
-| 2     | `Left`, `Forward`, `Right`     | `0-2`     |
-| 3     | `Left`, `Right`, `Forward`     | `0-3`     |
-| 4     | `Right`, `Forward`, `Left`     | `0-4`     |
-| 5     | `Right`, `Left`, `Forward`     | `0-5`     |
-| 6     | `Randomized`                   | `0-6`     |
+| Index | Priorities               | Domino ->  |
+|-------|--------------------------|------------|
+| 0     | `Forward` `Left` `Right` | `0-0`      |
+| 1     | `Forward` `Right` `Left` | `0-1`      |
+| 2     | `Left` `Forward` `Right` | `0-2`      |
+| 3     | `Left` `Right` `Forward` | `0-3`      |
+| 4     | `Right` `Forward` `Left` | `0-4`      |
+| 5     | `Right` `Left` `Forward` | `0-5`      |
+| 6     | `RANDOM`                 | `0-6`      |
 
 ### Basic Two Way
 
 Out of two directions, the IP will prioritize moving to the one with the highest priority.
 
-Index 13 will randomly choose between index 7-12 each time the IP moves to a new domino.
-
-| index | Priorities *(high to low)*     | Domino -> |
-|-------|--------------------------------|------------
-| 7     | `Forward`, `Left`              | `1-0`     |
-| 8     | `Forward`, `Right`             | `1-1`     |
-| 9     | `Left`, `Forward`              | `1-2`     |
-| 10    | `Left`, `Right`                | `1-3`     |
-| 11    | `Right`, `Forward`             | `1-4`     |
-| 12    | `Right`, `Left`                | `1-5`     |
-| 13    | `Randomized`                   | `1-6`     |
+| Index  | Priorities               | Domino -> |
+|--------|--------------------------|-----------|
+| 7      | `Forward` `Left`         | `1-0`     |
+| 8      | `Forward` `Right`        | `1-1`     |
+| 9      | `Left` `Forward`         | `1-2`     |
+| 10     | `Left` `Right`           | `1-3`     |
+| 11     | `Right` `Forward`        | `1-4`     |
+| 12     | `Right` `Left`           | `1-5`     |
+| 13     | `RANDOM`                 | `1-6`     |
 
 ### Basic One Way
 
 IP can only move in one direction.
 
-Index 20 will randomly choose between index 14-19 each time the IP moves to a new domino.
+| Index  | Only Direction           | Domino -> |
+|--------|--------------------------|-----------|
+| 14     | `Forward`                | `2-0`     |
+| 15     | `Forward`                | `2-1`     |
+| 16     | `Left`                   | `2-2`     |
+| 17     | `Left`                   | `2-3`     |
+| 18     | `Right`                  | `2-4`     |
+| 19     | `Right`                  | `2-5`     |
+| 20     | `RANDOM`                 | `2-6`     |
 
-| index | Primary      | Domino -> |
-|-------|--------------|-----------|
-| 14    | `Forward`    | `2-0`     |
-| 15    | `Forward`    | `2-1`     |
-| 16    | `Left`       | `2-2`     |
-| 17    | `Left`       | `2-3`     |
-| 18    | `Right`      | `2-4`     |
-| 19    | `Right`      | `2-5`     |
-| 20    | `Randomized` | `2-6`     |
+### Cycle Three Way
 
-### Flopper Two Way
+The direction with the highest priority becomes the least prioritized in the next cycle.
 
-Out of two directions, the IP will prioritize moving to the one with the highest priority. The priorities will switch each step.
+All 3 directions are available in all cycles.
 
-| index | Flip               | Flop                | Domino -> |
-|-------|--------------------|---------------------|------------
-| 21    | `Forward`, `Left`  | `Left`, `Forward`   | `3-0`     |
-| 22    | `Forward`, `Right` | `Right`, `Forward`  | `3-1`     |
-| 23    | `Left`, `Forward`  | `Forward`, `Left`   | `3-2`     |
-| 24    | `Left`, `Right`    | `Right`, `Left`     | `3-3`     |
-| 25    | `Right`, `Forward` | `Forward`, `Right`  | `3-4`     |
-| 26    | `Right`, `Left`    | `Left`, `Right`     | `3-5`     |
-| 27    | (unmapped)         | (unmapped)          | `3-6`     |
+| Index | Cycle 1     | Cycle 2     | Cycle 3     | Domino -> |
+|-------|-------------|-------------|-------------|-----------|
+| 21    | `F` `L` `R` | `L` `R` `F` | `R` `F` `L` | `3-0`     |
+| 22    | `F` `R` `L` | `R` `F` `F` | `L` `F` `R` | `3-1`     |
+| 23    | `L` `F` `R` | `F` `R` `F` | `R` `L` `F` | `3-2`     |
+| 24    | `L` `R` `F` | `R` `F` `L` | `F` `L` `R` | `3-3`     |
+| 25    | `R` `F` `L` | `F` `L` `R` | `L` `R` `F` | `3-4`     |
+| 26    | `R` `L` `F` | `L` `F` `R` | `F` `R` `L` | `3-5`     |
+| 27    | (unmapped)  | (unmapped)  | (unmapped)  | `3-6`     |
 
-### Flopper One Way
+### Cycle Two Way
 
-| index | Flip        | Flop                | Domino -> |
-|-------|-------------|---------------------|------------
-| 21    | `Forward`   | `Left`       | `4-0`     |
-| 22    | `Forward`   | `Right`      | `4-1`     |
-| 23    | `Left`      | `Forward`    | `4-2`     |
-| 24    | `Left`      | `Right`      | `4-3`     |
-| 25    | `Right`     | `Forward`    | `4-4`     |
-| 26    | `Right`     | `Left`       | `4-5`     |
-| 27    | (unmapped)  | (unmapped)   | `4-6`     |
+The direction with the highest priority becomes the least prioritized in the next cycle.
+
+Only 2 directions are available in a single cycle.
+
+| Index | Cycle 1     | Cycle 2     | Cycle 3     | Domino -> |
+|-------|-------------|-------------|-------------|-----------|
+| 28    | `F` `L`     | `L` `R`     | `R` `F`     | `4-0`     |
+| 29    | `F` `R`     | `R` `F`     | `L` `F`     | `4-1`     |
+| 30    | `L` `F`     | `F` `R`     | `R` `L`     | `4-2`     |
+| 31    | `L` `R`     | `R` `F`     | `F` `L`     | `4-3`     |
+| 32    | `R` `F`     | `F` `L`     | `L` `R`     | `4-4`     |
+| 33    | `R` `L`     | `L` `F`     | `F` `R`     | `4-5`     |
+| 34    | (unmapped)  | (unmapped)  | (unmapped)  | `4-6`     |
+
+### Cycle One Way
+
+The direction with the highest priority becomes the least prioritized in the next cycle.
+
+Only 1 direction is available in a single cycle.
+
+| Index | Cycle 1     | Cycle 2     | Cycle 3     | Domino -> |
+|-------|-------------|-------------|-------------|-----------|
+| 35    | `F`         | `L`         | `R`         | `5-0`     |
+| 36    | `F`         | `R`         | `L`         | `5-1`     |
+| 37    | `L`         | `F`         | `R`         | `5-2`     |
+| 38    | `L`         | `R`         | `F`         | `5-3`     |
+| 39    | `R`         | `F`         | `L`         | `5-4`     |
+| 40    | `R`         | `L`         | `F`         | `5-5`     |
+| 41    | (unmapped)  | (unmapped)  | (unmapped)  | `5-6`     |
+
+### Flip Flop
+
+The priority flip flops between 2 primary directions.
+
+| Index  | Flip       | Flop       | Domino -> |
+|--------|------------|------------|-----------|
+| 42     | `F`        | `L`        | `6-0`     |
+| 43     | `F`        | `R`        | `6-1`     |
+| 44     | `L`        | `F`        | `6-2`     |
+| 45     | `L`        | `R`        | `6-3`     |
+| 46     | `R`        | `F`        | `6-4`     |
+| 47     | `R`        | `L`        | `6-5`     |
+| 48     | (unmapped) | (unmapped) | `6-6`     |
 
 
 <br>
 
 ## Other References:
 
-### Unicode to domino Lookup Table
+### Unicode to Domino Lookup Table
 
 Wiith DominoScript you can output unicode characters to the console. Here is a lookup table for the ASCII range.
 

@@ -1,9 +1,15 @@
+import {DSInvalidLabelError, DSInvalidNavigationModeError} from '../errors.js';
 import {Context} from '../Context.js';
-import {DSInvalidLabelError} from '../errors.js';
+import {navModes} from '../navModes.js';
 
 export function NAVM(ctx: Context): void {
   const index = ctx.stack.pop();
   ctx.navMode = index;
+  const mode = navModes[index];
+  if (!mode) throw new DSInvalidNavigationModeError(index);
+  if (!Array.isArray(mode)) {
+    ctx.navModeNeedsReset = true;
+  }
 }
 
 export function BRANCH(ctx: Context): void {

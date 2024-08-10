@@ -240,63 +240,123 @@ describe('NavigationModes', () => {
     });
   });
 
-  describe('Flopper Two Way', () => {
-    it('should flip priority with each move: [FORWARD, LEFT] <--> [LEFT, FORWARD]', () => {
+  describe('Cycle Three Way', () => {
+    it('should cycle priority: [FORWARD, LEFT, RIGHT]', () => {
       const ctx = createRunner(getCode('1-0 3-0')).run();
-      testResult(ctx, coordsToAddress(21, 4), coordsToAddress(21, 3), 12, 28);
+      testResult(ctx, coordsToAddress(1, 12), coordsToAddress(0, 12), 17, 38);
     });
-    it('should flip priority with each move: [FORWARD, RIGHT] <--> [RIGHT, FORWARD]', () => {
+    it('should cycle priority: [FORWARD, RIGHT, LEFT]', () => {
       const ctx = createRunner(getCode('1-0 3-1')).run();
-      testResult(ctx, coordsToAddress(9, 4), coordsToAddress(9, 3), 12, 28);
+      testResult(ctx, coordsToAddress(24, 11), coordsToAddress(24, 12), 14, 32);
     });
-    it('should flip priority with each move: [LEFT, FORWARD] <--> [FORWARD, LEFT]', () => {
+    it('should cycle priority: [LEFT, FORWARD, RIGHT]', () => {
       const ctx = createRunner(getCode('1-0 3-2')).run();
+      testResult(ctx, coordsToAddress(5, 6), coordsToAddress(5, 5), 13, 30);
+    });
+    it('should cycle priority: [LEFT, RIGHT, FORWARD]', () => {
+      const ctx = createRunner(getCode('1-0 3-3')).run();
       testResult(ctx, coordsToAddress(16, 9), coordsToAddress(17, 9), 9, 22);
     });
-    it('should flip priority with each move: [LEFT, RIGHT] <--> [RIGHT, LEFT]', () => {
-      const ctx = createRunner(getCode('1-0 3-3')).run();
-      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
-    });
-    it('should flip priority with each move: [RIGHT, FORWARD] <--> [FORWARD, RIGHT]', () => {
+    it('should cycle priority: [RIGHT, FORWARD, LEFT]', () => {
       const ctx = createRunner(getCode('1-0 3-4')).run();
+      testResult(ctx, coordsToAddress(25, 6), coordsToAddress(25, 5), 13, 30);
+    });
+    it('should cycle priority: [RIGHT, LEFT, FORWARD]', () => {
+      const ctx = createRunner(getCode('1-0 3-5')).run();
       testResult(ctx, coordsToAddress(14, 9), coordsToAddress(13, 9), 9, 22);
     });
-    it('should flip priority with each move: [RIGHT, LEFT] <--> [LEFT, RIGHT]', () => {
-      const ctx = createRunner(getCode('1-0 3-5')).run();
-      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
-    });
     it('should throw an InvalidNavigationModeError', () => {
-      throws(() => createRunner(getCode('1-0 3-6')).run(), DSInvalidNavigationModeError);
+      throws(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
     });
   });
 
-  describe('Flopper One Way', () => {
-    it('should flip priority with each move: [FORWARD] <--> [LEFT]', () => {
+  describe('Cycle Two Way', () => {
+    it('should cycle priority: [FORWARD, LEFT] -> [LEFT, RIGHT] -> [RIGHT, FORWARD]', () => {
       const ctx = createRunner(getCode('1-0 4-0')).run();
       testResult(ctx, coordsToAddress(13, 0), coordsToAddress(14, 0), 3, 10);
     });
-    it('should flip priority with each move: [FORWARD] <--> [RIGHT]', () => {
+    it('should cycle priority: [FORWARD, RIGHT] -> [RIGHT, LEFT] -> [LEFT, FORWARD]', () => {
       const ctx = createRunner(getCode('1-0 4-1')).run();
       testResult(ctx, coordsToAddress(13, 0), coordsToAddress(14, 0), 3, 10);
     });
-    it('should flip priority with each move: [LEFT] <--> [FORWARD]', () => {
+    it('should cycle priority: [LEFT, FORWARD] -> [FORWARD, RIGHT] -> [RIGHT, LEFT]', () => {
       const ctx = createRunner(getCode('1-0 4-2')).run();
-      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+      testResult(ctx, coordsToAddress(15, 0), coordsToAddress(15, 1), 4, 12);
     });
-    it('should flip priority with each move: [LEFT] <--> [RIGHT]', () => {
+    it('should cycle priority: [LEFT, RIGHT] -> [RIGHT, FORWARD] -> [FORWARD, LEFT]', () => {
       const ctx = createRunner(getCode('1-0 4-3')).run();
       testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
     });
-    it('should flip priority with each move: [RIGHT] <--> [FORWARD]', () => {
+    it('should cycle priority: [RIGHT, FORWARD] -> [FORWARD, LEFT] -> [LEFT, RIGHT]', () => {
       const ctx = createRunner(getCode('1-0 4-4')).run();
-      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+      testResult(ctx, coordsToAddress(15, 0), coordsToAddress(15, 1), 4, 12);
     });
-    it('should flip priority with each move: [RIGHT] <--> [LEFT]', () => {
+    it('should cycle priority: [RIGHT, LEFT] -> [LEFT, FORWARD] -> [FORWARD, RIGHT]', () => {
       const ctx = createRunner(getCode('1-0 4-5')).run();
       testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
     });
     it('should throw an InvalidNavigationModeError', () => {
-      throws(() => createRunner(getCode('1-0 4-6')).run(), DSInvalidNavigationModeError);
+      throws(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
+    });
+  });
+
+  describe('Cycle One Way', () => {
+    it('should cycle primary direction: [FORWARD] -> [LEFT] -> [RIGHT]', () => {
+      const ctx = createRunner(getCode('1-0 5-0')).run();
+      testResult(ctx, coordsToAddress(13, 0), coordsToAddress(14, 0), 3, 10);
+    });
+    it('should cycle primary: [FORWARD] -> [RIGHT] -> [LEFT]', () => {
+      const ctx = createRunner(getCode('1-0 5-1')).run();
+      testResult(ctx, coordsToAddress(13, 0), coordsToAddress(14, 0), 3, 10);
+    });
+    it('should cycle primary: [LEFT] -> [FORWARD] -> [RIGHT]', () => {
+      const ctx = createRunner(getCode('1-0 5-2')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should cycle primary: [LEFT] -> [RIGHT] -> [FORWARD]', () => {
+      const ctx = createRunner(getCode('1-0 5-3')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should cycle primary: [RIGHT] -> [FORWARD] -> [LEFT]', () => {
+      const ctx = createRunner(getCode('1-0 5-4')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should cycle primary: [RIGHT] -> [LEFT] -> [FORWARD]', () => {
+      const ctx = createRunner(getCode('1-0 5-5')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should throw an InvalidNavigationModeError', () => {
+      throws(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
+    });
+  });
+
+  describe('FlipFlop', () => {
+    it('should flip priority with each move: [FORWARD] <--> [LEFT]', () => {
+      const ctx = createRunner(getCode('1-0 6-0')).run();
+      testResult(ctx, coordsToAddress(13, 0), coordsToAddress(14, 0), 3, 10);
+    });
+    it('should flip priority with each move: [FORWARD] <--> [RIGHT]', () => {
+      const ctx = createRunner(getCode('1-0 6-1')).run();
+      testResult(ctx, coordsToAddress(13, 0), coordsToAddress(14, 0), 3, 10);
+    });
+    it('should flip priority with each move: [LEFT] <--> [FORWARD]', () => {
+      const ctx = createRunner(getCode('1-0 6-2')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should flip priority with each move: [LEFT] <--> [RIGHT]', () => {
+      const ctx = createRunner(getCode('1-0 6-3')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should flip priority with each move: [RIGHT] <--> [FORWARD]', () => {
+      const ctx = createRunner(getCode('1-0 6-4')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should flip priority with each move: [RIGHT] <--> [LEFT]', () => {
+      const ctx = createRunner(getCode('1-0 6-5')).run();
+      testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
+    });
+    it('should throw an InvalidNavigationModeError', () => {
+      throws(() => createRunner(getCode('1-0 6-6')).run(), DSInvalidNavigationModeError);
     });
   });
 });

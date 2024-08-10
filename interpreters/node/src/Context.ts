@@ -9,6 +9,7 @@ export interface Context {
   stack: Stack;
   returnStack: Stack; // to know where to go back after a CALL
 
+  navModeNeedsReset: boolean;
   navMode: number;
   navModeOverrides: number[];
 
@@ -50,6 +51,7 @@ export function createContext(source: string): Context {
     board: new Board(source),
     stack: new Stack(256),
     returnStack: new Stack(256),
+    navModeNeedsReset: false,
     navMode: 0,
     navModeOverrides: [],
     labels: {},

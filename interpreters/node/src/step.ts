@@ -86,7 +86,10 @@ export function step(ctx: Context): Cell | null {
   const index = overrideIndex !== undefined ? overrideIndex : ctx.navMode;
   let mm = navModes[index];
   if (!mm) throw new DSInvalidNavigationModeError(index);
-  if (!Array.isArray(mm)) mm = mm(forwardCell, leftCell, rightCell);
+  if (!Array.isArray(mm)) {
+    mm = mm(ctx.navModeNeedsReset, forwardCell, leftCell, rightCell);
+    ctx.navModeNeedsReset = false;
+  }
   for (const direction of mm) {
     if (direction === FORWARD && forwardCell && forwardCell.value !== null) return moveIP(ctx, forwardCell);
     else if (direction === LEFT && leftCell && leftCell.value !== null) return moveIP(ctx, leftCell);

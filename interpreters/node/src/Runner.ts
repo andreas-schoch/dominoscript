@@ -29,8 +29,15 @@ function run(ctx: Context): Context {
     ctx.debug.totalInstructionExecution[instruction.name] = (ctx.debug.totalInstructionExecution[instruction.name] || 0) + 1;
     instruction(ctx);
   }
+
   ctx.debug.executionTimeSeconds = (performance.now() - start) / 1000;
-  // console.debug('\n\n DEBUG INFO:');
+  console.debug('\n\n DEBUG INFO:');
+  console.debug(ctx.debug);
+  // console.debug('\n currentCell:', ctx.currentCell);
+  // console.debug('\n lastCell:', ctx.lastCell);
+  // const y = Math.floor((ctx.currentCell?.address || 0) / ctx.board.grid.width);
+  // const x = (ctx.currentCell?.address || 0) % ctx.board.grid.width;
+  // console.debug('\n currentCell x:', x, 'y:', y);
   return ctx;
 }
 

@@ -869,6 +869,18 @@ If I were to make a game engine I would implement all higher level functionality
 I think this ties multiple concepts up in a fairly elegant way and allows 3rd party extensions to be used like they are part of the language itself.
 
 
+## How to do something exactly 10 times per second
+
+DominoScript atm doesn't have a way to do that. Currently I can only think of the following ways to do it:
+- Measure how long it takes to do something N times in a loop. If 1 mio "somethings is roughly a second, then you can scale it down to like  90k somethings in a loop doing nothing but wait and break out of it to do actual things. You'd measure how long these "actual things" take and scale the wait time accordingly. Here assuming 10k somethings we are doing something before returning to the wait loop. This is obviously a very wasteful way. You essentially don't do anything for 90% of the time.
+
+- Provide external functionality using the JS API. You can create an external label which maps a js function that returns the current time. Within DS you can CALL that function using the label. Now you can have a loop you can treat like an event loop. where you check the last time the "tick" was executed. and jump to it after 100ms have passed.
+
+I cannot think of other ways. The second way is probably so useful that it should be part of the language itself. With a TIME instruction alone the language suddenly gains the ability to do game loops at constant 60fps, timers, delays, timeouts, events, input polling interupts etc.
+
+The implementation itself of something like an "event loop" would still be up to the dev. I think the most important thing is to add an ability to tell how much time has passed.
+
+
 <style>
   /* dominoscript looks a bit more readable when slightly styled */
     .ds {

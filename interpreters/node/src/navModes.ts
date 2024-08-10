@@ -5,7 +5,7 @@ export type PriorityDirection = 'Primary' | 'Secondary' | 'Tertiary';
 export type CardinalDirection = 'north' | 'east' | 'south' | 'west';
 export type RelativeDirection = 0 | 1 | 2; // 0 = forward, 1 = left, 2 = right
 export type NavModeMapping = [RelativeDirection, RelativeDirection?, RelativeDirection?];
-export type NavModeGetter = (forward: Cell | null, left: Cell | null, right: Cell | null) => NavModeMapping;
+export type NavModeGetter = (needsReset: boolean, forward: Cell | null, left: Cell | null, right: Cell | null) => NavModeMapping;
 
 export const FORWARD = 0;
 export const LEFT = 1;
@@ -30,7 +30,9 @@ const B1W_LEFT: NavModeMapping = [LEFT];
 const B1W_RIGHT: NavModeMapping = [RIGHT];
 
 export const navModes: (NavModeMapping | NavModeGetter)[] = [
-  // Basic Three Way
+  /***************************/
+  /** Basic Three Way (0-6) **/
+  /***************************/
   B3W_FORWARD_LEFT_RIGHT,
   B3W_FORWARD_RIGHT_LEFT,
   B3W_LEFT_FORWARD_RIGHT,
@@ -50,7 +52,9 @@ export const navModes: (NavModeMapping | NavModeGetter)[] = [
     default: throw new DSInterpreterError('Random number out of range');
     }
   },
-  // Basic Two Way
+  /**************************/
+  /** Basic Two Way (7-13) **/
+  /**************************/
   B2W_FORWARD_LEFT,
   B2W_FORWARD_RIGHT,
   B2W_LEFT_FORWARD,
@@ -70,7 +74,9 @@ export const navModes: (NavModeMapping | NavModeGetter)[] = [
     default: throw new DSInterpreterError('Random number out of range');
     }
   },
-  // Basic One Way
+  /***************************/
+  /** Basic One Way (14-20) **/
+  /***************************/
   B1W_FORWARD,
   B1W_FORWARD,
   B1W_LEFT,
@@ -90,46 +96,77 @@ export const navModes: (NavModeMapping | NavModeGetter)[] = [
     default: throw new DSInterpreterError('Random number out of range');
     }
   },
-  // Flopper Two Way
-  Flopper2WayFactory(B2W_FORWARD_LEFT, B2W_LEFT_FORWARD),
-  Flopper2WayFactory(B2W_FORWARD_RIGHT, B2W_RIGHT_FORWARD),
-  Flopper2WayFactory(B2W_LEFT_FORWARD, B2W_FORWARD_LEFT),
-  Flopper2WayFactory(B2W_LEFT_RIGHT, B2W_RIGHT_LEFT),
-  Flopper2WayFactory(B2W_RIGHT_FORWARD, B2W_FORWARD_RIGHT),
-  Flopper2WayFactory(B2W_RIGHT_LEFT, B2W_LEFT_RIGHT),
+  /*******************************/
+  /** Rotator Three Way (21-27) **/
+  /*******************************/
+  SwitcherFactory(B3W_FORWARD_LEFT_RIGHT, B3W_LEFT_RIGHT_FORWARD, B3W_RIGHT_FORWARD_LEFT),
+  SwitcherFactory(B3W_FORWARD_RIGHT_LEFT, B3W_RIGHT_LEFT_FORWARD, B3W_LEFT_FORWARD_RIGHT),
+  SwitcherFactory(B3W_LEFT_FORWARD_RIGHT, B3W_FORWARD_RIGHT_LEFT, B3W_RIGHT_LEFT_FORWARD),
+  SwitcherFactory(B3W_LEFT_RIGHT_FORWARD, B3W_RIGHT_FORWARD_LEFT, B3W_FORWARD_LEFT_RIGHT),
+  SwitcherFactory(B3W_RIGHT_FORWARD_LEFT, B3W_FORWARD_LEFT_RIGHT, B3W_LEFT_RIGHT_FORWARD),
+  SwitcherFactory(B3W_RIGHT_LEFT_FORWARD, B3W_LEFT_FORWARD_RIGHT, B3W_FORWARD_RIGHT_LEFT),
   () => {throw new DSInvalidNavigationModeError(27);},
-  // Flopper One Way
-  Flopper1WayFactory(B1W_FORWARD, B1W_LEFT),
-  Flopper1WayFactory(B1W_FORWARD, B1W_RIGHT),
-  Flopper1WayFactory(B1W_LEFT, B1W_FORWARD),
-  Flopper1WayFactory(B1W_LEFT, B1W_RIGHT),
-  Flopper1WayFactory(B1W_RIGHT, B1W_FORWARD),
-  Flopper1WayFactory(B1W_RIGHT, B1W_LEFT),
-  () => {throw new DSInvalidNavigationModeError(34);}
-
+  /*****************************/
+  /** Rotator Two Way (28-34) **/
+  /*****************************/
+  SwitcherFactory(B2W_FORWARD_LEFT, B2W_LEFT_RIGHT, B2W_RIGHT_FORWARD),
+  SwitcherFactory(B2W_FORWARD_RIGHT, B2W_RIGHT_LEFT, B2W_LEFT_FORWARD),
+  SwitcherFactory(B2W_LEFT_FORWARD, B2W_FORWARD_RIGHT, B2W_RIGHT_LEFT),
+  SwitcherFactory(B2W_LEFT_RIGHT, B2W_RIGHT_FORWARD, B2W_FORWARD_LEFT),
+  SwitcherFactory(B2W_RIGHT_FORWARD, B2W_FORWARD_LEFT, B2W_LEFT_RIGHT),
+  SwitcherFactory(B2W_RIGHT_LEFT, B2W_LEFT_FORWARD, B2W_FORWARD_RIGHT),
+  () => {throw new DSInvalidNavigationModeError(34);},
+  /*****************************/
+  /** Rotator One Way (35-41) **/
+  /*****************************/
+  SwitcherFactory(B1W_FORWARD, B1W_LEFT, B1W_RIGHT),
+  SwitcherFactory(B1W_FORWARD, B1W_RIGHT, B1W_LEFT),
+  SwitcherFactory(B1W_LEFT, B1W_FORWARD, B1W_RIGHT),
+  SwitcherFactory(B1W_LEFT, B1W_RIGHT, B1W_FORWARD),
+  SwitcherFactory(B1W_RIGHT, B1W_FORWARD, B1W_LEFT),
+  SwitcherFactory(B1W_RIGHT, B1W_LEFT, B1W_FORWARD),
+  () => {throw new DSInvalidNavigationModeError(41);},
+  /***********************/
+  /** Flip Flop (42-48) **/
+  /***********************/
+  FlopperFactory(B1W_FORWARD, B1W_LEFT),
+  FlopperFactory(B1W_FORWARD, B1W_RIGHT),
+  FlopperFactory(B1W_LEFT, B1W_FORWARD),
+  FlopperFactory(B1W_LEFT, B1W_RIGHT),
+  FlopperFactory(B1W_RIGHT, B1W_FORWARD),
+  FlopperFactory(B1W_RIGHT, B1W_LEFT),
+  () => {throw new DSInvalidNavigationModeError(48);},
 ];
 
-function Flopper2WayFactory(flip: NavModeMapping, flop: NavModeMapping): NavModeGetter {
-  /* c8 ignore start */
-  if (flip[0] !== flop[1]) throw new Error('Primary direction of flip must be the same as the secondary direction of flop');
-  if (flip[1] !== flop[0]) throw new Error('Primary direction of flop must be the same as the secondary direction of flip');
-  if (flip[2] || flop[2]) throw new Error('Flip and flop must only have two directions');
-  /* c8 ignore end */
-  let current: NavModeMapping;
-  return () => {
-    current = current === flip ? flop : flip;
-    return current;
+function SwitcherFactory(cycle1: NavModeMapping, cycle2: NavModeMapping ,cycle3: NavModeMapping): NavModeGetter {
+  let i = 0;
+  return (needsReset) => {
+    if (needsReset) i = 0;
+    const mod = i++ % 3;
+    switch (mod) {
+    case 0: return cycle1;
+    case 1: return cycle2;
+    case 2: return cycle3;
+    /* c8 ignore next */
+    default: throw new DSInterpreterError('Modulus out of range');
+    }
   };
 }
 
-function Flopper1WayFactory(flip: NavModeMapping, flop: NavModeMapping): NavModeGetter {
+function FlopperFactory(flip: NavModeMapping, flop: NavModeMapping): NavModeGetter {
   /* c8 ignore start */
   if (flip[0] === flop[0]) throw new Error('Primary direction of flip cannot be the same as the primary direction of flop');
   if (flip[1] || flop[1] || flip[2] || flop[2]) throw new Error('Flip and flop must only have one direction');
   /* c8 ignore end */
   let current: NavModeMapping;
-  return () => {
-    current = current === flip ? flop : flip;
+  return (needsReset) => {
+
+    if (needsReset) current = flip;
+    else if (current === flip) current = flop;
+    else current = flip;
     return current;
   };
 }
+
+/* c8 ignore next */
+if (navModes.length !== 49) throw new DSInterpreterError('Incorrect number of navigation modes:' + navModes.length);
