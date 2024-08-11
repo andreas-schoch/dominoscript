@@ -115,7 +115,7 @@ export class DSFullStackError extends Error {
 }
 
 export class DSInvalidInstructionError extends Error {
-  constructor(opcode: number) {
+  constructor(opcode: number | null) {
     super(`Invalid instruction opcode ${opcode}`);
     this.name = 'InvalidInstructionError';
   }

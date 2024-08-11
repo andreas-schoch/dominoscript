@@ -6,6 +6,7 @@ import {DUP, NUM, POP, ROTL, STR, SWAP} from './StackManipulations.js';
 import {GET, NOOP, SET} from './Misc.js';
 import {NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
+import {DSInvalidInstructionError} from '../errors.js';
 
 export type Instruction = (ctx: Context) => void;
 
@@ -76,5 +77,5 @@ export const instructionsByOpcode: Instruction[] = [
 ];
 
 export function INVALID(_ctx: Context) {
-  throw new Error('Invalid instruction');
+  throw new DSInvalidInstructionError(_ctx.lastOpcode);
 }

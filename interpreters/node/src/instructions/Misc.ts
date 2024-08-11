@@ -2,10 +2,10 @@ import {Cell, CellValue} from '../Board.js';
 import {Context} from '../Context.js';
 import {DSInterpreterError} from '../errors.js';
 
+// TODO consider using param to determine how to parse it: opcode, number or string 
 export function GET(ctx: Context): void {
   const address = ctx.stack.pop();
-  const cell = ctx.board.getOrNull(address);
-  if (!cell) return ctx.stack.push(-1);
+  const cell = ctx.board.getOrThrow(address);
   const value = parseDominoValue(ctx, cell);
   ctx.stack.push(value);
 }
@@ -28,8 +28,8 @@ export function SET(ctx: Context): void {
   /* c8 ignore next */
   else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
 
-  const cellValue = value % ctx.base as CellValue;
-  const otherCellValue = Math.floor(value / ctx.base) as CellValue;
+  const cellValue = Math.floor(value / ctx.base) as CellValue;
+  const otherCellValue = value % ctx.base as CellValue;
   ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
 }
 

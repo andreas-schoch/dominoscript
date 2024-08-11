@@ -16,7 +16,7 @@ This repository contains the reference implementation written in TypeScript as w
 *Feel free to open issues for clarification requests, feature suggestions, bugs etc. I am grateful for any interest and help in eliminating bugs, edgecases and improve the documentation but be warned that I will probably not accept any major pull requests for the reference interpreter until it matures into a stable version. That being said, I'd love for people to make their own Interpreters or Compilers and will link to all of them. Just be warned about potential breaking changes this early on!*
 
 <div style="text-align: center; margin: 3rem 0;">
-  <img style="aspect-ratio: 1;" src="docs/dominoscript-logo.png" alt="Domino" width="450" height="450">
+  <img style="aspect-ratio: 1;" src="docs/dominoscript-logo.png" alt="Domino" width="450">
 </div>
 
 ## Table of Contents
@@ -694,7 +694,7 @@ Here are the pattern and some examples:
 
 **The below code results in the number 6 being pushed and popped of the stack:**
 <pre class="ds i">
-0—1 0—6 6—6
+0—1 0—6 0—0
 </pre>
 
 - `0—1` is the `NUM` instruction (**PATTERN 1**)
