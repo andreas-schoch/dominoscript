@@ -776,8 +776,7 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 |  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [LSL](#lsl) | [LSR](#lsr) | [ASR](#asr) | [Bitwise](#bitwise) |
 |  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [_](#reserved_4_5) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
-|  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [_](#reserved_6_4) | [_](#reserved_6_5) | [NOOP](#noop) | [Misc](#misc) |
-
+|  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [_](#reserved_6_4) | [TIME](#time) | [NOOP](#noop) | [Misc](#misc) |
 
 
 <h3 id="stack-management">Stack Management</h3>
@@ -1299,17 +1298,19 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
-#### `RESERVED_6_5`
+#### `TIME`
 <img src="assets/horizontal/6-5.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Pushes the milliseconds since program start to the stack.
+
+Useful for things like a gameloop, animations, cooldowns etc.
 
 #### `NOOP`
 <img src="assets/horizontal/6-6.png" alt="Domino" width="128">
 
 No operation. The IP will move to the next domino without executing any instruction.
 
- Any "reserved" opcode which isn't mapped to an instruction will be a NOOP but this is the only one that should be used as such to ensure program compatibility with future versions of the interpreter when reserved opcodes are mapped to new instructions.
+*If you have 10 NOOPs in a row it will do 10 steps without doing anything. Over time, the interpreter **may** optimize this and do an implicit jump to the end of the NOOP chain when it things you are within a loop and the navigation mode doesn't change*
 
 <br>
 

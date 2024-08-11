@@ -36,7 +36,6 @@ describe('Misc', () => {
       const ds = createRunner('0-1 1-6 6-6 6-0');
       throws(() => ds.run(), DSAddressError);
     });
-
   });
 
   describe('SET', () => {
@@ -58,6 +57,22 @@ describe('Misc', () => {
       strictEqual(ctx.board.grid.cells[20].value, 6);
       strictEqual(ctx.board.grid.cells[21].value, 3);
       strictEqual(ctx.board.grid.cells[22].value, 2);
+    });
+    it('should empty an existing domino when value argument is -1', () => {
+      // NUM -1 NUM 20 SET
+      const ds = createRunner('0-1 0-1 1-5 0-1 1-0 2-6 6-1 . . . . . . 6-3 . . . .');
+      const ctx = ds.run();
+
+      strictEqual(ctx.board.grid.cells[20].value, null);
+      strictEqual(ctx.board.grid.cells[21].value, null);
+    });
+    it('should empty an existing domino when value argument is -1 and addressing from the other side', () => {
+      // NUM -1 NUM 21 SET
+      const ds = createRunner('0-1 0-1 1-5 0-1 1-0 3-0 6-1 . . . . . . 6-3 . . . .');
+      const ctx = ds.run();
+
+      strictEqual(ctx.board.grid.cells[20].value, null);
+      strictEqual(ctx.board.grid.cells[21].value, null);
     });
     it('should correctly delete previous connection when setting 1 non-empty and 1 empty cell', () => {
       // NUM 48 NUM 21 SET 
@@ -129,9 +144,28 @@ describe('Misc', () => {
     });
   });
 
+  describe('TIME', () => {
+    it('should give you the time since programm start in ms', () => {
+      const originalNow = Date.now;
+      let first = true;
+      Date.now = () => {
+        if (first) {
+          first = false;
+          return 50;
+        }
+        return 150;
+      };
+      const ds = createRunner('6-5');
+      const ctx = ds.run();
+      Date.now = originalNow;
+      const time = ctx.stack.pop();
+      strictEqual(time, 100);
+    });
+  });
+
   describe('INVALID', () => {
     it('should throw an error when an invalid instruction is encountered', () => {
-      const ds = createRunner('6-5');
+      const ds = createRunner('0-6');
       throws(() => ds.run(), DSInvalidInstructionError);
     });
   });

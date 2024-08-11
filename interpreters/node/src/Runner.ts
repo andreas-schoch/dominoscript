@@ -23,16 +23,18 @@ export function createRunner(source: string): DominoScriptRunner {
 
 function run(ctx: Context): Context {
   const start = performance.now();
+  ctx.info.timeStartMs = Date.now();
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
     const instruction = instructionsByOpcode[opcode];
-    ctx.debug.totalInstructions++;
-    ctx.debug.totalInstructionExecution[instruction.name] = (ctx.debug.totalInstructionExecution[instruction.name] || 0) + 1;
+    ctx.info.totalInstructions++;
+    ctx.info.totalInstructionExecution[instruction.name] = (ctx.info.totalInstructionExecution[instruction.name] || 0) + 1;
     instruction(ctx);
   }
 
-  ctx.debug.executionTimeSeconds = (performance.now() - start) / 1000;
+  ctx.info.timeEndMs = Date.now();
+  ctx.info.executionTimeSeconds = (performance.now() - start) / 1000;
   console.debug('\n\n DEBUG INFO:');
-  console.debug(ctx.debug);
+  console.debug(ctx.info);
   // console.debug('\n currentCell:', ctx.currentCell);
   // console.debug('\n lastCell:', ctx.lastCell);
   // const y = Math.floor((ctx.currentCell?.address || 0) / ctx.board.grid.width);

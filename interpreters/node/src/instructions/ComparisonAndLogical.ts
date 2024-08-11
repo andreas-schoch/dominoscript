@@ -1,28 +1,28 @@
 import {Context} from '../Context.js';
 
-export function NOT(ctx: Context) {
+export function NOT(ctx: Context): void {
   ctx.stack.push(ctx.stack.pop() === 0 ? 1 : 0);
 }
 
-export function AND(ctx: Context) {
+export function AND(ctx: Context): void {
   const b = ctx.stack.pop();
   const a = ctx.stack.pop();
   ctx.stack.push(a && b ? 1 : 0);
 }
 
-export function OR(ctx: Context) {
+export function OR(ctx: Context): void {
   const b = ctx.stack.pop();
   const a = ctx.stack.pop();
   ctx.stack.push(a || b ? 1 : 0);
 }
 
-export function EQL(ctx: Context) {
+export function EQL(ctx: Context): void {
   const b = ctx.stack.pop();
   const a = ctx.stack.pop();
   ctx.stack.push(a === b ? 1 : 0);
 }
 
-export function GTR(ctx: Context) {
+export function GTR(ctx: Context): void {
   const b = ctx.stack.pop();
   const a = ctx.stack.pop();
   ctx.stack.push(a > b ? 1 : 0);

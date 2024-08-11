@@ -3,7 +3,7 @@ import {AND, EQL, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
 import {BRANCH, CALL, JUMP, LABEL, NAVM} from './ContrlFlow.js';
 import {DUP, NUM, POP, ROTL, STR, SWAP} from './StackManipulations.js';
-import {GET, NOOP, SET} from './Misc.js';
+import {GET, NOOP, SET, TIME} from './Misc.js';
 import {NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
 import {DSInvalidInstructionError} from '../errors.js';
@@ -72,10 +72,10 @@ export const instructionsByOpcode: Instruction[] = [
   INVALID,
   INVALID,
   INVALID,
-  INVALID,
+  TIME,
   NOOP
 ];
 
-export function INVALID(_ctx: Context) {
+export function INVALID(_ctx: Context): void {
   throw new DSInvalidInstructionError(_ctx.lastOpcode);
 }

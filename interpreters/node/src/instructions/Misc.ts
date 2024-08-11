@@ -1,6 +1,6 @@
 import {Cell, CellValue} from '../Board.js';
+import {DSInterpreterError, DSInvalidValueError} from '../errors.js';
 import {Context} from '../Context.js';
-import {DSInterpreterError} from '../errors.js';
 
 // TODO consider using param to determine how to parse it: opcode, number or string 
 export function GET(ctx: Context): void {
@@ -13,10 +13,12 @@ export function GET(ctx: Context): void {
 export function SET(ctx: Context): void {
   /* c8 ignore next */
   if (!ctx.currentCell || !ctx.lastCell) throw new DSInterpreterError('Not possible to call SET without the IP having moved before');
+
   const address = ctx.stack.pop();
   const value = ctx.stack.pop();
-
   const cell = ctx.board.getOrThrow(address);
+
+  if (value < -1) throw new DSInvalidValueError(value, ctx.lastOpcode);
 
   let otherCell: Cell;
   // Here we check the last cardinal direction of the IP to determine where to put the second half of the set domino
@@ -28,9 +30,18 @@ export function SET(ctx: Context): void {
   /* c8 ignore next */
   else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
 
-  const cellValue = Math.floor(value / ctx.base) as CellValue;
-  const otherCellValue = value % ctx.base as CellValue;
-  ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
+  if (value === -1) {
+    ctx.board.set(address, null, otherCell.address, null);
+  } else {
+    const cellValue = Math.floor(value / ctx.base) as CellValue;
+    const otherCellValue = value % ctx.base as CellValue;
+    ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
+  }
+}
+
+export function TIME(ctx: Context): void {
+  const delta = Date.now() - ctx.info.timeStartMs;
+  ctx.stack.push(delta);
 }
 
 export function NOOP(_ctx: Context): void {

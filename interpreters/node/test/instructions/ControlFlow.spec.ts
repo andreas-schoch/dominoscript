@@ -79,13 +79,13 @@ describe('ControlFlow', () => {
     it('should jump by address', () => {
       const ds = createRunner('0-1 1-0 2-4 4-3 . . 6-6 6-1 1-0 . . 0-1 1-0 2-1 4-3');
       const ctx = ds.run();
-      strictEqual(ctx.debug.totalJumps, 2, 'should have jumped twice');
+      strictEqual(ctx.info.totalJumps, 2, 'should have jumped twice');
       strictEqual(ctx.stack.peek(), 342, 'should have pushed 342 to the stack by the end');
     });
     it('should jump by label', () => {
       const ds = createRunner('0-1 1-0 3-2 4-2 0-1 0-1 1-5 4-3 . . 6-6 6-1 1-0');
       const ctx = ds.run();
-      strictEqual(ctx.debug.totalJumps, 1, 'should have jumped once');
+      strictEqual(ctx.info.totalJumps, 1, 'should have jumped once');
       strictEqual(ctx.stack.peek(), 342, 'should have pushed 342 to the stack by the end');
     });
     it('should throw StepToEmptyCellError when jumping to empty cell', () => {
@@ -115,8 +115,8 @@ describe('ControlFlow', () => {
       const ds = createRunner('0-1 1-0 2-3 4-4 6-6 . . 6-6 6-1 1-0');
       const ctx = ds.run();
 
-      strictEqual(ctx.debug.totalCalls, 1, 'should have called once');
-      strictEqual(ctx.debug.totalReturns, 1, 'should have returned once');
+      strictEqual(ctx.info.totalCalls, 1, 'should have called once');
+      strictEqual(ctx.info.totalReturns, 1, 'should have returned once');
       strictEqual(ctx.stack.peek(), 342, 'should have pushed 342 to the stack by the end');
       strictEqual(ctx.lastCell?.address, 8, 'should have continued stepping after return');
       strictEqual(ctx.currentCell?.address, 9, 'should have continued stepping after return');
@@ -124,7 +124,7 @@ describe('ControlFlow', () => {
     it('should call by label and return', () => {
       const ds = createRunner('0-1 1-0 3-4 4-2 0-1 0-1 1-5 4-4 6-6 . . 6-6 6-1 1-0');
       const ctx = ds.run();
-      strictEqual(ctx.debug.totalCalls, 1, 'should have called once');
+      strictEqual(ctx.info.totalCalls, 1, 'should have called once');
       strictEqual(ctx.stack.peek(), 342, 'should have pushed 342 to the stack by the end');
       strictEqual(ctx.lastCell?.address, 16, 'should have continued stepping after return');
       strictEqual(ctx.currentCell?.address, 17, 'should have continued stepping after return');

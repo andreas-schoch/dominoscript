@@ -42,6 +42,7 @@ export class Board {
   }
 
   set(addressA: Address, valueA: CellValue, addressB: Address, valueB: CellValue): void {
+    /* c8 ignore next */
     if (addressA === addressB) throw new DSInterpreterError('Cannot connect a cell to itself');
 
     const cellA = this.getOrThrow(addressA);
@@ -65,17 +66,5 @@ export class Board {
     cellB.value = valueB;
     cellA.connection = addressB;
     cellB.connection = addressA;
-  }
-
-  setEmpty(address: Address): void {
-    if (this.grid.cells[address].value === null) return; // already empty
-    const cellA = this.grid.cells[address];
-    /* c8 ignore next */
-    if (cellA.connection === null) throw new DSInterpreterError('A non-empty cell did not have a connection! This should never happen');
-    const cellB = this.grid.cells[cellA.connection];
-    cellA.value = null;
-    cellA.connection = -1;
-    cellB.value = null;
-    cellB.connection = -1;
   }
 }

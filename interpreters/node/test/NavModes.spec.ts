@@ -8,7 +8,7 @@ function coordsToAddress(x: number, y: number, width = 31): number {
   return y * width + x;
 }
 
-function getCode(mode: string) {
+function getCode(mode: string): string {
   return dedent(`\
     . . . . . 0—1 ${mode} 4—0 6—6 6 . . . . . . 6 . . . . . . . .
                                   |             |                
@@ -41,11 +41,11 @@ function getCode(mode: string) {
     . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .`);
 }
 
-function testResult(ctx: Context, lastCell: number, currentCell: number, totalInstructions: number, totalSteps: number) {
+function testResult(ctx: Context, lastCell: number, currentCell: number, totalInstructions: number, totalSteps: number): void {
   strictEqual(ctx.lastCell?.address, lastCell, 'expected to move in different directions');
   strictEqual(ctx.currentCell?.address, currentCell, 'expected to move in different directions');
-  strictEqual(ctx.debug.totalInstructions, totalInstructions, 'expected this amount of instructions to be executed');
-  strictEqual(ctx.debug.totalSteps, totalSteps, 'expected this amount of steps to be made');
+  strictEqual(ctx.info.totalInstructions, totalInstructions, 'expected this amount of instructions to be executed');
+  strictEqual(ctx.info.totalSteps, totalSteps, 'expected this amount of steps to be made');
 }
 
 describe('NavigationModes', () => {

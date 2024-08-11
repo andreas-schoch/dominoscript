@@ -28,7 +28,9 @@ export interface Context {
   onStdout: (cb: (msg: string) => void) => void;
   // stderr: (msg: string) => void;
   // onStderr: (cb: (msg: string) => void) => void;
-  debug: {
+  info: {
+    timeStartMs: number;
+    timeEndMs: number;
     executionTimeSeconds: number;
     totalInstructions: number;
     totalSteps: number;
@@ -65,7 +67,9 @@ export function createContext(source: string): Context {
     onStdout: (cb) => listeners.stdout = cb,
     // stderr: msg => listeners.stderr(msg),
     // onStderr: (cb) => listeners.stderr = cb,
-    debug: {
+    info: {
+      timeStartMs: 0,
+      timeEndMs: 0,
       executionTimeSeconds: 0,
       totalInstructions: 0,
       totalSteps: 0,

@@ -127,3 +127,10 @@ export class DSInvalidNavigationModeError extends Error {
     this.name = 'InvalidNavigationModeError';
   }
 }
+
+export class DSInvalidValueError extends Error {
+  constructor(value: number, opcode: number | null) {
+    super(`Invalid value ${value} for opcode ${opcode}`);
+    this.name = 'InvalidValueError';
+  }
+}

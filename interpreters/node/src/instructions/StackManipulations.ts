@@ -28,7 +28,7 @@ function parseNum(ctx: Context): number {
 }
 
 // Pushes 1 number to the stack using up to 7 dominoes
-export function NUM(ctx: Context) {
+export function NUM(ctx: Context): void {
   const number = parseNum(ctx);
   ctx.stack.push(number);
 }

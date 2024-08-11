@@ -1,4 +1,4 @@
-export function dedent(str: string) {
+export function dedent(str: string): string {
   // Remove indentation that is not part of a DominoScript string
   // Only to be used for test strings.
   const lines = str.split('\n');

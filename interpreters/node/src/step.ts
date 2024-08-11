@@ -21,7 +21,7 @@ export function step(ctx: Context): Cell | null {
     if (nextCell.address === ctx.currentCell.connection || nextCell.address === ctx.currentCell.address) throw new DSJumpToItselfError(nextCell.address);
     ctx.currentCell = nextCell;
     ctx.nextJumpAddress = null;
-    ctx.debug.totalJumps++;
+    ctx.info.totalJumps++;
     return ctx.currentCell;
   }
 
@@ -34,7 +34,7 @@ export function step(ctx: Context): Cell | null {
     ctx.returnStack.push(ctx.currentCell.address);
     ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
     ctx.nextCallAddress = null;
-    ctx.debug.totalCalls++;
+    ctx.info.totalCalls++;
     return ctx.currentCell;
   }
   /* c8 ignore next */
@@ -102,7 +102,7 @@ export function step(ctx: Context): Cell | null {
     const entryCell = ctx.board.getOrThrow(returnCell.connection);
     ctx.lastCell = entryCell;
     ctx.currentCell = returnCell;
-    ctx.debug.totalReturns++;
+    ctx.info.totalReturns++;
     return step(ctx);
   }
 
@@ -119,7 +119,7 @@ function moveIP(ctx: Context, cell: Cell): Cell {
   if (ctx.currentCell && ctx.lastCell && ctx.currentCell.address !== -1 && ctx.currentCell === ctx.lastCell) throw new DSInterpreterError('IP address and previous are the same');
   ctx.lastCell = ctx.currentCell;
   ctx.currentCell = cell;
-  ctx.debug.totalSteps++;
+  ctx.info.totalSteps++;
   return cell;
 }
 
@@ -131,7 +131,7 @@ function findFirstDomino(ctx: Context): void {
     if (cell.value !== null) {
       ctx.currentCell = cell;
       ctx.isFirstDomino = false;
-      ctx.debug.totalSteps++;
+      ctx.info.totalSteps++;
       return;
     }
   }

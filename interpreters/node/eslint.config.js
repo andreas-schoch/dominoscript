@@ -28,6 +28,9 @@ export default tseslint.config(
       '@stylistic/no-trailing-spaces': ['error', {ignoreComments: true}],
       '@stylistic/nonblock-statement-body-position': ['error', 'beside'],
       '@stylistic/quote-props': ['error', 'as-needed'],
+      '@typescript-eslint/explicit-function-return-type': ['error', {
+        allowExpressions: true,
+      }],
       '@typescript-eslint/no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
