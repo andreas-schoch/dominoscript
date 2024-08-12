@@ -1628,6 +1628,8 @@ A list of examples to help you understand the language better.
 7. [Call function by address](./examples/007_calling_functions_by_address.md)
 8. [Call function by label](./examples//008_calling_functions_by_label.md)
 9. [Recursion: Factorial](./examples/009_recursive_factorial.md)
+10. [Navigation Mode changes](./examples/010_navigation_mode_changes.md)
+11. [Basic game loop](./examples/011_basic_game_loop.md)
 
 
 <style>

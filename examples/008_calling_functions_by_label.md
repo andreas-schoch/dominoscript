@@ -19,7 +19,7 @@ We map addresses 40 and 80 to labels -1 and -2 respectively.
 
 We define functions that double and triple the number on top of the stack. Then we call them by label and print the result. which should be `9000`.
 
-```
+```js
 NUM 40 LABEL
 NUM 80 LABEL
 NUM 1500
@@ -27,15 +27,13 @@ NUM 1 NEG CALL
 NUM 2 NEG CALL
 NUMOUT
 
-FUNCTION DOUBLE (address 40, label -1)
+FUNCTION DOUBLE: // (address 40, label -1)
   NUM 2
   MUL
-END
 
-FUNCTION TRIPLE (address 80, label -2)
+FUNCTION TRIPLE: // (address 80, label -2)
   NUM 3
   MUL
-END
 ```
 
 

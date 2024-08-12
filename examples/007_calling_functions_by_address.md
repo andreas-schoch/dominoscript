@@ -16,21 +16,19 @@ This example shows how to call functions by address.
 ## Pseudocode:
 We define functions that double and triple the number on top of the stack. Then we call them by address and print the result. which should be 9000.
 
-```
+```js
 NUM 1500
 NUM 40 CALL
 NUM 80 CALL
 NUMOUT
 
-FUNCTION DOUBLE (address 40)
+FUNCTION DOUBLE: // (address 40)
   NUM 2
   MUL
-END
 
-FUNCTION TRIPLE (address 80)
+FUNCTION TRIPLE: // (address 80)
   NUM 3
   MUL
-END
 ```
 
 

@@ -19,22 +19,20 @@ Example 009 - Factorial Recursion
 ## Pseudocode:
 We define a recursive function that calculates the factorial of a number. We call it with 12 and print the result, which should be `479001600`
 
-```
+```js
 NUM 12
 NUM 42 CALL
 NUMOUT
 
-FUNCTION FACTORIAL (address 42)
+FUNCTION FACTORIAL: // (address 42)
   DUP NUM 0 EQ
-  IF
+  IF:
     POP
     NUM 1
-  ELSE
+  ELSE:
     DUP NUM 1 SUB
     NUM 42 CALL 
     MUL
-  END
-END
 ```
 
 ## DominoScript:

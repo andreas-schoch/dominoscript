@@ -12,7 +12,7 @@ See [previous](002_hello_world_commented.md) example for a simpler version.
 - [**STROUT**](../readme.md#strout) `5—3`
 
 ## Pseudo code: 
-```
+```js
 STR "hello world" STROUT
 ```
 

@@ -16,7 +16,7 @@ This is the most simple hello world example you can make in DominoScript as it i
 - [**STROUT**](../readme.md#strout) `5—3`
 
 ## Pseudo code: 
-```
+```js
 STR "hello world" STROUT
 ```
 
