@@ -34,7 +34,7 @@ FUNCTION TRIPLE: // (address 80)
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—1 2—0 4—2 4—2 0—1 1—0 5—5 4—4 0—1 1—1
                                        
 . . . . . . . . . . . . . . . . . . . 4
@@ -46,8 +46,7 @@ FUNCTION TRIPLE: // (address 80)
 0—1 0—3 1—2 . . . . . . . . . . . . . 4
                                        
 . . . . . . . . . . . . . . . . . . 1—5
-
-</pre>
+```
 
 ## Notes:
 It is important to know the grid size to know the address of the functions. Here it is 20 cells wide and 6 cells tall.
@@ -61,8 +60,3 @@ At no point in the code do we actually "define" a function. A function in DS is 
 > A `CALL` is just a jump with implicit jump back once IP cannot move anymore.
 
 See [next example](008_calling_functions_by_label.md) to see how to call functions by label.
-
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

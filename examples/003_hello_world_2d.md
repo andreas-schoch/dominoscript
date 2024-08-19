@@ -18,7 +18,7 @@ STR "hello world" STROUT
 
 ## DominoScript:
 
-<pre class="ds">
+```
 . . . . . . . . . . . . . . .
                              
 . . . . . . . . 0—2 1 . 0—3 .
@@ -36,7 +36,7 @@ STR "hello world" STROUT
 . 2 0—2 0 . . . . . . . . . .
         |                    
 . . . . 0 5—3 . . . . . . . .
-</pre>
+```
 
 
 
@@ -55,7 +55,3 @@ To learn more, take a look at [How navigation modes work](../readme.md#how-navig
 
 
 Also see [how the Instruction Pointer Moves](../readme.md#how-the-instruction-pointer-moves). It will become crucial to understand where the IP will move when you have less gaps in the grid and dominos are side by side.
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

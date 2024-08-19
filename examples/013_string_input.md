@@ -18,7 +18,7 @@ STR "'\n" STROUT
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—2 1—1 4—3 1—2 1—3 1—2 0—3 1—1 6—6 1—2 2—3 1—2 0—3 1—0 4—4 1—2
                                                                
 2—1 4—4 0—1 6—6 1—1 4—4 0—1 2—2 2—1 3—0 2—1 4—2 2—1 5—1 2—1 3—0
@@ -32,10 +32,6 @@ STR "'\n" STROUT
 . . . 5 0—0 3—1 0—1 4—5 0—1 2—0 3—5 3—5 0—0 4—5 0—1 4—4 0 . . .
       |                                                        
 . . . 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-</pre>
+```
 
 ## Notes:
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

@@ -41,7 +41,7 @@ STR "DONE!!\n" STROUT
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—1 1—0 5—2 0—1 0—0 0—1 1—0 6—5 0—3 0—1 1—0 2—0 0—4 6—6 6—6 6—6 6—6
                                                                    
 0 4 6 6 3 0 3 1 2 1 3 1 2 1 6 1 3 1 4 1 6 1 3 1 3 1 3 1 2 1 2 6 6 4
@@ -63,7 +63,7 @@ STR "DONE!!\n" STROUT
 0 4 2 3 1 1 6 3 1 1 4 5 1 1 5 3 1 1 3 5 2 2 1 1 1 2 0 1 5 1 0 6 6 5
 | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
 0 0 0 2 1 1 3 6 1 0 4 3 1 1 4 6 1 0 1 3 0 5 1 1 4 6 1 0 4 3 0 6 6 3
-</pre>
+```
 
 ## Notes:
 
@@ -71,7 +71,3 @@ You can see repeating patterns in how dominos are laid out here. That doesn't ne
 
 
 See [how navigation modes work](../readme.md#how-navigation-modes-work) for more information.
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 2px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

@@ -39,7 +39,7 @@ Within the loop we do exactly the same as in the previous examples. The differen
 
 ## DominoScript:
 
-<pre class="ds">
+```
 . 0—1 1—1 6 . . . . . . . . . . . . . . . . . . . . . . .
           |                                              
 . . . . . 0 . . . . . . . . . . . . . . . 3—4 5—1 1—0 1 .
@@ -53,14 +53,8 @@ Within the loop we do exactly the same as in the previous examples. The differen
 . . . . . . . . 5 0—0 6—2 1—1 1—4 1—1 2—4 1—1 5—2 1—1 2 .
                 |                                        
 . . . . . . . . 3 . . . . . . . . . . . . . . . . . . . .
-</pre>
+```
 
 ## Notes:
 
 The `JUMP` is not the only instruction that can use labels. `CALL`, `GET` and `SET` can also make use of them. Basically any instruction that requires an address can also use a label instead.
-
-
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 2px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

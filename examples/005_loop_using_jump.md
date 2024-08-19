@@ -36,7 +36,7 @@ Before the loop we push a number to the stack to act as index. Each iteration we
 
 ## DominoScript:
 
-<pre class="ds">
+```
 . 0 . . . . . . . . . . . . . . . . . . . . . . . . . . .
   |                                                      
 . 1 . . . . . . . . . . . . . . . . . . . 3—4 0—6 1—1 1 .
@@ -50,12 +50,8 @@ Before the loop we push a number to the stack to act as index. Each iteration we
 . . . . . . . . 5 0—0 6—2 1—1 1—4 1—1 2—4 1—1 5—2 1—1 2 .
                 |                                        
 . . . . . . . . 3 . . . . . . . . . . . . . . . . . . . .
-</pre>
+```
 
 ## Notes:
 
 The JUMP instruction works with both direct addressing and labels. See [next example](006_loop_using_jump_and_label.md) for how to use labels.
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 2px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

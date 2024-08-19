@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.0.3`**
+**Current version `0.0.4`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -15,9 +15,9 @@ This repository contains the reference implementation written in TypeScript as w
 
 *Feel free to open issues for clarification requests, feature suggestions, bugs etc. I am grateful for any interest and help in eliminating bugs, edgecases and improve the documentation but be warned that I will probably not accept any major pull requests for the reference interpreter until it matures into a stable version. That being said, I'd love for people to make their own Interpreters or Compilers and will link to all of them. Just be warned about potential breaking changes this early on!*
 
-<div style="text-align: center; margin: 3rem 0;">
+<p align="center">
   <img style="aspect-ratio: 1;" src="docs/dominoscript-logo.png" alt="Domino" width="450">
-</div>
+</p>
 
 ## Table of Contents
 - **[Core Concepts](#core-concepts)**
@@ -176,7 +176,7 @@ Bla bla bla
 
 When the source code is parsed it ignores everything except the actual code:
 
-<pre class="ds i">
+```
 . . . . . . . .
 
 . 6 6 6—6 6 6 .
@@ -188,7 +188,7 @@ When the source code is parsed it ignores everything except the actual code:
 . 6—6 6—6 6—6 .
 
 . . . . . . . . 
-</pre>
+```
 
 Which is the equivalent of these dominos:
 
@@ -205,7 +205,7 @@ The grid doesn't have to be a square but it must have a consistent number of col
 <tr>
 <td>
   
-<pre class="ds i">
+```
 . . . . . . . .
 
 . . . . . . . .
@@ -213,12 +213,12 @@ The grid doesn't have to be a square but it must have a consistent number of col
 . . . . . . . .
 
 . . . . . . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
  . . . . . . .
 
 . . . . . . . .
@@ -226,7 +226,7 @@ The grid doesn't have to be a square but it must have a consistent number of col
 . . . . .
 
 . . .  . . . .
-</pre>
+```
 
 </td>
 </tr>
@@ -242,24 +242,24 @@ Connecting to a domino half which is already connected results in `MultiConnecti
 <tr>
 <td>
 
-<pre class="ds i">
+```
 6—6 6—6 .
 
 6 6—6 . .
 |
 6 . . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
 6—6—6—6 .
 
 6—6 . . .
 |
 6 . . . .
-</pre>
+```
 
 </td>
 </tr>
@@ -276,24 +276,24 @@ Having a domino half that is not connected to anything results in `MissingConnec
 <tr>
 <td>
 
-<pre class="ds i">
+```
 . . 6—6 .
 
 . 6 . . .
   |
 . 6 . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . 6 6 .
 
 . 6 . . .
    
 . 6 . . .
-</pre>
+```
 
 </td>
 </tr>
@@ -309,24 +309,24 @@ Having a connection where 1 or both ends are empty results in a `ConnectionToEmp
 <tr>
 <td>
 
-<pre class="ds i">
+```
 6—6 . 6—6
 
 6 . . . 6
 |       |
 6 . . . 6
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
 6—. . .—6
 
 6 . . . .
 |       |
 . . . . 6
-</pre>
+```
 
 </td>
 </tr>
@@ -352,9 +352,16 @@ When the IP encounters a [STR](#str) instruction, it will parse the next dominos
 You can use any instruction on characters of a "string" but most of them will not distinguish between what is a number and a character. There are only 3 instructions which are specifically for handling strings: [STR](#str), [STRIN](#strin), [STROUT](#strout).
 
 For convenience and clarity in examples I will often represent unicode characters like this:
-<pre class="i">[..., 'NUL', 's', 'e', 'y']</pre>
+
+```
+[..., 'NUL', 's', 'e', 'y']
+```
+
 But in reality the stack will store them as integers and look like this:
-<pre class="i">[..., 0, 115, 101, 121]</pre>
+
+```
+[..., 0, 115, 101, 121]
+```
 
 ### How to represent floating point numbers
 
@@ -426,68 +433,68 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 <tr>
 <td>
 
-<pre class="ds i">
+```
 . 2 . . .
   |
 . 2 . . .
 
-<span class="current-domino">5—6</span> 1—1 .
+5—6 1—1 .
 
 . 3 . . .
   |
 . 3 . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . . 3 .
       |
 . . . 3 .
 
-. 1—1 <span class="current-domino">6—5</span>
+. 1—1 6—5
 
 . . . 2 .
       |
 . . . 2 .
-</pre>
+```
 
 </td>
 <td>
 
-<pre class="ds i">
-. . <span class="current-domino">5</span> . .
-    <span class="current-domino">|</span>
-3—3 <span class="current-domino">6</span> 2—2
+```
+. . 5 . .
+    |
+3—3 6 2—2
 
 . . 1 . .
     |
 . . 1 . .
 
 . . . . .
-</pre>
+```
 
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . . . .
 
 . . 1 . .
     |
 . . 1 . .
 
-2—2 <span class="current-domino">6</span> 3—3
-    <span class="current-domino">|</span>
-. . <span class="current-domino">5</span> . .
-</pre>
+2—2 6 3—3
+    |
+. . 5 . .
+```
 
 </td>
 </tr>
 </table>
 
-*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript. The <span style="color: salmon;">red</span> color is just for show (Colors unfortunately not visible with githubs markdown viewer. TODO replace with images)*
+*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript.)*
 
 - `index 0` the IP will move to `1—1` (Primary, Forward)
 - `index 1` the IP will move to `1—1` (Primary, Forward)
@@ -510,62 +517,62 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 <tr>
 <td>
 
-<pre class="ds i">
+```
 . 2 . . .
   |
 . 2 . . .
 
-<span class="current-domino">5—6</span> . . .
+5—6 . . .
 
 . 3 . . .
   |
 . 3 . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . . 3 .
       |
 . . . 3 .
 
-. . . <span class="current-domino">6—5</span>
+. . . 6—5
 
 . . . 2 .
       |
 . . . 2 .
-</pre>
+```
 
 </td>
 <td>
 
-<pre class="ds i">
-. . <span class="current-domino">5</span> . .
-    <span class="current-domino">|</span>
-3—3 <span class="current-domino">6</span> 2—2
+```
+. . 5 . .
+    |
+3—3 6 2—2
 
 . . . . .
      
 . . . . .
 
 . . . . .
-</pre>
+```
 
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . . . .
 
 . . . . .
      
 . . . . .
 
-2—2 <span class="current-domino">6</span> 3—3
-    <span class="current-domino">|</span>
-. . <span class="current-domino">5</span> . .
-</pre>
+2—2 6 3—3
+    |
+. . 5 . .
+```
 
 </td>
 </tr>
@@ -592,62 +599,62 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 <tr>
 <td>
 
-<pre class="ds i">
+```
 . . . . .
    
 . . . . .
 
-<span class="current-domino">5—6</span> . . .
+5—6 . . .
 
 . 3 . . .
   |
 . 3 . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . . 3 .
       |
 . . . 3 .
 
-. . . <span class="current-domino">6—5</span>
+. . . 6—5
 
 . . . . .
        
 . . . . .
-</pre>
+```
 
 </td>
 <td>
 
-<pre class="ds i">
-. . <span class="current-domino">5</span> . .
-    <span class="current-domino">|</span>
-3—3 <span class="current-domino">6</span> . .
+```
+. . 5 . .
+    |
+3—3 6 . .
 
 . . . . .
      
 . . . . .
 
 . . . . .
-</pre>
+```
 
 </td>
 <td>
 
-<pre class="ds i">
+```
 . . . . .
 
 . . . . .
      
 . . . . .
 
-. . <span class="current-domino">6</span> 3—3
-    <span class="current-domino">|</span>
-. . <span class="current-domino">5</span> . .
-</pre>
+. . 6 3—3
+    |
+. . 5 . .
+```
 
 </td>
 </tr>
@@ -693,9 +700,9 @@ Here are the pattern and some examples:
 > It will decide how many more dominos will be part of the argument before the next instruction is executed. 
 
 **The below code results in the number 6 being pushed and popped of the stack:**
-<pre class="ds i">
+```
 0—1 0—6 0—0
-</pre>
+```
 
 - `0—1` is the `NUM` instruction (**PATTERN 1**)
 - `0—6` is the argument for NUM
@@ -704,9 +711,9 @@ Here are the pattern and some examples:
 - `0—0` is the next instruction. We know that because the first half of previous domino told us that no more dominos will be part of the argument. (see **PATTERN 2**)
 
 **The below code results in the number 1000 being pushed and popped off the stack:**
-<pre class="ds i">
+```
 0—1 2—0 2—6 2—6 0—0
-</pre>
+```
 
 - `0—1` is the `NUM` instruction (see **PATTERN 1**)
 - `2—0 2—6 2—6` is the argument for NUM representing 1000 in base7
@@ -729,9 +736,9 @@ Here are the pattern and some examples:
 > It indicates the the string is complete and will be pushed to the stack and that next domino will be a new instruction.
 
 **The below code results in the string "abc" being pushed to the stack.**
-<pre class="ds i">
+```
 0—2 1—1 6—6 1—2 0—0 1—2 0—1 0—0 0—1 0—6 0—0
-</pre>
+```
 - `0—2` is the `STR` instruction
 - `1—1 6—6` is the unicode value for "a"
 - `1—2 0—0` is the unicode value for "b"
@@ -754,11 +761,11 @@ The patterns are universal for all cardinal directions the Instruction Pointer c
 
 I only showed examples where the IP moves from left to right but you have to understand that the same domino can either mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
 
-<pre class="ds i">
+```
 0—1 . 1-0 . 1 . 0 . . .
             |   |
 . . . . . . 0 . 1 . . .
-</pre>
+```
 
 <br>
 
@@ -852,9 +859,9 @@ Only once the interpreter does encounter the NULL character, will it push the ch
 *(Note: I decided to parse strings like this because I wanted a single int32 based stack and, out of all options I could think of, this one felt the least annoying. If you can think of better ways, I am open for suggestions!)*
 
 This is how you push the string `"hi!"` to the stack and output it:
-<pre class="ds i">
+```
 0—2 1—2 0—6 1—2 1—0 1-0 4—5 0—0 5—3
-</pre>
+```
 
 It equals the following pseudo code: `STR "hi!" STROUT`
 
@@ -875,16 +882,16 @@ This is the resulting stack:
 <tr>
 <td>
   
-<pre class="i">
+```
 [..., 'NUL', '!', 'i', 'h']
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="i">
+```
 [..., 0, 33, 105, 104]
-</pre>
+```
 
 </td>
 </tr>
@@ -893,12 +900,12 @@ This is the resulting stack:
 Keep in mind that the IP can move in 4 cardinal direction so the following variations would also push the string `"hi!"` to the stack:
 
 IP moves right to left:
-<pre class="ds i">
+```
 3—5 0—0 5—4 0-1 0—1 2—1 6—0 2—1 2—0
-</pre>
+```
 
 IP moves in multiple directions:
-<pre class="ds i">
+```
 0 . . . . 0 4—5
 |         |
 2 . . . . 1 . 0
@@ -906,7 +913,7 @@ IP moves in multiple directions:
 1 . . 2 1—0 . 0
 |     | 
 2 0—6 1 . . 3-5
-</pre>
+```
 
 #### `DUPE`
 <img src="assets/horizontal/0-3.png" alt="Domino" width="128">
@@ -1067,31 +1074,31 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
 
 **Here we push 1 to the stack which will cause the IP to move <ins>LEFT</ins>:**
 
-<pre class="ds i">
-. . . . . <span style="color:yellow;">6</span> . .
-          <span style="color:yellow;">|</span>
-. . . . . <span style="color:yellow;">6</span> . .
+```
+. . . . . 6 . .
+          |
+. . . . . 6 . .
 
-<span style="color:yellow;">0-1 0-1 4-1</span> . .
+0-1 0-1 4-1 . .
           
 . . . . . X . .
           |
 . . . . . X . .
-</pre>
+```
 
 **Here we push 0 to the stack which will cause the IP to move <ins>RIGHT</ins>:**
 
-<pre class="ds i">
+```
 . . . . . X . .
           |
 . . . . . X . .
 
-<span style="color:yellow;">0-1 0-0 4-1</span> . .
+0-1 0-0 4-1 . .
           
-. . . . . <span style="color:yellow;">6</span> . .
-          <span style="color:yellow;">|</span>
-. . . . . <span style="color:yellow;">6</span> . .
-</pre>
+. . . . . 6 . .
+          |
+. . . . . 6 . .
+```
 
 #### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
@@ -1166,15 +1173,15 @@ Prompt the user for a string. The user input will be pushed to the stack as indi
 
 So if the user inputs `"yes"`, the stack will look like this:
 
-<pre class="i">
+```
 [..., 0, 115, 101, 121]
-</pre>
+```
 
 For convenience you might often see the stack represented  But remember that in reality it just stores int32s.
 
-<pre class="i">
+```
 [..., 'NUL' 's', 'e', 'y']
-</pre>
+```
 
 
 #### `STROUT`
@@ -1236,33 +1243,33 @@ For example here we have a 10x3 grid:
 <tr>
 <td>
   
-<pre class="ds i">
-<span style="color: red;">0—1 1—0 6—0</span> <span style="color: green;">0—1 1—0</span>
+```
+0—1 1—0 6—0 0—1 1—0
                   
-. . . . <span style="color: yellow;">1—6</span> <span style="color: green;">6—1 0—1</span>
+. . . . . . 1—6 0—1
 
 . . . . . . . . . .
-</pre>
+```
   
 </td>
 <td>
 
-<pre class="ds i">
-<span style="color: red;">0—1 1—0 6—0</span> <span style="color: green;">0—1 1—0</span>
+```
+0—1 1—0 6—0 0—1 1—0
                   
-. . 0—6 <span style="color: yellow;">1—6</span> <span style="color: green;">6—1 0—1</span>
+. . 0—6 . . 1—6 0—1
 
 . . . . . . . . . .
-</pre>
+```
 
 </td>
 </tr>
 </table>
 
 **What has happened?:**
-- We push the number 42 to the stack <span style="color: red;">(marked in red)
-- We push the number 13 to the stack <span style="color: green;">(marked in green)</span>
-- We execute the `SET` instruction <span style="color: yellow;">(marked in yellow)</span>
+- `0—1 1—0 6—0` We push the number 42 to the stack
+- `0—1 1—0 1—0` We push the number 13 to the stack *(last domino wraps around on second line)*
+- `6—1` We execute the `SET` instruction
   - it pops 13 for the address
   - it pops 42 for the value
 
@@ -1270,8 +1277,6 @@ For example here we have a 10x3 grid:
 
 
 <ins>But why is the set domino "backwards"?</ins> Because the IP was moving to the west when `SET` was executed. Remember that the IP can move in all 4 cardinal directions, so there is no "backwards" or "forwards" in the traditional sense. The address argument indicates the first cell only. The other one depends on the direction the IP is moving.
-
-*(You might have noticed that the new domino was placed right after the `SET` instruction domino. So the IP will now move to the now domino which is a `GET` instruction from this direction. It will result in an StackUnderflowError because it tries to pop an address from an empty stack.)*
 
 <br>
 
@@ -1630,35 +1635,5 @@ A list of examples to help you understand the language better.
 9. [Recursion: Factorial](./examples/009_recursive_factorial.md)
 10. [Navigation Mode changes](./examples/010_navigation_mode_changes.md)
 11. [Basic game loop](./examples/011_basic_game_loop.md)
-
-
-<style>
-  /* dominoscript looks a bit more readable when slightly styled */
-    .ds {
-      position: relative;
-      line-height: 1.25;
-      letter-spacing: 5px;
-      border: 1px solid gray;
-      /* margin-bottom: 2.5rem; */
-    }
-
-    .i {
-      display: inline-block;
-    }
-
-    .side-by-side {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .side-by-side .title {
-      flex: 1;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .current-domino {
-      color: salmon;
-    }
-
-</style>
+12. [Number Input](./examples/012_number_input.md)
+13. [String Input](./examples/013_string_input.md)

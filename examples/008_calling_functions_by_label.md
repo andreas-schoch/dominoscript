@@ -39,7 +39,7 @@ FUNCTION TRIPLE: // (address 80, label -2)
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—1 1—0 5—5 4—2 0—1 1—1 4—3 4—2 0—1 2—0
                                        
 . . . . . . . . 4—4 5—1 1—0 1—0 2—4 2—4
@@ -51,7 +51,7 @@ FUNCTION TRIPLE: // (address 80, label -2)
 0—1 0—3 1—2 . . . . . . . . 5 . . . . .
                             |          
 . . . . . . . . . . . . . . 1 . . . . .
-</pre>
+```
 
 ## Notes:
 You can call functions wither by label or by address. Labels are resolved to addresses before being pushed to the return stack.
@@ -62,8 +62,3 @@ You can call functions wither by label or by address. Labels are resolved to add
 <br>
 
 See the [factorial example](009_recursive_factorial.md) for recursive function calls.
-
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

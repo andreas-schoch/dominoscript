@@ -68,7 +68,7 @@ function main() {
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—1 0—0 6—5 0—3 6—5 0—4 1—1 0—1 2—0 0—5 0—1 2—4 4 . . .
                                                 |      
 . . . . . . 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 1 0—0 6
@@ -82,11 +82,7 @@ function main() {
 . . . 6 3—5 0—0 3—1 0—1 2—0 4—0 1—5 3—0 4—0 3—5 0—0 4—4
       |                                                
 . . . 6 . . . . . . . . . . . . . . . . . . . . . . . .
-</pre>
+```
 
 ## Notes:
 This is kept minimal to show the concept. Future examples will expand on this. TODO
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

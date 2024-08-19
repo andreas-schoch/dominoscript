@@ -22,9 +22,9 @@ STR "hello world" STROUT
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0 5—3
-</pre>
+```
 
 ## Notes:
 
@@ -33,7 +33,3 @@ You can also add comments below the script. But not inbetween it.
 *(I might support commenting inbetween in the future so you can divide the code into multiple blocks with the same width. That would be very useful for larger projects since DominoScript itself isn't very readable)*
 
 [See next example](./003_hello_world_2d.md) for a more complex hello world example.
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

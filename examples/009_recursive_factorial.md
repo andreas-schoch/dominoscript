@@ -37,7 +37,7 @@ FUNCTION FACTORIAL: // (address 42)
 
 ## DominoScript:
 
-<pre class="ds">
+```
 0—1 . . . . . 1—0 1—0 0 . . . 2—1 4—4 0
                       |               |
 0—1 . . . . . . . . . 0 . . . . . . . 6
@@ -47,7 +47,7 @@ FUNCTION FACTORIAL: // (address 42)
 5 . . . . . . . . . . 0 . . . . . . . 1
                       |                
 0—1 1—0 6—0 4—4 5—1 . 3 0—1 0—1 1—1 0—1
-</pre>
+```
 
 ## Notes:
 Internally DominoScript maintains a return stack containing the int32 address to return to. The size is limited and preallocated in advance *(maybe uint32 since addresses are all positive and labels are resolved to addresses before pushed to return stack)*
@@ -55,7 +55,3 @@ Internally DominoScript maintains a return stack containing the int32 address to
 You can perform recursive calls but only up to a limited depth *(Not sure yet what the max depth will be by default, but for now assume 512 as max. Might be configurable.)*
 
 > *Also note that the result of `factorial(12)` is the largest one that fits in an int32 without overflowing. `Factorial(13)` would overflow and return a number that is not the factorial of 13 but ---> 1932053504 - If you create your own implementation of DominoScript, keep that in mind*
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 3px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>

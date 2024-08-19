@@ -35,7 +35,7 @@ Before the loop we push a number to the stack to act as index. Each iteration we
 
 ## DominoScript:
 
-<pre class="ds">
+```
 . 0 . . . . . . . . . . . . . . . . . . . . . . . . . . .
   |                                                      
 . 1 . . 6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6 .
@@ -49,7 +49,7 @@ Before the loop we push a number to the stack to act as index. Each iteration we
 . . . . . . . . 5 0—0 6—2 1—1 1—4 1—1 2—4 1—1 5—2 1—1 2 .
                 |                                        
 . . . . . . . . 3 . . . . . . . . . . . . . . . . . . . .
-</pre>
+```
 
 ## Notes:
 
@@ -58,8 +58,3 @@ This way of looping can waste a few instruction cycles depending on how many NOO
 You can obviously lay the dominos out in a way where the start and end are closer together, and avoid the need for NOOPs altogether BUT maybe you like placing sequences of dominos in a certain way and don't want to change that.
 
 In that case, take a look at the [next example](005_loop_using_jump.md) that uses the JUMP instruction to move the IP back to the start instead of NOOPs.
-
-
-<style>
-  .ds {position: relative;line-height: 1.2;letter-spacing: 2px;border: 1px solid gray;margin-bottom: 2.5rem;display: inline-block;}
-</style>
