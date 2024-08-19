@@ -1279,9 +1279,9 @@ For example here we have a 10x3 grid:
 
 - If the address argument is out of bounds, an `InvalidAddressError` is thrown.
 
-- If the value argument is not within 0-48, an `InvalidValueError` is thrown.
+- If the value argument is not within 0-48, an `InvalidDominoValueError` is thrown.
 
-- If the address of the other domino half is out of bounds, an `InvalidValueError` is thrown.
+- If the address of the other domino half is out of bounds, an `AddressError` is thrown.
 
 #### `RESERVED_6_2`
 <img src="assets/horizontal/6-2.png" alt="Domino" width="128">

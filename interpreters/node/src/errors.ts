@@ -46,7 +46,7 @@ export class DSConnectionToEmptyCellsError extends Error {
 export class DSInterpreterError extends Error {
   constructor(message: string) {
     super('Something wrong with the Interpreter: ' + message);
-    this.message = 'InterpreterError';
+    this.name = 'InterpreterError';
   }
 }
 /* c8 ignore end */
@@ -129,8 +129,15 @@ export class DSInvalidNavigationModeError extends Error {
 }
 
 export class DSInvalidValueError extends Error {
-  constructor(value: number, opcode: number | null) {
-    super(`Invalid value ${value} for opcode ${opcode}`);
+  constructor(value: number) {
+    super(`Invalid value ${value}`);
     this.name = 'InvalidValueError';
+  }
+}
+
+export class DSInvalidInputError extends Error {
+  constructor(reason = '') {
+    super('Invalid input. ' + reason);
+    this.name = 'InvalidInputError';
   }
 }

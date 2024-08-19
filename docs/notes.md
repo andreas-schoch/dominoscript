@@ -825,6 +825,9 @@ It would be funny to create a webapp similar to e.g. codepen which shows 3 colum
 - `setJSONValue(jsonId: JSONID, key: string, value: string | number | boolean | null): void`
   - pseudocode: `PUSH <jsonId> PUSH "title" PUSH "new title" PUSH "setJSON" CALL`
 
+## DominoScript real documentation
+Right now the docs are just markdown. Eventually the docs should become their own website as I want to have more control over the layout and styling. Interactive dominoscript snippets would be very helpful. I like to have interactive dominoscript snippets like on MDN. I could make it some kind of component that I place within the docs BUT it would be more useful to have a standalone webapp to write dominoscript and saves it to a DB. This webapp acts as an interpreter, playground, editor, and a way to embed DS in other websites via iframe.
+
 ## Opcode layer mapping reconsidered**
 
 I have been thinking about his since the beginning of DS but kind of hesitate implementing since I prefer using "D-Modes" to extend the language.

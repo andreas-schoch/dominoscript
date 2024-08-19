@@ -24,6 +24,8 @@ export interface Context {
 
   lastOpcode: number | null;
   base: 7 | 10 | 12 | 16; // indicates if using D6, D9, D12 or D15 dominos
+  stdin: (ctx: Context, type: 'num' | 'str') => Promise<void>;
+  onStdin: (handler: (ctx: Context, type: 'num' | 'str') => Promise<void>) => void;
   stdout: (msg: string) => void;
   onStdout: (cb: (msg: string) => void) => void;
   // stderr: (msg: string) => void;
@@ -42,10 +44,14 @@ export interface Context {
 }
 
 export function createContext(source: string): Context {
+  /* c8 ignore start */
+  // These are dummy listeners which are meant to be replaced
   const listeners = {
+    stdin: (_ctx: Context, _type: 'num' | 'str'): Promise<void> => Promise.resolve(),
     stdout: (_msg: string): void => void 0,
     // stderr: (msg: string) => {}
   };
+  /* c8 ignore end */
 
   return {
     currentCell: null,
@@ -63,6 +69,8 @@ export function createContext(source: string): Context {
     isFinished: false,
     lastOpcode: null,
     base: 7,
+    stdin: (ctx, type) => listeners.stdin(ctx, type),
+    onStdin: (cb) => listeners.stdin = cb,
     stdout: msg => listeners.stdout(msg),
     onStdout: (cb) => listeners.stdout = cb,
     // stderr: msg => listeners.stderr(msg),

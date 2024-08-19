@@ -1,11 +1,11 @@
 import {DSEmptyStackError, DSFullStackError} from './errors.js';
 
 export class Stack {
-  public data: Int32Array;
+  private data: Int32Array;
   private length = 0;
 
-  constructor(private maxLength = 1024) {
-    this.data = new Int32Array(maxLength);
+  constructor(public readonly maxSize = 1024) {
+    this.data = new Int32Array(maxSize);
   }
 
   push(value: number): void {
@@ -56,7 +56,7 @@ export class Stack {
   }
 
   isFull(): boolean {
-    return this.length === this.maxLength;
+    return this.length === this.maxSize;
   }
 
   size(): number {

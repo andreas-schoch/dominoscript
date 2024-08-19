@@ -18,7 +18,7 @@ export function SET(ctx: Context): void {
   const value = ctx.stack.pop();
   const cell = ctx.board.getOrThrow(address);
 
-  if (value < -1) throw new DSInvalidValueError(value, ctx.lastOpcode);
+  if (value < -1 || value > 48) throw new DSInvalidValueError(value);
 
   let otherCell: Cell;
   // Here we check the last cardinal direction of the IP to determine where to put the second half of the set domino

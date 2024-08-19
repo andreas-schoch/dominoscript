@@ -1,7 +1,8 @@
 import {Context} from '../Context.js';
 
-export function NUMIN(_ctx: Context): void {
-  // TODO
+// TODO benchmark promised based input vs callback based where we break the main while(true) loop and "restart" it again after the input is received
+export function NUMIN(ctx: Context): Promise<void> {
+  return ctx.stdin(ctx, 'num');
 }
 
 export function NUMOUT(ctx: Context): void {
@@ -9,8 +10,8 @@ export function NUMOUT(ctx: Context): void {
   ctx.stdout(String(value));
 }
 
-export function STRIN(_ctx: Context): void {
-  // TODO
+export function STRIN(ctx: Context): Promise<void> {
+  return ctx.stdin(ctx, 'str');
 }
 
 export function STROUT(ctx: Context): void {

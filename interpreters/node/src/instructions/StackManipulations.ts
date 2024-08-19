@@ -1,5 +1,5 @@
+import {DSFullStackError, DSUnexpectedEndOfNumberError} from '../errors.js';
 import {Context} from '../Context.js';
-import {DSUnexpectedEndOfNumberError} from '../errors.js';
 import {step} from '../step.js';
 
 // stack effect diagram ---> ( before -- after )
@@ -36,9 +36,11 @@ export function NUM(ctx: Context): void {
 // Pushes numbers representing unicode characters to the stack until a NULL character is found
 export function STR(ctx: Context): void {
   const numbers: number[] = [];
+  const available = ctx.stack.maxSize - ctx.stack.size();
   while (true) {
     const unicode = parseNum(ctx);
     numbers.push(unicode);
+    if (numbers.length >= available) throw new DSFullStackError(); // can prevent infinite loops when NULL terminator is missing and IP is stuck in a loop
     if (unicode === 0) break;
   }
 

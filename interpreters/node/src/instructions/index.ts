@@ -9,9 +9,10 @@ import {Context} from '../Context.js';
 import {DSInvalidInstructionError} from '../errors.js';
 
 export type Instruction = (ctx: Context) => void;
+export type AsyncInstruction = (ctx: Context) => Promise<void>;
 
 // TODO benchmark performance of this approach vs a single large switch statement where instructions are inlined without function calls
-export const instructionsByOpcode: Instruction[] = [
+export const instructionsByOpcode: (Instruction | AsyncInstruction)[] = [
   // Stack Management
   POP,
   NUM,

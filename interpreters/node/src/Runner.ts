@@ -6,8 +6,9 @@ import {step} from './step.js';
 
 export interface DominoScriptRunner {
   context: Context;
-  run(): Context;
+  run(): Promise<Context>;
   onStdout(fn: (msg: string) => void): void;
+  onStdin(fn: (ctx: Context, type: 'num' | 'str') => Promise<void>): void;
   // onStderr(fn: (msg: string) => void): void;
 }
 
@@ -17,29 +18,27 @@ export function createRunner(source: string): DominoScriptRunner {
     context: ctx,
     run: () => run(ctx),
     onStdout: fn => ctx.onStdout(fn),
+    onStdin: fn => ctx.onStdin(fn)
     // onStderr: fn => ctx.onStderr(fn)
   };
 }
 
-function run(ctx: Context): Context {
+async function run(ctx: Context): Promise<Context> {
   const start = performance.now();
   ctx.info.timeStartMs = Date.now();
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
     const instruction = instructionsByOpcode[opcode];
     ctx.info.totalInstructions++;
     ctx.info.totalInstructionExecution[instruction.name] = (ctx.info.totalInstructionExecution[instruction.name] || 0) + 1;
-    instruction(ctx);
+
+    if (instruction.name === 'NUMIN' || instruction.name === 'STRIN') await instruction(ctx);
+    else instruction(ctx);
   }
 
   ctx.info.timeEndMs = Date.now();
   ctx.info.executionTimeSeconds = (performance.now() - start) / 1000;
   console.debug('\n\n DEBUG INFO:');
   console.debug(ctx.info);
-  // console.debug('\n currentCell:', ctx.currentCell);
-  // console.debug('\n lastCell:', ctx.lastCell);
-  // const y = Math.floor((ctx.currentCell?.address || 0) / ctx.board.grid.width);
-  // const x = (ctx.currentCell?.address || 0) % ctx.board.grid.width;
-  // console.debug('\n currentCell x:', x, 'y:', y);
   return ctx;
 }
 
