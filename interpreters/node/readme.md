@@ -1,48 +1,45 @@
 DominoScript JS
 ========================
 
-> Please check out the [DominoScript specification](../../readme.md) for more information on the language. 
+> Please check out the [specification](https://github.com/andreas-schoch/dominoscript) for more information on DominoScript. 
 
 This is the "official" JavaScript implementation for DominoScript.
 
+## Usage as CLI
 
-## Installation
+Install it globally:
 
+```shell
+npm install -g dominoscript
+```
+
+Currently the CLI only supports this one command:
+
+```shell
+dominoscript somefile.ds
+```
+
+Eventually it will be fleshed out more with a REPL, help, config options etc.
+
+
+## Usage as API
+
+The API is still subject to change. At this point, I don't recomment using it for anything other than playing around with DominoScript.
+
+But if you want, you can install it as a dependency to use in your own projects: 
 ```
 npm install dominoscript
 ```
 
-## Using CLI
-
-Currently only supports a single command to run DominoScript files.
-
-```
-npx dominoscript <file>
-```
-
-Will eventually add a REPL and other features to configure the interpreter.
-
-
-## Using within javascript
-
-Allows DominoScript to be embedded into a JavaScript application.
-
-> API is not implemented yet and subject to change. What you see below is a rough idea of what it might look like.
-
+It should work in both the browser and node environments *(Not tested with bun or deno, so no guarantees there)*.
 
 ```ts
-import { DominoScript } from 'dominoscript';
+import {createRunner, Conext} from 'dominoscript';
 
-const ds = new DominoScript();
-ds.onstdout((msg: string) => console.log(str));
-ds.onstderr((msg: string) => console.error(str));
-ds.onrequestinput((msg: string) => prompt(msg));
-ds.onStep((ctx: Context) => console.log(ctx.currentCell?.address));
-ds.onInstruction((ctx: Context) => console.log(ctx.currentCell?.address));
-
-// Equivalent of: `NUM 5 NUM 5 ADD DUP MULT`  or `(5 + 5) ** 2`;
+// Define the DominoScript program to run.
+// Equivalent of: "NUM 5 NUM 5 ADD DUP MULT"  or "(5 + 5) ** 2";
 // Or if all on the same line: 0—1 0—5 0—1 0-5 1—0 0—3 1—2
-const result = await = ds.run(`\
+const ds = createRunner(`\
 0 . 1—0 0—3 1 .
 |           |  
 1 0 5 . . . 2 .
@@ -51,58 +48,24 @@ const result = await = ds.run(`\
                
 . 0—1 . . . . .`);
 
-// The result will be whatever is left on the stack when the program halts.
-const result = await = ds.run(script);
-console.log(result); // [100]
+// Decide where to print NUMOUT and STROUT
+ds.onStdout((msg: string) => console.log(str));
 
+// Decide how and from where to get user input (NUMIN and STRIN)
+// In a terminal you might want to use stdin, in a web app you might want to use a prompt or listen to key events.
+ds.onStdin((ctx: Context, type: 'num' | 'str') => type === 'num'
+  ? Promise.resolve(parseInt(prompt('Enter a number: ')))
+  : Promise.resolve(prompt('Enter a string: '))
+);
 
-// Maybe you want to extend the interpreter with custom instructions
-// Here we do the same as the above script did but outside of DominoScript
-const label: number = ds.register((ctx: Context) => {
-  const val = (5 + 5) ** 2;
-  ctx.stack.push(val);
-});
-
-// Then when you want to use it in a script you just need to call the label `NUM 1 NEG CALL`
-const result2 = await = ds.run('0-1 0-1 1-5 4-4');
-console.log(result2); // [100]
-
-
+// Actually run the program. The result will be a Context object which among other things contains the stack.
+const ctx = await ds.run();
+console.log(ctx.stack.pop()); // 100
 ```
 
+Take a look at how the CLI uses this exact interface [here](https://github.com/andreas-schoch/dominoscript/blob/main/interpreters/node/src/bin/cli.ts). 
 
-<style>
-  /* dominoscript looks a bit more readable when slightly styled */
-    .ds {
-      position: relative;
-      line-height: 1.25;
-      letter-spacing: 5px;
-      border: 1px solid gray;
-      margin-bottom: 2.5rem;
-    }
-
-    .i {
-      display: inline-block;
-    }
-
-    .side-by-side {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .side-by-side .title {
-      flex: 1;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .current-domino {
-      color: salmon;
-    }
-
-</style>
-
-
+The API will be extended depending on the needs of the CLI and the eventual online playground.
 
 ## License
 

@@ -8,7 +8,7 @@ export interface DominoScriptRunner {
   context: Context;
   run(): Promise<Context>;
   onStdout(fn: (msg: string) => void): void;
-  onStdin(fn: (ctx: Context, type: 'num' | 'str') => Promise<void>): void;
+  onStdin(fn: (ctx: Context, type: 'num' | 'str') => Promise<number | string>): void;
   // onStderr(fn: (msg: string) => void): void;
 }
 

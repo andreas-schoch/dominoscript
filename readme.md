@@ -1072,7 +1072,7 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
           <span style="color:yellow;">|</span>
 . . . . . <span style="color:yellow;">6</span> . .
 
-<span style="color:yellow;">0-1 0-0 4-1</span> . .
+<span style="color:yellow;">0-1 0-1 4-1</span> . .
           
 . . . . . X . .
           |
@@ -1086,7 +1086,7 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
           |
 . . . . . X . .
 
-<span style="color:yellow;">0-1 0-1 4-1</span> . .
+<span style="color:yellow;">0-1 0-0 4-1</span> . .
           
 . . . . . <span style="color:yellow;">6</span> . .
           <span style="color:yellow;">|</span>

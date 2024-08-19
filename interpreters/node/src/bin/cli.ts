@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import {Context} from '../Context.js';
-import {DSInvalidInputError} from '../errors.js';
 import {createRunner} from '../Runner.js';
 import {readFileSync} from 'fs';
 import readline from 'readline';
@@ -19,27 +18,16 @@ const rl = readline.createInterface({
   prompt: '> ',
 });
 
-function handleNumIn(ctx: Context): Promise<void> {
+function handleNumIn(_ctx: Context): Promise<number> {
   return new Promise(resolve => {
-    rl.once('line', line => {
-      const num = parseInt(line, 10);
-      if (isNaN(num)) throw new DSInvalidInputError('Expected a number');
-      ctx.stack.push(num);
-      resolve();
-    });
-
+    rl.once('line', line => resolve(parseInt(line, 10)));
     rl.prompt();
   });
 }
 
-function handleStrIn(ctx: Context): Promise<void> {
+function handleStrIn(_ctx: Context): Promise<string> {
   return new Promise(resolve => {
-    rl.once('line', line => {
-      ctx.stack.push(0);
-      for (let i = line.length - 1; i >= 0; i--) ctx.stack.push(line.charCodeAt(i));
-      resolve();
-    });
-
+    rl.once('line', line => resolve(line));
     rl.prompt();
   });
 }

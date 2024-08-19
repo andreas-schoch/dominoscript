@@ -1,4 +1,5 @@
 import {Address, Board, Cell} from './Board.js';
+import {DSInvalidInputError, DSMissingListenerError} from './errors.js';
 import {Stack} from './Stack.js';
 
 export interface Context {
@@ -25,11 +26,9 @@ export interface Context {
   lastOpcode: number | null;
   base: 7 | 10 | 12 | 16; // indicates if using D6, D9, D12 or D15 dominos
   stdin: (ctx: Context, type: 'num' | 'str') => Promise<void>;
-  onStdin: (handler: (ctx: Context, type: 'num' | 'str') => Promise<void>) => void;
+  onStdin: (handler: (ctx: Context, type: 'num' | 'str') => Promise<number | string>) => void;
   stdout: (msg: string) => void;
   onStdout: (cb: (msg: string) => void) => void;
-  // stderr: (msg: string) => void;
-  // onStderr: (cb: (msg: string) => void) => void;
   info: {
     timeStartMs: number;
     timeEndMs: number;
@@ -44,14 +43,27 @@ export interface Context {
 }
 
 export function createContext(source: string): Context {
-  /* c8 ignore start */
-  // These are dummy listeners which are meant to be replaced
+
   const listeners = {
-    stdin: (_ctx: Context, _type: 'num' | 'str'): Promise<void> => Promise.resolve(),
-    stdout: (_msg: string): void => void 0,
-    // stderr: (msg: string) => {}
+    stdin: (_ctx: Context, _type: 'num' | 'str'): Promise<number | string> => {
+      throw new DSMissingListenerError('You need to provide a listener for stdin using Context.onStdin(...)');
+    },
+    stdout: (_msg: string): void => {
+      throw new DSMissingListenerError('You need to provide a listener for stdout using Context.onStdout(...)');
+    }
   };
-  /* c8 ignore end */
+
+  async function handleStdin(ctx: Context, type: 'num' | 'str'): Promise<void> {
+    const value = await listeners.stdin(ctx, type);
+    if (typeof value === 'number' && !isNaN(value) && Number.isInteger(value)) {
+      ctx.stack.push(value);
+    } else if (typeof value === 'string') {
+      ctx.stack.push(0);
+      for (let i = value.length - 1; i >= 0; i--) ctx.stack.push(value.charCodeAt(i));
+    } else {
+      throw new DSInvalidInputError('Invalid value received from stdin listener');
+    }
+  }
 
   return {
     currentCell: null,
@@ -69,12 +81,10 @@ export function createContext(source: string): Context {
     isFinished: false,
     lastOpcode: null,
     base: 7,
-    stdin: (ctx, type) => listeners.stdin(ctx, type),
+    stdin: (ctx, type) => handleStdin(ctx, type),
     onStdin: (cb) => listeners.stdin = cb,
     stdout: msg => listeners.stdout(msg),
     onStdout: (cb) => listeners.stdout = cb,
-    // stderr: msg => listeners.stderr(msg),
-    // onStderr: (cb) => listeners.stderr = cb,
     info: {
       timeStartMs: 0,
       timeEndMs: 0,

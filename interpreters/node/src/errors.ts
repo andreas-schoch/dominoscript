@@ -141,3 +141,10 @@ export class DSInvalidInputError extends Error {
     this.name = 'InvalidInputError';
   }
 }
+
+export class DSMissingListenerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MissingListenerError';
+  }
+}
