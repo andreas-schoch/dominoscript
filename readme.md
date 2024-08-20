@@ -57,25 +57,20 @@ This repository contains the reference implementation written in TypeScript as w
   - [Domino Modes](#domino-modes)
   - [Examples](#examples)
 
-
 <br>
 
 ## Core Concepts
 - **`Recreational Esolang`**: This isn't a serious programming language. I got inspired after watching "The Art of Code" by Dylan Beattie where I discovered "Piet" and eventually went down the esolang rabbit hole. I wanted to create a language that is not only weirdly powerful but can also look good when hanged on a wall.
 
-- **`Stack-Oriented`**: There is a single global stack to be used for data manipulation and to pass parameters. It only stores signed 32-bit Integers. The interpreter will preallocate all the memory required to maintain the stack, therefore its size is limited. For now, assume that the stack can contain up to `512` items. It will likely be configurable in future versions.
+- **`Stack-Oriented`**: There is a global data stack that all instructions operate on. Internally every item on the stack is a signed 32-bit integer. Strings are just null-terminated sequences of integers representing Unicode char codes. Floats are not supported. No other data structures exist.
 
-- **`Concatenative`**: DominoScript at its core is just another concatenative reverse-polish language similar to Forth. The following DominoScript `0—1 0—5 0—1 0—5 1—0 0—3 1—2 5—1` is the same as `PUSH 5 PUSH 5 ADD DUP MULT OUT` *(Note: what you see is the text based representation of 8 domino pieces)*
+- **`Concatenative`**: DominoScript at its core is just another concatenative reverse-polish language. The following code: `0—1 0—5 0—1 0—6 1—0 0—3 1—2 5—1` is the same as `5 6 + dup * .` in Forth.
 
-- **`Two-Dimensional`**: The code is represented on a rectangle grid. The instruction pointer can move in any cardinal direction. Kind of like in Befunge or Piet but not quite as it doesn't wrap around and the direction changes work differently. keep in mind that 1 domino takes 2x1 cells (when horizontal) or 1x2 cells (when vertical) so with a 64x64 grid you can have 32x64 dominos. There is a hard limit of 65408 total cells which will likely be configurable in future versions.
+- **`Two-Dimensional`**: The code is represented on a rectangle grid. The instruction pointer can move in any cardinal direction. One domino takes up 2 cells on the grid. Direction changes are performed by placing dominos in a certain way (IP always moves from one half to the other half of the same domino) as well as the current [Navigation Mode](#how-navigation-modes-work).
 
-- **`non-linear Execution flow`**: Non-linear in the context of DominoScript means that the execution flow doesn't necessarily progress in an obvious or logical way. That being said, it only on first glance seems to be illogical. There are quite strinct rules the instruction pointer has to adhere to. 
+- **`Self-Modifying`**: The code can override itself similar to befunge.
 
-- **`Self-Modifying`**: The code can override itself similar to befunge. That means you can use it to store data, display or animate things and who knows what else.
-
-- **`Òbfuscated`**: You cannot really tell what is going on just by looking at the code. This seems to be inherent with most esolangs but in Dominoscript you can't really be sure if a domino is an opcode or a number. It can be both depending on how the IP moves. Hell, you cannot even be sure that the same opcode will trigger the same instruction as instructions can be remapped on a different layer where they have different opcodes. I don't think it is nearly as 'evil' as Malbolge but it is hard to follow.
-
-- **`Int32 Based`** The stack only stores signed 32-bit Integers. There are no inbuilt data structures. Floats don't exist. Strings don't exist but are supported in the sense that you can treat the Integers as UNICODE and output them as such *(Well I guess you could maybe represent floats similarly to how pico8 does it using 16.16 fixed point arithmetic)*.
+- **`Òbfuscated`**: Because all code is represented using domino pieces, reading it is somewhat like reading machine code. To "de-obfuscate" it you would need to replace the domino pieces with their corresponding instructions and literal values. The following: `NUM 5 NUM 6 SUM DUPE MULT NUMOUT` is a readable pseudocode representation of DominoScript.
 
 <br>
 
@@ -116,7 +111,7 @@ DominoScript uses Double-Six (aka `D6`) dominos to represent code. Double-six he
 ### The Grid
 
 - The grid is a rectangle of cells which can contain domino pieces.
-- The grid can contain up to 65408 cells.
+- The grid can contain up to 65408 cells (soft limit)
 - One domino takes up 2 cells and can placed horizontally or vertically.
 - The top-left cell is address 0. The bottom-right cell is address `width * height - 1`.
 - When playing domino game variants you can usually place pieces "outside" the grid when both sides have the same number of dots: 🁈🁳🁀 - this is not allowed in DominoScript *(Maybe in future versions but for now not worth the extra complexity)*
@@ -347,11 +342,11 @@ DominoScript is a language where you cannot really tell what is going on just by
 When the IP encounters a [STR](#str) instruction, it will parse the next dominos as characters of a string. How that works exactly is explained in more detail in the description of the instruction.
 
 > It is important to understand that <ins>internally</ins> everything in DominoScript is represented as signed 32-bit integers and <ins>externally</ins> everything is represented by the dots on the domino pieces.
-<br><br>Internally strings are just <ins>null-terminated sequences of integers representing unicode characters</ins>. It is your job as the developer to keep track of what items on the stack are numbers and what are characters of a string.
+<br><br>Internally strings are just <ins>null-terminated sequences of integers representing Unicode characters</ins>. It is your job as the developer to keep track of what items on the stack are numbers and what are characters of a string.
 
 You can use any instruction on characters of a "string" but most of them will not distinguish between what is a number and a character. There are only 3 instructions which are specifically for handling strings: [STR](#str), [STRIN](#strin), [STROUT](#strout).
 
-For convenience and clarity in examples I will often represent unicode characters like this:
+For convenience and clarity in examples I will often represent Unicode characters like this:
 
 ```
 [..., 'NUL', 's', 'e', 'y']
@@ -740,9 +735,9 @@ Here are the pattern and some examples:
 0—2 1—1 6—6 1—2 0—0 1—2 0—1 0—0 0—1 0—6 0—0
 ```
 - `0—2` is the `STR` instruction
-- `1—1 6—6` is the unicode value for "a"
-- `1—2 0—0` is the unicode value for "b"
-- `1—2 0—1` is the unicode value for "c"
+- `1—1 6—6` is the Unicode value for "a"
+- `1—2 0—0` is the Unicode value for "b"
+- `1—2 0—1` is the Unicode value for "c"
 -  `0—0` is the null terminator and not the `POP` instruction as in the previous 2 examples. We know that because `STR` only ends once it encounters a `0—0` (see **PATTERN 4**)
 - `0—1 0—6 0—0` is the code from the first example above. It will push the number 6 to the stack and then pop it off again.
 
@@ -848,7 +843,7 @@ You might think that since internally numbers are int32s, that we parse from bas
 
 <img src="assets/horizontal/0-2.png" alt="Domino" width="128">
 
-With `STR` you switch to "string mode" and can push multiple integers to the stack to represent unicode characters.
+With `STR` you switch to "string mode" and can push multiple integers to the stack to represent Unicode characters.
 
 The way the dominos are parsed to numbers is identical to `NUM`: First half of first domino indicates how many more will follow for a single number.
 
@@ -866,11 +861,11 @@ This is how you push the string `"hi!"` to the stack and output it:
 It equals the following pseudo code: `STR "hi!" STROUT`
 
 - `0—2` is the `STR` instruction
-- `1—2 0—6` is the unicode value 105 representing the character `h`
-- `1—2 1—0` is the unicode value 105 representing the character `i`
-- `0—0 4—5` is the unicode value 33 representing the character `!`
-- `0—0` is the unicode value for the NULL character which terminates the string.
-- `5—3` is the [STROUT](#strout) instruction. It will pop items from the stack, parse them as unicode chars and once it encounters the NULL character, it will output the string to stdout all at once.
+- `1—2 0—6` is the Unicode value 105 representing the character `h`
+- `1—2 1—0` is the Unicode value 105 representing the character `i`
+- `0—0 4—5` is the Unicode value 33 representing the character `!`
+- `0—0` is the Unicode value for the NULL character which terminates the string.
+- `5—3` is the [STROUT](#strout) instruction. It will pop items from the stack, parse them as Unicode chars and once it encounters the NULL character, it will output the string to stdout all at once.
 
 This is the resulting stack: 
 
@@ -954,17 +949,39 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `ADD`
 <img src="assets/horizontal/1-0.png" alt="Domino" width="128">
 
+Pops 2 numbers from the stack. The sum is pushed to the stack.
+
 #### `SUB`
 <img src="assets/horizontal/1-1.png" alt="Domino" width="128">
+
+Pops 2 numbers from the stack. The result of `numberA - numberB` is pushed to the stack.
 
 #### `MULT`
 <img src="assets/horizontal/1-2.png" alt="Domino" width="128">
 
+Pops 2 numbers to multiply. The result is pushed to the stack.
+
 #### `DIV`
 <img src="assets/horizontal/1-3.png" alt="Domino" width="128">
 
+Pops 2 numbers. The result of the division of numberA by numberB is pushed to the stack.
+
+Keep in mind that DominoScript is integer based and any remainder is discarded.
+
+**Pseudocode:**
+- `NUM 5 NUM 3 DIV` is `5 / 3` and equals `1`
+- `NUM 5 NEG NUM 3 DIV` is `-5 / 3` and equals `-1`
+
 #### `MOD`
 <img src="assets/horizontal/1-4.png" alt="Domino" width="128">
+
+Pops 2 numbers. The remainder of division of `numberA / numberB` is pushed to the stack.
+
+> When numberA is positive modulo behaves identical in most languages (afaik). However, there are some differences across programming languages when numberA is negative. In DominoScript modulo behaves like in JavaScript, Java, C++ and Go and <ins>NOT</ins> like in Python or Ruby!
+
+**Pseudocode:**
+- `NUM 5 NUM 3 MOD` is `5 % 3` and equals `2`
+- `NUM 5 NEG NUM 3 MOD` is `-5 % 3` and equals `-2` *(in python, ruby and calculators it would equal `1`)*
 
 #### `NEG`
 <img src="assets/horizontal/1-5.png" alt="Domino" width="128">
@@ -1123,10 +1140,6 @@ Soooo, LABEL gets the address of the cell you want to label from the stack and a
 
 The negative number label will <ins>NOT</ins> be pushed to the stack. It is always decrementing so first label will be `-1`, second label will be `-2`, etc.
 
-
-
-
-
 #### `JUMP`
 <img src="assets/horizontal/4-3.png" alt="Domino" width="128">
 
@@ -1169,7 +1182,7 @@ Pop the top item from the stack and output it to stdout.
 #### `STRIN`
 <img src="assets/horizontal/5-2.png" alt="Domino" width="128">
 
-Prompt the user for a string. The user input will be pushed to the stack as individual unicode characters in reverse order.
+Prompt the user for a string. The user input will be pushed to the stack as individual Unicode characters in reverse order.
 
 So if the user inputs `"yes"`, the stack will look like this:
 
@@ -1186,6 +1199,8 @@ For convenience you might often see the stack represented  But remember that in 
 
 #### `STROUT`
 <img src="assets/horizontal/5-3.png" alt="Domino" width="128">
+
+Pops numbers (representing Unicode char codes) from the stack until it encounters a null terminator (number 0). It will then output the string to stdout.  
 
 #### `RESERVED_5_4`
 <img src="assets/horizontal/5-4.png" alt="Domino" width="128">
@@ -1283,9 +1298,7 @@ For example here we have a 10x3 grid:
 **Errors:**
 
 - If the address argument is out of bounds, an `InvalidAddressError` is thrown.
-
 - If the value argument is not within 0-48, an `InvalidDominoValueError` is thrown.
-
 - If the address of the other domino half is out of bounds, an `AddressError` is thrown.
 
 #### `RESERVED_6_2`
@@ -1447,7 +1460,7 @@ The priority flip flops between 2 primary directions.
 
 ### Unicode to Domino Lookup Table
 
-Wiith DominoScript you can output unicode characters to the console. Here is a lookup table for the ASCII range.
+Wiith DominoScript you can output Unicode characters to the console. Here is a lookup table for the ASCII range.
 
 ### Control characters (ASCII 0-31)
 
@@ -1588,7 +1601,6 @@ Wiith DominoScript you can output unicode characters to the console. Here is a l
 
 
 ### Error Types
-
 The spec doesn't define a way to "catch" errors in a graceful way yet. For now, whenever an error occurs, the program will terminate and the interpreter will throw an error to stderr.
 
 - **SyntaxError**: Unexpected token '{token}' at line {line}, column {column}
@@ -1596,13 +1608,22 @@ The spec doesn't define a way to "catch" errors in a graceful way yet. For now, 
 - **MultiConnectionError**: {type} connection at line {line}, column {column} is trying to connect a cell that is already connected
 - **MissingConnectionError**: Non-empty cell at line {line}, column {column} does not have a connection
 - **ConnectionToEmptyCellError**: Connection to an empty cell at line {line}, column {column}
+- **ConnectionToEmptyCellsError**: There are connectors that are not connected to anything (Cannot give you the exact location of the error atm)
 - **InterpreterError**: Something wrong with the Interpreter: {message}
 - **UnexpectedEndOfInputError**: Unexpected end of input at line {line}, column {column}
 - **AddressError**: Address '{address}' out of bounds
+- **InvalidLabelError**: Label {name} is not a valid label
 - **StepToEmptyCellError**: Trying to step from cell {currentAddress} to empty cell {emptyAddress}
-- **UnexpectedEndOfNumberError**: Unexpected end of number
+- **JumpToItselfError**: Jumping to itself at address {address} is forbidden as it results in an infinite loop
+- **CallToItselfError**:Calling to itself at address {address} is forbidden as it results in an infinite loop
+- **UnexpectedEndOfNumberError**: Unexpected end of number at address {address}
 - **EmptyStackError**: Cannot pop from an empty stack
 - **FullStackError**: Cannot push to a full stack
+- **InvalidInstructionError**: Invalid instruction opcode {opcode}
+- **InvalidNavigationModeError**: Invalid navigation mode {mode}
+- **InvalidValueError**: Invalid value {value}
+- **InvalidInputError**: Invalid input {reason}
+- **MissingListenerError**: NUMIN, NUMOUT, STRIN or STROUT instructions were called and the DominoScript "runtime" did not provide a way on how to handle input or output
 
 ### Domino Modes
 By default DominoScript uses "Double Six" dominoes (D&) which have 6 dots on each side. It will support higher modes in the future. Each mode will expand the opcode range.
