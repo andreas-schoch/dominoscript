@@ -1,5 +1,5 @@
 import {Cell, CellValue} from './Board.js';
-import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from './errors.js';
+import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInterpreterError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from './errors.js';
 
 export interface Grid {
   cells: Cell[];
@@ -19,10 +19,41 @@ const allowedValueChars = AllowedValueCharsByDMode.D6; // TODO for now D6 mode i
 const allowedHorizontalConnectorChars = '—-=═ ';
 const allowedVerticalConnectorChars = '|║ ';
 
-/* c8 ignore start */
-export function gridToSource(_grid: Grid): string {
-  throw new Error('Not implemented');
-  /* c8 ignore end */
+export function gridToSource(grid: Grid): string {
+  const lines: string[] = [];
+
+  // Create a string representing an empty grid with the right dimensions
+  for (let row = 0; row < grid.height * 2 - 1; row++) {
+    if (row % 2 === 0) lines.push('. '.repeat(grid.width).trim() + '\n'); // even rows are cells and horizontal connectors
+    else lines.push(' '.repeat(grid.width * 2 - 1) + '\n'); // odd rows are vertical connectors
+  }
+
+  for (const cell of grid.cells) {
+    if (cell.value === null && cell.connection !== null) throw new DSInterpreterError('cell.connection cannot be null if cell.value is not null');
+    if (cell.connection === null && cell.value !== null) throw new DSInterpreterError('cell.value cannot be null if cell.connection is not null');
+    if (cell.value === null || cell.connection === null) continue;
+
+    // SET VALUES
+    const row = Math.floor(cell.address / grid.width) * 2;
+    const col = (cell.address % grid.width) * 2;
+    const lineIndex = row;
+    const charIndex = col;
+    lines[lineIndex] = lines[lineIndex].substring(0, charIndex) + cell.value + lines[lineIndex].substring(charIndex + 1);
+
+    if (cell.connection - cell.address === 1) {
+      // SET HORIZONTAL CONNECTIONS
+      const row = Math.floor(cell.address / grid.width) * 2;
+      const col = Math.min(cell.address % grid.width, cell.connection % grid.width) * 2 + 1;
+      lines[row] = lines[row].substring(0, col) + '—' + lines[row].substring(col + 1);
+    } else if (cell.connection - cell.address === grid.width) {
+      // SET VERTICAL CONNECTIONS
+      const row = Math.floor(cell.address / grid.width) * 2 + 1;
+      const col = (cell.address % grid.width) * 2;
+      lines[row] = lines[row].substring(0, col) + '|' + lines[row].substring(col + 1);
+    }
+  }
+
+  return lines.join('');
 }
 
 export function sourceToGrid(source: string): Grid {

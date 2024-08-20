@@ -1,4 +1,4 @@
-import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from '../src/errors.js';
+import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInterpreterError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from '../src/errors.js';
 import {deepStrictEqual, strictEqual, throws} from 'assert';
 import {Cell} from '../src/Board.js';
 import {createRunner} from '../src/Runner.js';
@@ -191,4 +191,35 @@ describe('Board', () => {
     )), DSSyntaxError);
   });
 
+  describe('serialize', () => {
+    it('should serialize a grid back to single-line source code', () => {
+      const originalSource = '6—6 6—6 6—6 6—6';
+      const ds = createRunner(originalSource);
+      const source = ds.context.board.serialize();
+      strictEqual(source, originalSource + '\n');
+    });
+    it('should serialize a grid back to multi-line source code', () => {
+      const originalSource = dedent(`\
+      . . . 1 . .
+            |    
+      6 6—6 2 . 6
+      |         |
+      6 . . 6—6 6`);
+      const ds = createRunner(originalSource);
+      const serializedSource = ds.context.board.serialize();
+      strictEqual(serializedSource, originalSource + '\n');
+    });
+    it('should throw InterpreterError when grid becomes invalid before serialization', () => {
+      // This is something that might happen when using the API and manipulating the board.grid manually
+      const ds = createRunner('6—6');
+      ds.context.board.grid.cells[0].connection = null;
+      throws(() => ds.context.board.serialize(), DSInterpreterError);
+    });
+    it('should throw InterpreterError when grid becomes invalid before serialization', () => {
+      // This is something that might happen when using the API and manipulating the board.grid manually
+      const ds = createRunner('6—6');
+      ds.context.board.grid.cells[0].value = null;
+      throws(() => ds.context.board.serialize(), DSInterpreterError);
+    });
+  });
 });

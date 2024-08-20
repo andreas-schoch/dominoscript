@@ -1,5 +1,5 @@
 import {DSAddressError, DSInterpreterError} from './errors.js';
-import {Grid, sourceToGrid} from './serializer.js';
+import {Grid, gridToSource, sourceToGrid} from './serializer.js';
 
 export type Address = number;
 export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | null;
@@ -66,5 +66,9 @@ export class Board {
     cellB.value = valueB;
     cellA.connection = addressB;
     cellB.connection = addressA;
+  }
+
+  serialize(): string {
+    return gridToSource(this.grid);
   }
 }

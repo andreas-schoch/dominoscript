@@ -735,6 +735,8 @@ In a real world scenario the performance will probably be somewhat slower.
 
 However, even if 5 times slower, it would probably be good enough for a simple game running at 30-60fps. I could perform about 5-10k instructions per frame which seems good enough for a simple breakout game rendering to the terminal in a grid of e.g. 64x32 ascii chars,( simple physics, AABB collision, breakable blocks and player input.
 
+**Update**: Version 0.0.4 of ts implementation did perform about 2,330,954 ops/sec (2 weeks after original benchmark) on the same machine and a minute later 4,661,908 ops/sec so these benchmarks shouldn't be trusted too much.
+
 ### **Benchmark 002:**
 
 The following code loops around 1 million times and prints a decrementing number to stdout every iteration until the number reaches zero.
