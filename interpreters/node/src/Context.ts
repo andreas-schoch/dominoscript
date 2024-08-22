@@ -22,6 +22,7 @@ export interface Context {
 
   isFirstDomino: boolean;
   isFinished: boolean;
+  isExtendedMode: boolean;
 
   lastOpcode: number | null;
   base: 7 | 10 | 12 | 16; // indicates if using D6, D9, D12 or D15 dominos
@@ -79,6 +80,7 @@ export function createContext(source: string): Context {
     nextCallAddress: null,
     isFirstDomino: true,
     isFinished: false,
+    isExtendedMode: false,
     lastOpcode: null,
     base: 7,
     stdin: (ctx, type) => handleStdin(ctx, type),

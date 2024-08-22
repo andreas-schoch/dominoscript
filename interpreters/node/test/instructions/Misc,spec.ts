@@ -1,4 +1,4 @@
-import {DSAddressError, DSInvalidInstructionError, DSInvalidValueError} from '../../src/errors.js';
+import {DSAddressError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidValueError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
 import {rejects, strictEqual} from 'assert';
 import {createRunner} from '../../src/Runner.js';
 import {dedent} from '../helpers.js';
@@ -154,6 +154,45 @@ describe('Misc', () => {
     });
   });
 
+  describe('EXT', () => {
+    it('should use 2 dominos for each opcode when extended mode is toggled on', async () => {
+      // EXT NUM 6 DUPE MULT
+      const ds = createRunner('6-4 0-0 0-1 0-6 0-0 0-3 0-0 1-2');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.pop(), 36);
+    });
+    it('should toggle between using one, two and one dominoes for opcodes', async () => {
+      // NUM 1 EXT NUM 2 EXT NUM 3
+      const ds = createRunner('0-1 0-1 6-4 0-0 0-1 0-2 0-0 6-4 0-1 0-3');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.pop(), 3);
+      strictEqual(ctx.stack.pop(), 2);
+      strictEqual(ctx.stack.pop(), 1);
+    });
+    it('should call by label using the extended modes alternative syntax', async () => {
+      // NUM 25 LABEL EXT OPCODE_1001
+      const ds = createRunner('0-1 1-0 3-4 4-2 6-4 2-6 3-0 . . . . 6-6 6-1 1-0 0-0');
+      const ctx = await ds.run();
+      strictEqual(ctx.info.totalCalls, 1, 'should have called once');
+      strictEqual(ctx.stack.peek(), 342, 'should have pushed 342 to the stack by the end');
+    });
+    it('should throw an InvalidInstructionError when unmapped opcode is executed in extended mode', async () => {
+      // EXT INVALID_OPCODE_500
+      const ds = createRunner('6-4 1-3 1-3');
+      rejects(ds.run(), DSInvalidInstructionError);
+    });
+    it('should throw an InvalidLabelError when opcode in range 1001-2400 is executed without corresponding label', async () => {
+      // EXT OPCODE_1001
+      const ds = createRunner('6-4 2-6 3-0');
+      rejects(ds.run(), DSInvalidLabelError);
+    });
+    it('should throw an UnexpectedEndOfNumberError when 2 dominos are expected for an opcode but only 1 is provided', async () => {
+      // EXT INVALID_OPCODE_500
+      const ds = createRunner('6-4 6-6');
+      rejects(ds.run(), DSUnexpectedEndOfNumberError);
+    });
+  });
+
   describe('TIME', () => {
     it('should give you the time since programm start in ms', async () => {
       const originalNow = Date.now;
@@ -173,8 +212,23 @@ describe('Misc', () => {
     });
   });
 
+  describe('NOOP', () => {
+    it('should not do anything besides stepping through', async () => {
+      const ds = createRunner(dedent(`\
+        6-6 6
+            |
+        . . 6`));
+
+      const ctx = await ds.run();
+      strictEqual(ctx.isFinished, true);
+      strictEqual(ctx.stack.size(), 0);
+      strictEqual(ctx.lastCell?.address, 2, 'should have stepped to first half of last domino');
+      strictEqual(ctx.currentCell?.address, 5, 'should have stepped to last half of last domino');
+    });
+  });
+
   describe('INVALID', () => {
-    it('should throw an error when an invalid instruction is encountered', async () => {
+    it('should throw an error when an invalid instruction is encountered (within 0-48 range)', async () => {
       const ds = createRunner('0-6');
       rejects(ds.run(), DSInvalidInstructionError);
     });

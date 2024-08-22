@@ -1,6 +1,7 @@
+import {AsyncInstruction, Instruction, instructionsByOpcode} from './instructions/index.js';
 import {Context, createContext} from './Context.js';
-import {DSInterpreterError} from './errors.js';
-import {instructionsByOpcode} from './instructions/index.js';
+import {DSInterpreterError, DSInvalidInstructionError, DSUnexpectedEndOfNumberError} from './errors.js';
+import {CALL} from './instructions/ControlFlow.js';
 import {parseDominoValue} from './instructions/Misc.js';
 import {step} from './step.js';
 
@@ -27,7 +28,19 @@ async function run(ctx: Context): Promise<Context> {
   const start = performance.now();
   ctx.info.timeStartMs = Date.now();
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
-    const instruction = instructionsByOpcode[opcode];
+    let instruction: Instruction | AsyncInstruction | undefined;
+
+    if (opcode <= 1000) {
+      // Opcode range 0-1000 are reserved for inbuilt instructions
+      instruction = instructionsByOpcode[opcode];
+      if (!instruction) throw new DSInvalidInstructionError(opcode);
+    } else {
+      // Opcodes 1001-2400 are "Syntactic Sugar" for CALL with labels. Opcode 1001 is a CALL with label -1
+      instruction = CALL;
+      const label = -opcode + 1000;
+      ctx.stack.push(label);
+    }
+
     ctx.info.totalInstructions++;
     ctx.info.totalInstructionExecution[instruction.name] = (ctx.info.totalInstructionExecution[instruction.name] || 0) + 1;
 
@@ -49,13 +62,21 @@ function nextOpcode(ctx: Context): number | null {
   if (!c1 && !c2) {
     ctx.isFinished = true;
     return null;
-    /* c8 ignore start */
-  } else if (!c1 || !c2) {
-    throw new DSInterpreterError('The steps here should always return 2 cells as we expect to move to a new domino');
   }
-  // /* c8 ignore end */
+  /* c8 ignore next */
+  else if (!c1 || !c2) throw new DSInterpreterError('The steps here should always return 2 cells as we expect to move to a new domino');
+  /* c8 ignore end */
 
-  const opcode = parseDominoValue(ctx, c1);
+  let opcode: number;
+  if (ctx.isExtendedMode) {
+    const c3 = step(ctx);
+    const c4 = step(ctx);
+    if (!c3 || !c4) throw new DSUnexpectedEndOfNumberError(c1.address);
+    opcode = parseDominoValue(ctx, c1) * (ctx.base ** 2) + parseDominoValue(ctx, c3);
+  } else {
+    opcode = parseDominoValue(ctx, c1);
+  }
+
   ctx.lastOpcode = opcode;
   return opcode;
 }

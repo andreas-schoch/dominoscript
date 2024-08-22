@@ -39,6 +39,10 @@ export function SET(ctx: Context): void {
   }
 }
 
+export function EXT(ctx: Context): void {
+  ctx.isExtendedMode = !ctx.isExtendedMode;
+}
+
 export function TIME(ctx: Context): void {
   const delta = Date.now() - ctx.info.timeStartMs;
   ctx.stack.push(delta);

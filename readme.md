@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.0.4`**
+**Current version `0.0.5`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -778,7 +778,7 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 |  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [LSL](#lsl) | [LSR](#lsr) | [ASR](#asr) | [Bitwise](#bitwise) |
 |  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [_](#reserved_4_5) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
-|  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [_](#reserved_6_4) | [TIME](#time) | [NOOP](#noop) | [Misc](#misc) |
+|  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [EXT](#ext) | [TIME](#time) | [NOOP](#noop) | [Misc](#misc) |
 
 
 <h3 id="stack-management">Stack Management</h3>
@@ -1120,25 +1120,31 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
 #### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
 
-A label is like a bookmark or an alternative identifier of a specific Cell address. It is used by the `JUMP`, `CALL`, `GET` and `SET` instructions. You can call it a pointer if you want.
+A label is like a bookmark or an alternative identifier of a specific Cell address. You can also think of it as a pointer. It can be used by the `JUMP`, `CALL`, `GET` and `SET` instructions.
 
-> Labels are probably not what you expect them to be. 
-> - They are <ins>not</ins> a strings, but negative numbers.
-> - They are auto generated and self decrementing: `-1`, `-2`, `-3`, etc. ...
->
-> I know, a bit strange but let me explain:
->- **Flexibility**: I wanted JUMP, CALL, GET and SET to work with both; labels and the actual addresses.
->- **Less dominos needed**: 
->   - `String-based`: For a 2 char string you'd need a total of 6 dominos (1 for STR instruction, 2 per char, 1 for NULL). Using alphanumeric chars you'd be able to have 3906 unique 1-2 character labels and you'd have to label every cell you need to jump to.
->   - `number-based`: With 4 dominos you can have 342 unique negative labels (1 for NUM instruction, 2 for number, 1 to negate). And since you don't need to negate these, can address 823,543 real addresses directly. Plus you save space on the grid for not having to even label the cells if not needed.
->- **Readability**:
->   - Either way you'll have a hard time reading DominoScript and will likely end up with a reference sheet that tells you what dominos represent what labels and what they do when you jump to them etc.
-> 
-> I am open for suggestions on how to improve this. I am not 100% happy with it but it was the best compromise I could think of. The language could do without labels, BUT they will become handy for the `IMPORT` instruction that I plan to add to the language.
+Labels are probably not what you expect them to be. 
+- They are <ins>not</ins> strings, but negative numbers.
+- They are auto generated and self decrementing: `-1`, `-2`, `-3`, etc. ...
 
-Soooo, LABEL gets the address of the cell you want to label from the stack and assigns it to a negative number.
+Executing the LABEL instruction pops the address of the cell you want to label from the stack and assigns it to the next available negative number label.
 
-The negative number label will <ins>NOT</ins> be pushed to the stack. It is always decrementing so first label will be `-1`, second label will be `-2`, etc.
+The negative number label will <ins>NOT</ins> be pushed to the stack. First label will be `-1`, second label will be `-2` and so on. You need to keep track of them yourself.
+
+For clarity, I'd generally recommend adding comments like the following to your source files:
+```markdown
+## Label Mappings
+| Label | Address | Function name |
+|-------|---------|---------------|
+| -1    | 340     | main          |
+| -2    | 675     | update        |
+| -3    | 704     | whatever      |
+```
+
+It is not mandatory to use labels. The 4 mentioned instructions that can use them also work with addresses directly!
+
+**Labels are mandatory only in  the following cases:**
+- Calling JS functions: The "official" js interpreter exposes an API where you can define functions in JS and call them from DominoScript via a label (Not implemented yet!)
+- Calling imported functions: DominoScript will have an `IMPORT` instruction that allows source files to be imported into others. The imported functions can only be called via labels, so in that regard a label also acts like an export. (Not implemented yet!)
 
 #### `JUMP`
 <img src="assets/horizontal/4-3.png" alt="Domino" width="128">
@@ -1311,10 +1317,17 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
-#### `RESERVED_6_4`
+#### `EXT`
 <img src="assets/horizontal/6-4.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Toggle extended mode on or off. If extended mode is active the interpreter will use 2 dominos instead of 1 for each instruction which extends the opcode range from 0-48 to 0-2400.
+
+The range 0-1000 is reserved for "real" instructions.
+
+The range 1001-2400 is used to call functions by label. It is essentially "Syntactic Sugar" to execute CALL with a label. Making function calls look like actual instructions.
+
+To call a function with the label -1 you'd normally do `0—1 0—1 1—5 4—4` which is equivalent to `NUM 1 NEG CALL`.
+In extended mode you could do the same `0—0 0—1 0—1 0—0 1—5 0—0 4—4` BUT You can also do the exact same using `2—6 3—0` which is the opcode 1001 and is mapped to the label -1.
 
 #### `TIME`
 <img src="assets/horizontal/6-5.png" alt="Domino" width="128">
