@@ -7,7 +7,7 @@ export function NUMIN(ctx: Context): Promise<void> {
 
 export function NUMOUT(ctx: Context): void {
   const value = ctx.stack.pop();
-  ctx.stdout(String(value));
+  ctx.stdout(ctx, String(value));
 }
 
 export function STRIN(ctx: Context): Promise<void> {
@@ -23,5 +23,5 @@ export function STROUT(ctx: Context): void {
   }
 
   const str = chars.join('');
-  ctx.stdout(str);
+  ctx.stdout(ctx, str);
 }

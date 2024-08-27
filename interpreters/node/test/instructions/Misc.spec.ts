@@ -1,7 +1,7 @@
 import {DSAddressError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidValueError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
 import {rejects, strictEqual} from 'assert';
 import {createRunner} from '../../src/Runner.js';
-import {dedent} from '../helpers.js';
+import {dedent} from '../../src/helpers.js';
 
 describe('Misc', () => {
 
@@ -233,5 +233,4 @@ describe('Misc', () => {
       rejects(ds.run(), DSInvalidInstructionError);
     });
   });
-
 });

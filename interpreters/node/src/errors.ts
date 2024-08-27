@@ -86,6 +86,13 @@ export class DSJumpToItselfError extends Error {
   }
 }
 
+export class DSJumpToExternalLabelError extends Error {
+  constructor(name: string, address: number) {
+    super(`Jumping to an external label from ${name} at address ${address} is forbidden. External labels can only be used by CALL instruction`);
+    this.name = 'JumpToExternalLabelError';
+  }
+}
+
 export class DSCallToItselfError extends Error {
   constructor(address: number) {
     super(`Calling to itself at address ${address} is forbidden as it results in an infinite loop`);

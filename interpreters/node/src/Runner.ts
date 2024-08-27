@@ -8,25 +8,38 @@ import {step} from './step.js';
 export interface DominoScriptRunner {
   context: Context;
   run(): Promise<Context>;
-  onStdout(fn: (msg: string) => void): void;
-  onStdin(fn: (ctx: Context, type: 'num' | 'str') => Promise<number | string>): void;
-  // onStderr(fn: (msg: string) => void): void;
+  onStdout(fn: Context['listeners']['stdout']): void;
+  onStdin(fn: Context['listeners']['stdin']): void;
+  onImport(fn: Context['listeners']['import']): void;
+  onBeforeRun(fn: Context['listeners']['beforeRun']): void;
+  onAfterRun(fn: Context['listeners']['afterRun']): void;
+  onAfterInstruction(fn: Context['listeners']['afterInstruction']): void;
 }
 
-export function createRunner(source: string): DominoScriptRunner {
-  const ctx = createContext(source);
+export interface DSConfig {
+  filename: string;
+  debug: boolean;
+}
+
+export function createRunner(source: string, options: Partial<DSConfig> = {}): DominoScriptRunner {
+  const ctx = createContext(source, null, options);
   return {
     context: ctx,
     run: () => run(ctx),
-    onStdout: fn => ctx.onStdout(fn),
-    onStdin: fn => ctx.onStdin(fn)
-    // onStderr: fn => ctx.onStderr(fn)
+    onStdout: fn => ctx.listeners.stdout = fn,
+    onStdin: fn => ctx.listeners.stdin = fn,
+    onImport: fn => ctx.listeners.import = fn,
+    onBeforeRun: fn => ctx.listeners.beforeRun = fn,
+    onAfterInstruction: fn => ctx.listeners.afterInstruction = fn,
+    onAfterRun: fn => ctx.listeners.afterRun = fn
   };
 }
 
-async function run(ctx: Context): Promise<Context> {
+export async function run(ctx: Context): Promise<Context> {
   const start = performance.now();
   ctx.info.timeStartMs = Date.now();
+  ctx.beforeRun?.(ctx);
+
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
     let instruction: Instruction | AsyncInstruction | undefined;
 
@@ -43,15 +56,18 @@ async function run(ctx: Context): Promise<Context> {
 
     ctx.info.totalInstructions++;
     ctx.info.totalInstructionExecution[instruction.name] = (ctx.info.totalInstructionExecution[instruction.name] || 0) + 1;
+    ctx.lastInstruction = ctx.currentInstruction;
+    ctx.currentInstruction = instruction.name;
 
-    if (instruction.name === 'NUMIN' || instruction.name === 'STRIN') await instruction(ctx);
+    if (instruction.name === 'NUMIN' || instruction.name === 'STRIN' || instruction.name === 'IMPORT') await instruction(ctx);
     else instruction(ctx);
+
+    ctx.afterInstruction?.(ctx, instruction.name);
   }
 
   ctx.info.timeEndMs = Date.now();
   ctx.info.executionTimeSeconds = (performance.now() - start) / 1000;
-  console.debug('\n\n DEBUG INFO:');
-  console.debug(ctx.info);
+  ctx.afterRun?.(ctx);
   return ctx;
 }
 

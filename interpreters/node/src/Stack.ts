@@ -62,4 +62,8 @@ export class Stack {
   size(): number {
     return this.length;
   }
+
+  toString(): string {
+    return '[' + this.data.slice(0, this.length).join(' ') + ']';
+  }
 }

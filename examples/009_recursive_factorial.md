@@ -9,10 +9,8 @@ Example 009 - Factorial Recursion
 - [**DUPE**](../readme.md#dupe) `0—3`
 - [**SUB**](../readme.md#sub) `1—1`
 - [**MULT**](../readme.md#mult) `1—2`
-- [**NEG**](../readme.md#neg) `1—5`
 - [**EQL**](../readme.md#eql) `2—3`
 - [**BRANCH**](../readme.md#branch) `4—1`
-- [**LABEL**](../readme.md#label) `4—2`
 - [**CALL**](../readme.md#call) `4—4`
 - [**NUMOUT**](../readme.md#numout) `5—1`
 
@@ -22,7 +20,7 @@ We define a recursive function that calculates the factorial of a number. We cal
 ```js
 NUM 12
 NUM 42 CALL
-NUMOUT
+NUMOUT // prints 479001600
 
 FUNCTION FACTORIAL: // (address 42)
   DUP NUM 0 EQ
@@ -36,7 +34,6 @@ FUNCTION FACTORIAL: // (address 42)
 ```
 
 ## DominoScript:
-
 ```
 0—1 . . . . . 1—0 1—0 0 . . . 2—1 4—4 0
                       |               |
@@ -55,3 +52,5 @@ Internally DominoScript maintains a return stack containing the int32 address to
 You can perform recursive calls but only up to a limited depth *(Not sure yet what the max depth will be by default, but for now assume 512 as max. Might be configurable.)*
 
 > *Also note that the result of `factorial(12)` is the largest one that fits in an int32 without overflowing. `Factorial(13)` would overflow and return a number that is not the factorial of 13 but ---> 1932053504 - If you create your own implementation of DominoScript, keep that in mind*
+
+See how you can call factorial from another file in [Example 015 - Import Call (Parent)](015_import_call_parent.md).

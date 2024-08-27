@@ -1,7 +1,8 @@
+import {Context, contexts, createContext} from './Context.js';
 import {DSCallToItselfError, DSInterpreterError, DSInvalidNavigationModeError, DSJumpToItselfError, DSStepToEmptyCellError} from './errors.js';
 import {FORWARD, LEFT, RIGHT, navModes} from './navModes.js';
 import {Cell} from './Board.js';
-import {Context} from './Context.js';
+import {run} from './Runner.js';
 
 export function step(ctx: Context): Cell | null {
 
@@ -27,16 +28,43 @@ export function step(ctx: Context): Cell | null {
 
   // perform call
   if (ctx.nextCallAddress !== null) {
-    const nextCell = ctx.board.getOrThrow(ctx.nextCallAddress);
-    if (nextCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, ctx.nextCallAddress);
-    if (ctx.currentCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, ctx.nextCallAddress);
-    if (ctx.nextCallAddress === ctx.currentCell.connection || ctx.nextCallAddress === ctx.currentCell.address) throw new DSCallToItselfError(ctx.nextCallAddress);
-    ctx.returnStack.push(ctx.currentCell.address);
-    ctx.currentCell = ctx.board.getOrThrow(ctx.nextCallAddress);
-    ctx.nextCallAddress = null;
-    ctx.info.totalCalls++;
-    return ctx.currentCell;
+    if (typeof ctx.nextCallAddress === 'number' || ctx.nextCallAddress.origin === ctx.id) {
+      // calling local function
+      const address = typeof ctx.nextCallAddress === 'number' ? ctx.nextCallAddress : ctx.nextCallAddress.address;
+      const nextCell = ctx.board.getOrThrow(address);
+      if (nextCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, address);
+      if (ctx.currentCell.value === null) throw new DSStepToEmptyCellError(ctx.currentCell.address, address);
+      if (ctx.nextCallAddress === ctx.currentCell.connection || ctx.nextCallAddress === ctx.currentCell.address) throw new DSCallToItselfError(ctx.nextCallAddress);
+      ctx.returnStack.push(ctx.currentCell.address);
+      ctx.currentCell = ctx.board.getOrThrow(address);
+      ctx.nextCallAddress = null;
+      ctx.info.totalCalls++;
+      return ctx.currentCell;
+    } else {
+      const label = ctx.nextCallAddress;
+      const childCtx = contexts[label.origin];
+      /* c8 ignore next */
+      if (!childCtx) throw new DSInterpreterError(`Context ${label.origin} not found`);
+      const localLabel = childCtx.labels[label.localId];
+      childCtx.nextCallAddress = localLabel;
+      childCtx.isFinished = false;
+      run(childCtx); // This essentially hands over control to the child context until its IP cannot move anymore.
+      ctx.nextCallAddress = null;
+      ctx.info.totalCalls++;
+      ctx.info.totalReturns++;
+      // Not returning here because we want to trigger the move to the next domino
+    }
   }
+
+  // perform import
+  if (ctx.nextImport !== null) {
+    const childCtx = createContext(ctx.nextImport.script, ctx, {...ctx.config, filename: ctx.nextImport.filename});
+    run(childCtx);
+    ctx.nextImport = null;
+    ctx.info.totalImports++;
+    // Not returning here because we want to trigger the move to the next domino
+  }
+
   /* c8 ignore next */
   if (ctx.currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
   const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== ctx.currentCell.connection;
@@ -74,30 +102,25 @@ export function step(ctx: Context): Cell | null {
   /* c8 ignore next */
   } else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
 
-  // If all possible directions are empty, the program is finished.
-  if (!forwardCell && !leftCell && !rightCell) {
-    ctx.isFinished = true;
-    return null;
-  }
-
-  // The current movement mode will determine where to move next.
-  // const index = navModeOverride !== undefined ? navModeOverride : ctx.movementModeIndex;
-  const overrideIndex = ctx.navModeOverrides.shift();
-  const index = overrideIndex !== undefined ? overrideIndex : ctx.navMode;
-  let mm = navModes[index];
-  if (!mm) throw new DSInvalidNavigationModeError(index);
-  if (!Array.isArray(mm)) {
-    mm = mm(ctx.navModeNeedsReset, forwardCell, leftCell, rightCell);
-    ctx.navModeNeedsReset = false;
-  }
-  for (const direction of mm) {
-    if (direction === FORWARD && forwardCell && forwardCell.value !== null) return moveIP(ctx, forwardCell);
-    else if (direction === LEFT && leftCell && leftCell.value !== null) return moveIP(ctx, leftCell);
-    else if (direction === RIGHT && rightCell && rightCell.value !== null) return moveIP(ctx, rightCell);
+  if (forwardCell || leftCell || rightCell) {
+    // The current navigation mode will determine where to move next.
+    const overrideIndex = ctx.navModeOverrides.shift();
+    const index = overrideIndex !== undefined ? overrideIndex : ctx.navMode;
+    let mm = navModes[index];
+    if (!mm) throw new DSInvalidNavigationModeError(index);
+    if (!Array.isArray(mm)) {
+      mm = mm(ctx.navModeNeedsReset, forwardCell, leftCell, rightCell);
+      ctx.navModeNeedsReset = false;
+    }
+    for (const direction of mm) {
+      if (direction === FORWARD && forwardCell && forwardCell.value !== null) return moveIP(ctx, forwardCell);
+      else if (direction === LEFT && leftCell && leftCell.value !== null) return moveIP(ctx, leftCell);
+      else if (direction === RIGHT && rightCell && rightCell.value !== null) return moveIP(ctx, rightCell);
+    }
   }
 
   if (!ctx.returnStack.isEmpty()) {
-    // We are within a function and there are no valid moves. We need to return to the caller.
+    // No valid moves but we are in a function call. Return to the caller.
     const returnCell = ctx.board.getOrThrow(ctx.returnStack.pop());
     const entryCell = ctx.board.getOrThrow(returnCell.connection);
     ctx.lastCell = entryCell;
@@ -135,5 +158,5 @@ function findFirstDomino(ctx: Context): void {
       return;
     }
   }
-  if (ctx.currentCell?.address === -1) ctx.isFinished = true;
+  if (!ctx.currentCell) ctx.isFinished = true;
 }

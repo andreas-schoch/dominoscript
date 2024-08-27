@@ -2,7 +2,7 @@ import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInterpret
 import {deepStrictEqual, strictEqual, throws} from 'assert';
 import {Cell} from '../src/Board.js';
 import {createRunner} from '../src/Runner.js';
-import {dedent} from './helpers.js';
+import {dedent} from '../src/helpers.js';
 
 describe('Board', () => {
 
@@ -103,6 +103,12 @@ describe('Board', () => {
 
   it('should throw InvalidGridError when source is empty', () => {
     throws(() => createRunner(''), DSInvalidGridError);
+  });
+
+  it('should not throw any errors when grid is empty', async () => {
+    const ds = createRunner('. .');
+    const ctx = await ds.run();
+    strictEqual(ctx.currentCell, null);
   });
 
   it('should throw InvalidGridError for an invalid grid', () => {

@@ -1,10 +1,27 @@
 import {Address, Board, Cell} from './Board.js';
 import {DSInvalidInputError, DSMissingListenerError} from './errors.js';
+import {DSConfig} from './Runner.js';
 import {Stack} from './Stack.js';
 
+export interface Label {
+  id: number;
+  localId: number;
+  origin: string;
+  address: Address;
+}
+
 export interface Context {
+  id: string;
+  config: DSConfig,
+
+  parent: Context['id'] | null;
+  children: Context['id'][];
+
   currentCell: Cell | null;
   lastCell: Cell | null;
+
+  currentInstruction: string | null;
+  lastInstruction: string | null;
 
   board: Board;
   stack: Stack;
@@ -14,11 +31,12 @@ export interface Context {
   navMode: number;
   navModeOverrides: number[];
 
-  labels: Record<number, Address>; // label keys are always negative numbers
+  labels: Record<Label['id'], Label>; // label ids are always negative numbers
 
   // jump and call address can either refer to a real address or a label if negative
   nextJumpAddress: number | null;
-  nextCallAddress: number | null;
+  nextCallAddress: Label | number | null;
+  nextImport: {filename: string, script: string} | null;
 
   isFirstDomino: boolean;
   isFinished: boolean;
@@ -26,10 +44,23 @@ export interface Context {
 
   lastOpcode: number | null;
   base: 7 | 10 | 12 | 16; // indicates if using D6, D9, D12 or D15 dominos
+
+  listeners: {
+    stdin: (ctx: Context, type: 'num' | 'str') => Promise<number | string>;
+    stdout: (ctx: Context, msg: string) => void;
+    import: (ctx: Context, filename: string) => Promise<string>;
+    beforeRun?: (ctx: Context) => void;
+    afterInstruction?: (ctx: Context, instruction: string) => void;
+    afterRun?: (ctx: Context) => void;
+  };
+
   stdin: (ctx: Context, type: 'num' | 'str') => Promise<void>;
-  onStdin: (handler: (ctx: Context, type: 'num' | 'str') => Promise<number | string>) => void;
-  stdout: (msg: string) => void;
-  onStdout: (cb: (msg: string) => void) => void;
+  stdout: (ctx: Context, msg: string) => void;
+  import: (ctx: Context, filename: string) => Promise<string>;
+  beforeRun?: (ctx: Context) => void;
+  afterRun?: (ctx: Context) => void;
+  afterInstruction?: (ctx: Context, instruction: string) => void;
+
   info: {
     timeStartMs: number;
     timeEndMs: number;
@@ -39,23 +70,31 @@ export interface Context {
     totalJumps: number;
     totalCalls: number;
     totalReturns: number;
+    totalImports: number;
     totalInstructionExecution: Record<string, number>;
   }
 }
 
-export function createContext(source: string): Context {
-
-  const listeners = {
-    stdin: (_ctx: Context, _type: 'num' | 'str'): Promise<number | string> => {
+function getDefaultListeners(): Context['listeners'] {
+  return {
+    stdin: (_ctx: Context, _type: 'num' | 'str') => {
       throw new DSMissingListenerError('You need to provide a listener for stdin using Context.onStdin(...)');
     },
-    stdout: (_msg: string): void => {
+    stdout: (_ctx: Context,_msg: string) => {
       throw new DSMissingListenerError('You need to provide a listener for stdout using Context.onStdout(...)');
-    }
+    },
+    import: async (_ctx: Context, _filename: string) => {
+      throw new DSMissingListenerError('You need to provide a listener for import using Context.onImport(...)');
+    },
   };
+}
+
+export const contexts: Record<Context['id'], Context> = {};
+
+export function createContext(source: string, parent: Context | null = null, options: Partial<DSConfig>): Context {
 
   async function handleStdin(ctx: Context, type: 'num' | 'str'): Promise<void> {
-    const value = await listeners.stdin(ctx, type);
+    const value = await ctx.listeners.stdin(ctx, type);
     if (typeof value === 'number' && !isNaN(value) && Number.isInteger(value)) {
       ctx.stack.push(value);
     } else if (typeof value === 'string') {
@@ -66,27 +105,56 @@ export function createContext(source: string): Context {
     }
   }
 
-  return {
+  function handleStdout(ctx: Context, msg: string): void {
+    ctx.listeners.stdout(ctx, msg);
+  }
+
+  function handleImport(ctx: Context, filename: string): Promise<string> {
+    return ctx.listeners.import(ctx, filename);
+  }
+
+  function handleOnAfterInstruction(ctx: Context, instruction: string): void {
+    if (ctx.listeners.afterInstruction) ctx.listeners.afterInstruction(ctx, instruction);
+  }
+
+  function handleBeforeRun(ctx: Context): void {
+    if (ctx.listeners.beforeRun) ctx.listeners.beforeRun(ctx);
+  }
+
+  function handleAfterRun(ctx: Context): void {
+    if (ctx.listeners.afterRun) ctx.listeners.afterRun(ctx);
+  }
+
+  const ctx: Context = {
+    id: Math.random().toString(36).slice(2),
+    parent: parent?.id || null,
+    children: [],
     currentCell: null,
     lastCell: null,
+    currentInstruction: null,
+    lastInstruction: null,
     board: new Board(source),
-    stack: new Stack(512),
-    returnStack: new Stack(512),
+    stack: parent?.stack || new Stack(512), // data stack is shared between all contexts
+    returnStack: new Stack(512), // return stack is unique to each context
     navModeNeedsReset: false,
     navMode: 0,
     navModeOverrides: [],
     labels: {},
     nextJumpAddress: null,
     nextCallAddress: null,
+    nextImport: null,
     isFirstDomino: true,
     isFinished: false,
     isExtendedMode: false,
     lastOpcode: null,
     base: 7,
-    stdin: (ctx, type) => handleStdin(ctx, type),
-    onStdin: (cb) => listeners.stdin = cb,
-    stdout: msg => listeners.stdout(msg),
-    onStdout: (cb) => listeners.stdout = cb,
+    listeners: parent?.listeners || getDefaultListeners(),
+    stdin: handleStdin,
+    stdout: handleStdout,
+    import: handleImport,
+    beforeRun: handleBeforeRun,
+    afterInstruction: handleOnAfterInstruction,
+    afterRun: handleAfterRun,
     info: {
       timeStartMs: 0,
       timeEndMs: 0,
@@ -96,7 +164,17 @@ export function createContext(source: string): Context {
       totalJumps: 0,
       totalCalls: 0,
       totalReturns: 0,
+      totalImports: 0,
       totalInstructionExecution: {}
-    }
+    },
+    config: {
+      filename: options.filename || 'inline',
+      debug: options.debug || false
+    },
   };
+
+  if (parent) parent.children.push(ctx.id);
+
+  contexts[ctx.id] = ctx;
+  return ctx;
 }

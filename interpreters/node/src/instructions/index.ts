@@ -1,7 +1,7 @@
 import {ADD, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
 import {AND, EQL, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
-import {BRANCH, CALL, JUMP, LABEL, NAVM} from './ControlFlow.js';
+import {BRANCH, CALL, IMPORT, JUMP, LABEL, NAVM} from './ControlFlow.js';
 import {DUP, NUM, POP, ROTL, STR, SWAP} from './StackManipulations.js';
 import {EXT, GET, NOOP, SET, TIME} from './Misc.js';
 import {NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
@@ -54,7 +54,7 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   LABEL,
   JUMP,
   CALL,
-  undefined,
+  IMPORT,
   undefined,
 
   // Input & Output

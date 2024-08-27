@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.0.5`**
+**Current version `0.0.6`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -776,7 +776,7 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 |  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [_](#reserved_1_6) | [Arithmetic](#arithmetic) |
 |  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [_](#reserved_2_5) | [_](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
 |  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [LSL](#lsl) | [LSR](#lsr) | [ASR](#asr) | [Bitwise](#bitwise) |
-|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [_](#reserved_4_5) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
+|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [IMPORT](#import) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
 |  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [EXT](#ext) | [TIME](#time) | [NOOP](#noop) | [Misc](#misc) |
 
@@ -1162,10 +1162,24 @@ Exactly like JUMP with one crucial difference: When it cannot move anymore, the 
 
 Internally there is another stack that keeps track of the return addresses.
 
-#### `RESERVED_4_5`
+#### `IMPORT`
 <img src="assets/horizontal/4-5.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Pop a "string" from the stack to indicate the file name of the source file to import.
+
+On import the interpreter will load the file and start running it until its Instruction Pointer cannot move anymore.
+
+Labels defined in the imported file are accessible from the importing file. That means you can call functions from the imported file via the `CALL` instruction.
+
+If the importer file defined label before the import, the labels from the imported will have different identifiers. For example:
+- `FileChild.ds` defines a label `-1`.
+- `FileAParent.ds` defines labels `-1`, `-2`, then imports FileB.ds, then defines another label `-6`.
+
+The label `-1` in `FileChild.ds` will be `-3` in `FileAParent.ds` because labels are always auto decrementing. Why? Because it is the simplest way to avoid conflicts and be able to use labels internally and externally.
+
+The data stack is shared between parent and all imported files. Apart from that they parent and child imports run in their own contexts. Imported files can have imports themselves but you should avoid circular dependencies.
+
+If you import the same file into more than one other file, it will result in multiple instances of the imported file. This is not a problem as long as you are aware of it.
 
 #### `RESERVED_4_6`
 <img src="assets/horizontal/4-6.png" alt="Domino" width="128">
@@ -1671,3 +1685,5 @@ A list of examples to help you understand the language better.
 11. [Basic game loop](./examples/011_basic_game_loop.md)
 12. [Number Input](./examples/012_number_input.md)
 13. [String Input](./examples/013_string_input.md)
+14. [Import script into another](./examples/014_import_parent.md)
+15. [Call imported function](./examples/015_import_call_parent.md)

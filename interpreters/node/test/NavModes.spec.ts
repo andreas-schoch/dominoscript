@@ -2,7 +2,7 @@ import {rejects, strictEqual} from 'node:assert';
 import {Context} from '../src/Context.js';
 import {DSInvalidNavigationModeError} from '../src/errors.js';
 import {createRunner} from '../src/Runner.js';
-import {dedent} from './helpers.js';
+import {dedent} from '../src/helpers.js';
 
 function coordsToAddress(x: number, y: number, width = 31): number {
   return y * width + x;
@@ -50,8 +50,14 @@ function testResult(ctx: Context, lastCell: number, currentCell: number, totalIn
 
 describe('NavigationModes', () => {
 
-  it('should throw an InvalidNavigationModeError', () => {
+  it('should throw an InvalidNavigationModeError ahead of time in  NAVM instruction', () => {
     rejects(() => createRunner(getCode('1-6 6-6')).run(), DSInvalidNavigationModeError);
+  });
+
+  it('should throw an InvalidNavigationModeError within step() if navm override is invalid', () => {
+    const ds = createRunner(getCode('1-6 6-6'));
+    ds.context.navModeOverrides.push(9001);
+    rejects(() => ds.run(), DSInvalidNavigationModeError);
   });
 
   describe('Basic Three Way', () => {

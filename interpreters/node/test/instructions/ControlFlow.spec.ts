@@ -1,7 +1,8 @@
-import {DSAddressError, DSCallToItselfError, DSInvalidLabelError, DSJumpToItselfError, DSStepToEmptyCellError} from '../../src/errors.js';
-import {rejects, strictEqual} from 'assert';
+import {DSAddressError, DSCallToItselfError, DSInvalidLabelError, DSJumpToItselfError, DSMissingListenerError, DSStepToEmptyCellError} from '../../src/errors.js';
+import {deepStrictEqual, rejects, strictEqual} from 'assert';
+import {contexts} from '../../src/Context.js';
 import {createRunner} from '../../src/Runner.js';
-import {dedent} from '../helpers.js';
+import {dedent} from '../../src/helpers.js';
 
 describe('ControlFlow', () => {
 
@@ -64,10 +65,13 @@ describe('ControlFlow', () => {
 
   describe('LABEL', () => {
     it('should map addresses to negative labels starting from -1', async () => {
+      // NUM 6 LABEL NUM 4 LABEL
       const ds = createRunner('0-1 0-6 4-2 0-1 0-4 4-2');
       const ctx = await ds.run();
-      strictEqual(ctx.labels['-1'], 6, 'NUM 6 LABEL...`should map address 6 to label -1');
-      strictEqual(ctx.labels['-2'], 4, '...NUM 4 LABEL`should map address 4 to label -2');
+      deepStrictEqual(ctx.labels, {
+        '-1': {id: -1, localId: -1, address: 6, origin: ctx.id},
+        '-2': {id: -2, localId: -2, address: 4, origin: ctx.id},
+      });
     });
     it('should not be allowed to label out-of-bound address', async () => {
       const ds = createRunner('0-1 1-6 6-6 4-2');
@@ -151,4 +155,48 @@ describe('ControlFlow', () => {
     });
   });
 
+  describe('IMPORT', () => {
+    it('should throw MissingListenerError when API consumer did not use Context.onImport(...) to load the import', async () => {
+      const ds = createRunner('0-2 1-2 0-3 0-0 4-5');
+      rejects(ds.run(), DSMissingListenerError);
+    });
+    it('should expose label from import correctly', async () => {
+      // NUM 2 LABEL STR "a" IMPORT NUM 0 LABEL
+      const ds = createRunner('0-1 0-2 4-2 0-2 1-1 6-6 0-0 4-5 0-1 0-0 4-2');
+      // NUM 6 LABEL NUM 4 LABEL 
+      ds.onImport(() => Promise.resolve('0-1 0-6 4-2 0-1 0-4 4-2'));
+      const ctx = await ds.run();
+      const childCtx = contexts[ctx.children[0]];
+      deepStrictEqual(ctx.labels, {
+        '-1': {id: -1, localId: -1, address: 2, origin: ctx.id},
+        '-2': {id: -2, localId: -1, address: 6, origin: childCtx.id},
+        '-3': {id: -3, localId: -2, address: 4, origin: childCtx.id},
+        '-4': {id: -4, localId: -4, address: 0, origin: ctx.id},
+      });
+      deepStrictEqual(childCtx.labels, {
+        '-1': {id: -1, localId: -1, address: 6, origin: childCtx.id},
+        '-2': {id: -2, localId: -2, address: 4, origin: childCtx.id},
+      });
+    });
+    it('should be able to call imported functions the regular and the "Syntactic sugar" way', async () => {
+      // STR "f" IMPORT NUM 12 NUM 1 NEG CALL NUM 12 EXT OPCODE_1001
+      const ds = createRunner('0-2 1-2 0-4 0-0 4-5 0-1 1-0 1-5 0-1 0-1 1-5 4-4 0-1 1-0 1-5 6-4 2-6 3-0');
+      // NUM 42 LABEL - then factorial function at address 42 (same as in example 015)
+      ds.onImport(() => Promise.resolve(dedent(`\
+        0 . . . . . . 1—0 1—0 0 . . . 2—1 4—4 0
+        |                     |               |
+        1 . . . . . . . . . . 0 . . . . . . . 6
+                                               
+        1 . 0—3 0—1 0—0 2—3 4—1 . . . . . . . 0
+        |                                     |
+        0 . . . . . . . . . . 0 . . . . . . . 1
+                              |                
+        6—0 4—2 . . . . . . . 3 0—1 0—1 1—1 0—1
+      `)));
+
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.pop(), 479001600, 'should have calculated the factorial of 12');
+      strictEqual(ctx.stack.pop(), 479001600, 'should have calculated the factorial of 12 again');
+    });
+  });
 });

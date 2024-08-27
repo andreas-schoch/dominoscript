@@ -884,12 +884,3 @@ DominoScript atm doesn't have a way to do that. Currently I can only think of th
 I cannot think of other ways. The second way is probably so useful that it should be part of the language itself. With a TIME instruction alone the language suddenly gains the ability to do game loops at constant 60fps, timers, delays, timeouts, events, input polling interupts etc.
 
 The implementation itself of something like an "event loop" would still be up to the dev. I think the most important thing is to add an ability to tell how much time has passed.
-
-
-<style>
-  /* dominoscript looks a bit more readable when slightly styled */
-    .ds {
-        line-height: 1.25;
-        letter-spacing: 4px;
-    }
-</style>
