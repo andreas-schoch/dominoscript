@@ -6,7 +6,7 @@ import {parseDominoValue} from './instructions/Misc.js';
 import {step} from './step.js';
 
 export interface DominoScriptRunner {
-  context: Context;
+  ctx: Context;
   run(): Promise<Context>;
   onStdout(fn: Context['listeners']['stdout']): void;
   onStdin(fn: Context['listeners']['stdin']): void;
@@ -24,7 +24,7 @@ export interface DSConfig {
 export function createRunner(source: string, options: Partial<DSConfig> = {}): DominoScriptRunner {
   const ctx = createContext(source, null, options);
   return {
-    context: ctx,
+    ctx,
     run: () => run(ctx),
     onStdout: fn => ctx.listeners.stdout = fn,
     onStdin: fn => ctx.listeners.stdin = fn,
@@ -59,7 +59,7 @@ export async function run(ctx: Context): Promise<Context> {
     ctx.lastInstruction = ctx.currentInstruction;
     ctx.currentInstruction = instruction.name;
 
-    if (instruction.name === 'NUMIN' || instruction.name === 'STRIN' || instruction.name === 'IMPORT') await instruction(ctx);
+    if (instruction.name === 'NUMIN' || instruction.name === 'STRIN' || instruction.name === 'IMPORT' || instruction.name === 'WAIT') await instruction(ctx);
     else instruction(ctx);
 
     ctx.afterInstruction?.(ctx, instruction.name);

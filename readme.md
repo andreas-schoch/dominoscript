@@ -776,7 +776,7 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 |  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [_](#reserved_1_6) | [Arithmetic](#arithmetic) |
 |  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [_](#reserved_2_5) | [_](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
 |  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [LSL](#lsl) | [LSR](#lsr) | [ASR](#asr) | [Bitwise](#bitwise) |
-|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [IMPORT](#import) | [_](#reserved_4_6) | [Control Flow](#control-flow) |
+|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [IMPORT](#import) | [WAIT](#wait) | [Control Flow](#control-flow) |
 |  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
 |  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [EXT](#ext) | [TIME](#time) | [NOOP](#noop) | [Misc](#misc) |
 
@@ -1181,10 +1181,12 @@ The data stack is shared between parent and all imported files. Apart from that 
 
 If you import the same file into more than one other file, it will result in multiple instances of the imported file. This is not a problem as long as you are aware of it.
 
-#### `RESERVED_4_6`
+#### `WAIT`
 <img src="assets/horizontal/4-6.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Pops the top item off the stack and waits for that many milliseconds before continuing.
+
+*(You could simulate a delay without using `WAIT` using a 'busy loop' like in example [011_basic_game_loop](./examples/011_basic_game_loop.md) but it is not recommended)*
 
 <br>
 <h3 id="input-and-output">Input & Output</h3>

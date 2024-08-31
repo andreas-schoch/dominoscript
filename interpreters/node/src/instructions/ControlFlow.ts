@@ -1,5 +1,5 @@
 import {Context, contexts} from '../Context.js';
-import {DSInterpreterError, DSInvalidLabelError, DSInvalidNavigationModeError, DSJumpToExternalLabelError} from '../errors.js';
+import {DSInterpreterError, DSInvalidLabelError, DSInvalidNavigationModeError, DSInvalidValueError, DSJumpToExternalLabelError} from '../errors.js';
 import {navModes} from '../navModes.js';
 
 export function NAVM(ctx: Context): void {
@@ -67,4 +67,10 @@ export async function IMPORT(ctx: Context): Promise<void> {
   const filename = chars.join('');
   const script = await ctx.import(ctx, filename);
   ctx.nextImport = {filename, script};
+}
+
+export async function WAIT(ctx: Context): Promise<void> {
+  const delay = ctx.stack.pop();
+  if (delay < 0) throw new DSInvalidValueError(delay);
+  return new Promise(resolve => setTimeout(resolve, delay));
 }

@@ -1,4 +1,4 @@
-import {DSAddressError, DSCallToItselfError, DSInvalidLabelError, DSJumpToItselfError, DSMissingListenerError, DSStepToEmptyCellError} from '../../src/errors.js';
+import {DSAddressError, DSCallToItselfError, DSInvalidLabelError, DSInvalidValueError, DSJumpToItselfError, DSMissingListenerError, DSStepToEmptyCellError} from '../../src/errors.js';
 import {deepStrictEqual, rejects, strictEqual} from 'assert';
 import {contexts} from '../../src/Context.js';
 import {createRunner} from '../../src/Runner.js';
@@ -197,6 +197,21 @@ describe('ControlFlow', () => {
       const ctx = await ds.run();
       strictEqual(ctx.stack.pop(), 479001600, 'should have calculated the factorial of 12');
       strictEqual(ctx.stack.pop(), 479001600, 'should have calculated the factorial of 12 again');
+    });
+  });
+
+  describe('WAIT', () => {
+    it('should wait for 50ms before continuing', async () => {
+      const ds = createRunner('0-1 1-1 0-1 4-6 6-6');
+      const start = Date.now();
+      await ds.run();
+      const end = Date.now();
+      strictEqual(end - start >= 50, true, 'should have waited for at least 50ms');
+      strictEqual(end - start < 60, true, 'should not have waited for more than 60ms');
+    });
+    it('should throw a ValueError when WAIT is executed with a negative delay', async () => {
+      const ds = createRunner('0-1 0-1 1-5 4-6');
+      rejects(ds.run(), DSInvalidValueError);
     });
   });
 });

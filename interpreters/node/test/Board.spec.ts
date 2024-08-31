@@ -17,8 +17,8 @@ describe('Board', () => {
       . . . . . . . .`
     ));
 
-    strictEqual(ds.context.board.grid.width, 8);
-    strictEqual(ds.context.board.grid.height, 4);
+    strictEqual(ds.ctx.board.grid.width, 8);
+    strictEqual(ds.ctx.board.grid.height, 4);
   });
 
   it('should populate the cells of a grid correctly', () => {
@@ -39,9 +39,9 @@ describe('Board', () => {
       {value: 4, address: 7, connection: 3, north: 3, south: null, east: null, west: 6},
     ];
 
-    strictEqual(ds.context.board.grid.width, 4);
-    strictEqual(ds.context.board.grid.height, 2);
-    deepStrictEqual(ds.context.board.grid.cells, expectedCells);
+    strictEqual(ds.ctx.board.grid.width, 4);
+    strictEqual(ds.ctx.board.grid.height, 2);
+    deepStrictEqual(ds.ctx.board.grid.cells, expectedCells);
   });
 
   it('should not throw any errors for comments that follow the "rules"', () => {
@@ -201,7 +201,7 @@ describe('Board', () => {
     it('should serialize a grid back to single-line source code', () => {
       const originalSource = '6—6 6—6 6—6 6—6';
       const ds = createRunner(originalSource);
-      const source = ds.context.board.serialize();
+      const source = ds.ctx.board.serialize();
       strictEqual(source, originalSource + '\n');
     });
     it('should serialize a grid back to multi-line source code', () => {
@@ -212,20 +212,20 @@ describe('Board', () => {
       |         |
       6 . . 6—6 6`);
       const ds = createRunner(originalSource);
-      const serializedSource = ds.context.board.serialize();
+      const serializedSource = ds.ctx.board.serialize();
       strictEqual(serializedSource, originalSource + '\n');
     });
     it('should throw InterpreterError when grid becomes invalid before serialization', () => {
       // This is something that might happen when using the API and manipulating the board.grid manually
       const ds = createRunner('6—6');
-      ds.context.board.grid.cells[0].connection = null;
-      throws(() => ds.context.board.serialize(), DSInterpreterError);
+      ds.ctx.board.grid.cells[0].connection = null;
+      throws(() => ds.ctx.board.serialize(), DSInterpreterError);
     });
     it('should throw InterpreterError when grid becomes invalid before serialization', () => {
       // This is something that might happen when using the API and manipulating the board.grid manually
       const ds = createRunner('6—6');
-      ds.context.board.grid.cells[0].value = null;
-      throws(() => ds.context.board.serialize(), DSInterpreterError);
+      ds.ctx.board.grid.cells[0].value = null;
+      throws(() => ds.ctx.board.serialize(), DSInterpreterError);
     });
   });
 });

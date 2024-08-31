@@ -86,3 +86,5 @@ function main() {
 
 ## Notes:
 This is kept minimal to show the concept. Future examples will expand on this. TODO
+
+Using a "busy-loop" like in this example isn't recommended anymore. Instead use the newly added `WAIT` instruction to wait for a specific amount of time. In simple cases where the main loop doesn't take a huge amount of time, you can use `WAIT` with a fixed delay. In an actual game you'd probably want to have a dynamic delay where you subtract the time it took to run the main loop.

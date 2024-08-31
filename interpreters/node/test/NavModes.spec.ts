@@ -56,7 +56,7 @@ describe('NavigationModes', () => {
 
   it('should throw an InvalidNavigationModeError within step() if navm override is invalid', () => {
     const ds = createRunner(getCode('1-6 6-6'));
-    ds.context.navModeOverrides.push(9001);
+    ds.ctx.navModeOverrides.push(9001);
     rejects(() => ds.run(), DSInvalidNavigationModeError);
   });
 
