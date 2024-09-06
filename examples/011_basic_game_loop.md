@@ -10,7 +10,7 @@ This shows how to use the `TIME` instruction to create a simple game loop that r
 - [**NUM**](../readme.md#num) `0—1`
 - [**STR**](../readme.md#str) `0—2`
 - [**DUPE**](../readme.md#dupe) `0—3`
-- [**SWAP**](../readme.md#swap) `0—4`
+- [**ROLL**](../readme.md#roll) `0—4`
 - [**ADD**](../readme.md#add) `1—0`
 - [**SUB**](../readme.md#sub) `1—1`
 - [**GTR**](../readme.md#gtr) `2—4`
@@ -24,25 +24,25 @@ This shows how to use the `TIME` instruction to create a simple game loop that r
 ## Pseudocode:
 
 ```js
-NUM 6
+NUM 0 // frame counter
 TIME
 
 LOOP_FOREVER:
-  DUPE TIME SWAP SUB
+  DUPE TIME NUM 1 ROLL SUB // calculate time difference since last call
   NUM 99 GTR
   IF:
     POP
     TIME
-    SWAP
-    NUM 1
-    ADD
-    NUM 112 CALL
+    NUM 1 ROLL // SWAP frame counter to top
+    NUM 1 ADD // increment frame counter
+    NUM 1 ROLL // SWAP frame counter back down
+    NUM 136 CALL
   ELSE:
     NOOP
 
-FUNCTION MAIN: // address: 112
+FUNCTION MAIN: // address: 136
   STR "Frame: " STROUT
-  SWAP DUPE NUMOUT SWAP
+  NUM 1 ROLL DUPE NUMOUT NUM 1 ROLL // move frame counter to the top, output it, and move it back down so time is at the top again
   STR "\n" STROUT
 ```
 
@@ -67,21 +67,20 @@ function main() {
 ```
 
 ## DominoScript:
-
 ```
-0—1 0—0 6—5 0—3 6—5 0—4 1—1 0—1 2—0 0—5 0—1 2—4 4 . . .
-                                                |      
-. . . . . . 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 1 0—0 6
-                                                      |
-. . . . . . . 6—6 4—4 0—2 2—1 1—0 4—0 0—1 1—0 1—0 4—0 5
-                                                       
-. . . . . . . . . . . . . . . . . . . . . . . . . . . .
-                                                       
-0—2 1—1 3—0 1—1 4—5 1—1 2—2 1—1 4—0 1—1 2—6 1—1 1—2 1—0
-                                                       
-. . . 6 3—5 0—0 3—1 0—1 2—0 4—0 1—5 3—0 4—0 3—5 0—0 4—4
-      |                                                
-. . . 6 . . . . . . . . . . . . . . . . . . . . . . . .
+0—1 0—0 6—5 0—3 6—5 0—1 0—1 0—4 1—1 0—1 2—0 0—5 0—1 2—4 4 . . . .
+                                                        |        
+. . . . . . 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 1 0—0 6—5
+                                                                 
+. . . . . . . 4—4 6—4 2—1 1—0 4—0 1—0 1—0 0—1 1—0 1—0 4—0 1—0 1—0
+                                                                 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                                                                 
+0—2 1—1 3—0 1—1 4—5 1—1 2—2 1—1 4—0 1—1 2—6 1—1 1—2 1-0 4-4 0-0 5
+                                                                |
+. . . . . 6 3—5 0—0 3—1 0—1 2—0 4—0 1-0 1-0 1—5 3—0 4—0 1-0 1-0 3
+          |                                                      
+. . . . . 6 . . . . . . . . . . . . . . . . . . . . . . . . . . .
 ```
 
 ## Notes:

@@ -9,7 +9,7 @@ describe('Bitwise', () => {
       // RES: 11111111111111111111111101000100 is -188 in decimal
       const ds = createRunner('0-1 1-3 5-5 3-0');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), -188, 'expected "187 BNOT" to push -188 to the stack');
+      strictEqual(ctx.stack.toString(), '[-188]', 'expected "187 BNOT" to push -188 to the stack');
     });
   });
 
@@ -20,7 +20,7 @@ describe('Bitwise', () => {
       // =: 00000000000000000000000000001000 is 8 in decimal
       const ds = createRunner('0-1 1-0 1-2 0-1 1-0 1-3 3-1');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 8, 'expected "9 10 BAND" to push 8 to the stack');
+      strictEqual(ctx.stack.toString(), '[8]', 'expected "9 10 BAND" to push 8 to the stack');
     });
   });
 
@@ -31,7 +31,7 @@ describe('Bitwise', () => {
       // =: 00000000000000000000000000001011 is 11 in decimal
       const ds = createRunner('0-1 1-0 1-2 0-1 1-0 1-3 3-2');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 11, 'expected "9 10 BOR" to push 11 to the stack');
+      strictEqual(ctx.stack.toString(), '[11]', 'expected "9 10 BOR" to push 11 to the stack');
     });
   });
 
@@ -42,7 +42,7 @@ describe('Bitwise', () => {
       // =: 00000000000000000000000000000011 is 3 in decimal
       const ds = createRunner('0-1 1-0 1-2 0-1 1-0 1-3 3-3');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 3, 'expected "9 10 BXOR" to push 3 to the stack');
+      strictEqual(ctx.stack.toString(), '[3]', 'expected "9 10 BXOR" to push 3 to the stack');
     });
   });
 
@@ -52,7 +52,7 @@ describe('Bitwise', () => {
       // RES: 10000000000000000000000000000000 is -2147483648 in decimal
       const ds = createRunner('0-1 0-1 0-1 1-0 4-3 3-4');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), -2147483648, 'expected "1 31 LSL" to push -2147483648 to the stack');
+      strictEqual(ctx.stack.toString(), '[-2147483648]', 'expected "1 31 LSL" to push -2147483648 to the stack');
     });
   });
 
@@ -62,7 +62,7 @@ describe('Bitwise', () => {
       // RES: 00000000000000000000000000000001 is 1 in decimal
       const ds = createRunner('0-1 6-0 1-0 4-1 3-4 2-1 1-1 6-2 1-5 0-1 1-0 4-3 3-5');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 1, 'expected "-2147483648 31 LSR" to push 1 to the stack');
+      strictEqual(ctx.stack.toString(), '[1]', 'expected "-2147483648 31 LSR" to push 1 to the stack');
     });
   });
 
@@ -72,7 +72,7 @@ describe('Bitwise', () => {
       // RES: 11111111111111111111111111111111 is -1 in decimal
       const ds = createRunner('0-1 6-0 1-0 4-1 3-4 2-1 1-1 6-2 1-5 0-1 1-0 4-3 3-6');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), -1, 'expected "-2147483648 31 ASR" to push -1 to the stack');
+      strictEqual(ctx.stack.toString(), '[-1]', 'expected "-2147483648 31 ASR" to push -1 to the stack');
     });
   });
 });

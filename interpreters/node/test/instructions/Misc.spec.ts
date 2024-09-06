@@ -10,8 +10,7 @@ describe('Misc', () => {
       // NUM 21 NUM 20 GET GET
       const ds = createRunner('0-1 1-0 3-0 6-0 0-1 1-0 2-6 6-0 . . 0-0 4-2 0-0 . .');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 30);
-      strictEqual(ctx.stack.pop(), 18);
+      strictEqual(ctx.stack.toString(), '[18 30]');
     });
     it('should push the correct decimal value representing the domino from either top or bottom', async () => {
       // NUM 46 GET NUM 20 GET
@@ -21,14 +20,13 @@ describe('Misc', () => {
         . . . . . . . . . . . . . . . . . . . 5 2 6 . . . .`
       ));
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 30);
-      strictEqual(ctx.stack.pop(), 18);
+      strictEqual(ctx.stack.toString(), '[18 30]');
     });
     it('should push -1 when getting empty cell', async () => {
       // NUM 13 GET
       const ds = createRunner('0-1 1-0 2-0 6-0 . . . . . . . . . . . . . . . . . .');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), -1);
+      strictEqual(ctx.stack.toString(), '[-1]');
 
     });
     it('should throw an AddressError when trying to get out of bound address', async () => {
@@ -159,22 +157,20 @@ describe('Misc', () => {
       // EXT NUM 6 DUPE MULT
       const ds = createRunner('6-4 0-0 0-1 0-6 0-0 0-3 0-0 1-2');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 36);
+      strictEqual(ctx.stack.toString(), '[36]');
     });
     it('should toggle between using one, two and one dominoes for opcodes', async () => {
       // NUM 1 EXT NUM 2 EXT NUM 3
       const ds = createRunner('0-1 0-1 6-4 0-0 0-1 0-2 0-0 6-4 0-1 0-3');
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 3);
-      strictEqual(ctx.stack.pop(), 2);
-      strictEqual(ctx.stack.pop(), 1);
+      strictEqual(ctx.stack.toString(), '[1 2 3]');
     });
     it('should call by label using the extended modes alternative syntax', async () => {
       // NUM 25 LABEL EXT OPCODE_1001
       const ds = createRunner('0-1 1-0 3-4 4-2 6-4 2-6 3-0 . . . . 6-6 6-1 1-0 0-0');
       const ctx = await ds.run();
       strictEqual(ctx.info.totalCalls, 1, 'should have called once');
-      strictEqual(ctx.stack.peek(), 342, 'should have pushed 342 to the stack by the end');
+      strictEqual(ctx.stack.toString(), '[342]', 'should have pushed 342 to the stack by the end');
     });
     it('should throw an InvalidInstructionError when unmapped opcode is executed in extended mode', async () => {
       // EXT INVALID_OPCODE_500
@@ -207,8 +203,7 @@ describe('Misc', () => {
       const ds = createRunner('6-5');
       const ctx = await ds.run();
       Date.now = originalNow;
-      const time = ctx.stack.pop();
-      strictEqual(time, 100);
+      strictEqual(ctx.stack.toString(), '[100]');
     });
   });
 

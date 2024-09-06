@@ -195,8 +195,7 @@ describe('ControlFlow', () => {
       `)));
 
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 479001600, 'should have calculated the factorial of 12');
-      strictEqual(ctx.stack.pop(), 479001600, 'should have calculated the factorial of 12 again');
+      strictEqual(ctx.stack.toString(), '[479001600 479001600]', 'should have calculated the factorial of 12 twice');
     });
   });
 

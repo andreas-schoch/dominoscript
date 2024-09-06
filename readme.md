@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.0.6`**
+**Current version `0.1.0`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -770,15 +770,15 @@ A single "double-six" domino can represent numbers from 0 to 6 twice giving us a
 
 (Note: These are the instructions for the default D6-mode. Other D-modes might extend it as they will have a larger opcode range. The dominos are presented as if the IP moves eastwards - See [Rule_01](#rule_01))
 
-|     |     0     |     1     |     2     |     3     |     4     |     5     |     6     |    CATEGORY     |
-|-----|-----------|-----------|-----------|-----------|-----------|-----------|-----------|----------|
-|  **0** | [POP](#pop) | [NUM](#num) | [STR](#str) | [DUPE](#dupe) | [SWAP](#swap) | [ROTL](#rotl) | [_](#reserved_0_6) | [Stack Management](#stack-management) |
-|  **1** | [ADD](#add) | [SUB](#sub) | [MULT](#mult) | [DIV](#div) | [MOD](#mod) | [NEG](#neg) | [_](#reserved_1_6) | [Arithmetic](#arithmetic) |
-|  **2** | [NOT](#not) | [AND](#and) | [OR](#or) | [EQL](#eql) | [GTR](#gtr) | [_](#reserved_2_5) | [_](#reserved_2_6) | [Comparison & Logical](#comparison-and-logical) |
-|  **3** | [BNOT](#bnot) | [BAND](#band) | [BOR](#bor) | [BXOR](#bxor) | [LSL](#lsl) | [LSR](#lsr) | [ASR](#asr) | [Bitwise](#bitwise) |
-|  **4** | [NAVM](#navm) | [BRANCH](#branch) | [LABEL](#label) | [JUMP](#jump) | [CALL](#call) | [IMPORT](#import) | [WAIT](#wait) | [Control Flow](#control-flow) |
-|  **5** | [NUMIN](#numin) | [NUMOUT](#numout) | [STRIN](#strin) | [STROUT](#strout) | [_](#reserved_5_4) | [_](#reserved_5_5) | [_](#reserved_5_6) | [Input & Output](#input-and-output) |
-|  **6** | [GET](#get) | [SET](#set) | [_](#reserved_6_2) | [_](#reserved_6_3) | [EXT](#ext) | [TIME](#time) | [NOOP](#noop) | [Misc](#misc) |
+|     |  0                | 1               | 2                | 3                | 4                | 5                | 6                | CATEGORY                                      |
+|-----|-------------------|-----------------|------------------|------------------|------------------|------------------|------------------|-----------------------------------------------|
+|**0**|[POP](#pop)       |[NUM](#num)       |[STR](#str)       |[DUPE](#dupe)     |[ROLL](#roll)     |[_](#reserved_0_5)|[_](#reserved_0_6)|[Stack Management](#data-management)          |
+|**1**|[ADD](#add)       |[SUB](#sub)       |[MULT](#mult)     |[DIV](#div)       |[MOD](#mod)       |[NEG](#neg)       |[_](#reserved_1_6)|[Arithmetic](#arithmetic)                      |
+|**2**|[NOT](#not)       |[AND](#and)       |[OR](#or)         |[EQL](#eql)       |[GTR](#gtr)       |[_](#reserved_2_5)|[_](#reserved_2_6)|[Comparison & Logical](#comparison-and-logical)|
+|**3**|[BNOT](#bnot)     |[BAND](#band)     |[BOR](#bor)       |[BXOR](#bxor)     |[LSL](#lsl)       |[LSR](#lsr)       |[ASR](#asr)       |[Bitwise](#bitwise)                            |
+|**4**|[NAVM](#navm)     |[BRANCH](#branch) |[LABEL](#label)   |[JUMP](#jump)     |[CALL](#call)     |[IMPORT](#import) |[WAIT](#wait)     |[Control Flow](#control-flow)                  |
+|**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[_](#reserved_5_4)|[_](#reserved_5_5)|[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
+|**6**|[GET](#get)       |[SET](#set)       |[_](#reserved_6_2)|[_](#reserved_6_3)|[EXT](#ext)       |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
 
 
 <h3 id="stack-management">Stack Management</h3>
@@ -919,23 +919,30 @@ Duplicate the top item on the stack.
 |-----------------|----------------|
 | `[a, b]`        | `[a, b, b]`    |
 
-#### `SWAP`
+#### `ROLL`
 <img src="assets/horizontal/0-4.png" alt="Domino" width="128">
 
-Swap the top 2 items on the stack.
+Pops one argument from the stack to be used as "depth".
 
-| Stack Before    | Stack After    |
-|-----------------|----------------|
-| `[a, b]`        | `[b, a]`       |
+- With a negative depth, the item at the <ins>top</ins> is moved to the <ins>nth depth</ins>
+- With a positive depth, the item at the <ins>nth depth</ins> is moved to the <ins>top</ins>
 
-#### `ROTL`
+With roll you can implement common stack operations like `SWAP` and `ROT`:
+
+| Roll Depth |  Equivalent to | Stack Before    | Stack After    |
+|------------|----------------|-----------------|----------------|
+| -3         | -              | `[a, b, c, d]`  | `[d, a, b, c]` |
+| -2         | ROTR           | `[a, b, c]`     | `[c, a, b]`    |
+| -1         | SWAP           | `[a, b]`        | `[b, a]`       |
+| 0          | NOOP           | `[a]`           | `[a]`          |
+| 1          | SWAP           | `[a, b]`        | `[b, a]`       |
+| 2          | ROTL           | `[a, b, c]`     | `[b, c, a]`    |
+| 3          | -              | `[a, b, c, d]`  | `[b, c, d, a]` |
+
+#### `RESERVED_0_5`
 <img src="assets/horizontal/0-5.png" alt="Domino" width="128">
 
-Rotate the top 3 items on the stack to the left. The third item becomes the top, the top becomes the second and the second becomes the third.
-
-| Stack Before    | Stack After    |
-|-----------------|----------------|
-| `[a, b, c]`     | `[b, c, a]`    |
+Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 #### `RESERVED_0_6`
 <img src="assets/horizontal/0-6.png" alt="Domino" width="128">
@@ -943,7 +950,6 @@ Rotate the top 3 items on the stack to the left. The third item becomes the top,
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
 <br>
-
 <h3 id="arithmetic">Arithmetic</h3>
 
 #### `ADD`

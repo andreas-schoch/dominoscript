@@ -1,13 +1,13 @@
 Example 017 - Using WAIT
 =======================================
 
-Prints hello world with a 500ms delay between each character.
+Prints hello world with a delay between each character.
 
 ## Opcodes:
 - [**NUM**](../readme.md#num) `0—1`
 - [**STR**](../readme.md#str) `0—2`
 - [**DUPE**](../readme.md#dupe) `0—3`
-- [**SWAP**](../readme.md#swap) `0—4`
+- [**ROLL**](../readme.md#roll) `0—4`
 - [**NOT**](../readme.md#not) `2—0`
 - [**EQL**](../readme.md#eql) `2—3`
 - [**BRANCH**](../readme.md#branch) `4—1`
@@ -20,8 +20,8 @@ Prints hello world with a 500ms delay between each character.
 STR 'hello world'
 
 LOOP:
-  NUM 0 SWAP STROUT // Print the character
-  NUM 1000 TIME WAIT // Wait 1000ms
+  NUM 0 NUM 1 ROLL STROUT // push null terminator, swap it behind current char, print the char
+  NUM 1000 TIME WAIT // Wait 500ms
 
   DUPE NUM 0 EQ NOT // Check if we reached the null terminator
   IF: // IP moves left
@@ -45,13 +45,13 @@ LOOP:
                                                   |
 6 . 0—1 0 . 1—3 1 . 2—3 2—0 . . . . . . . . . . . 2
 |       |       |                                  
-6 . 6 . 0 . 0 . 3 . 0 . . . . . . . . . . . . . . 1
+6 . 0 . 1 . 0 . 3 . 0 . . . . . . . . . . . . . . 1
     |       |       |                             |
-6 . 6 . 0 . 2 . 4 . 0 . . . . . . . . . . . . . . 1
+6 . 0 . 0 . 2 . 4 . 0 . . . . . . . . . . . . . . 1
 |       |       |                                  
-6 . 6 . 4 . 1 . 6 . 1 . . . . . . . . . . . . . . 4
+6 . 1 . 4 . 1 . 6 . 1 . . . . . . . . . . . . . . 4
     |       |       |                             |
-6—6 6 . 5—3 0 . 0—3 0 . . . . . . 3—5 0—0 6—2 1—1 1
+6—6 0 . 5—3 0 . 0—3 0 . . . . . . 3—5 0—0 6—2 1—1 1
 ```
 
 ## Notes:

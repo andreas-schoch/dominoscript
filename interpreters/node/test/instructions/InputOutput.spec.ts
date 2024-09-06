@@ -9,7 +9,7 @@ describe('InputOutput', () => {
       const ds = createRunner('5-0');
       ds.onStdin(() => Promise.resolve(123));
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 123);
+      strictEqual(ctx.stack.toString(), '[123]');
     });
     it('should throw MissingListenerError when API consumer did not use Context.onStdin(...) to specify how to get number input', async () => {
       const ds = createRunner('5-0');
@@ -52,10 +52,7 @@ describe('InputOutput', () => {
       ds.onStdin(() => Promise.resolve('123'));
 
       const ctx = await ds.run();
-      strictEqual(ctx.stack.pop(), 49, 'expected the charcode of "1"');
-      strictEqual(ctx.stack.pop(), 50, 'expected the charcode of "2"');
-      strictEqual(ctx.stack.pop(), 51, 'expected the charcode of "3"');
-      strictEqual(ctx.stack.pop(), 0, 'expected the charcode of the null terminator');
+      strictEqual(ctx.stack.toString(), '[0 51 50 49]', 'expected the string "123" to be pushed in reverse order');
     });
     it('should throw MissingListenerError when API consumer did not use Context.onStdin(...) to specify how to get string input', async () => {
       const ds = createRunner('5-2');

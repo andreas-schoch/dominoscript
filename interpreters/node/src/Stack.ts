@@ -1,4 +1,4 @@
-import {DSEmptyStackError, DSFullStackError} from './errors.js';
+import {DSEmptyStackError, DSFullStackError, DSInvalidValueError} from './errors.js';
 
 export class Stack {
   private data: Int32Array;
@@ -30,20 +30,29 @@ export class Stack {
     this.push(value);
   }
 
-  swap(): void {
-    const a = this.pop();
-    const b = this.pop();
-    this.push(a);
-    this.push(b);
-  }
+  roll(): void {
+    let depth = this.pop();
 
-  rotateLeft(): void {
-    const a = this.pop();
-    const b = this.pop();
-    const c = this.pop();
-    this.push(b);
-    this.push(a);
-    this.push(c);
+    // Positive depth: move item from depth to top
+    if (depth > 0) {
+      if (depth >= this.length) throw new DSInvalidValueError(depth);
+      const valueToMove = this.data[this.length - depth - 1];
+      for (let i = this.length - depth - 1; i < this.length - 1; i++) {
+        this.data[i] = this.data[i + 1]; // shift left
+      }
+      this.data[this.length - 1] = valueToMove;
+    }
+
+    // Negative depth: move top item to depth
+    else if (depth < 0) {
+      depth = -depth;
+      if (depth >= this.length) throw new DSInvalidValueError(depth);
+      const topValue = this.data[this.length - 1];
+      for (let i = this.length - 1; i > this.length - depth - 1; i--) {
+        this.data[i] = this.data[i - 1]; // shift right
+      }
+      this.data[this.length - depth - 1] = topValue;
+    }
   }
 
   clear(): void {
@@ -64,6 +73,8 @@ export class Stack {
   }
 
   toString(): string {
-    return '[' + this.data.slice(0, this.length).join(' ') + ']';
+    let str = '[';
+    for (let i = 0; i < this.length; i++) str += this.data[i] + ' ';
+    return str.trim() + ']';
   }
 }

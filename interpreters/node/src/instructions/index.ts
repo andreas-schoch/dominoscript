@@ -2,7 +2,7 @@ import {ADD, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
 import {AND, EQL, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
 import {BRANCH, CALL, IMPORT, JUMP, LABEL, NAVM, WAIT} from './ControlFlow.js';
-import {DUP, NUM, POP, ROTL, STR, SWAP} from './StackManipulations.js';
+import {DUP, NUM, POP, ROLL, STR} from './StackManipulations.js';
 import {EXT, GET, NOOP, SET, TIME} from './Misc.js';
 import {NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
@@ -17,8 +17,8 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   NUM,
   STR,
   DUP,
-  SWAP,
-  ROTL,
+  ROLL,
+  undefined,
   undefined,
 
   // Arithmetic

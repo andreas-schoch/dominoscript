@@ -52,12 +52,11 @@ export function DUP(ctx: Context): void {
   ctx.stack.duplicate();
 }
 
-export function SWAP(ctx: Context): void {
-  // ( a b -- b a )
-  ctx.stack.swap();
-}
-
-export function ROTL(ctx: Context): void {
-  // ( a b c -- b c a )
-  ctx.stack.rotateLeft();
+export function ROLL(ctx: Context): void {
+  // ROLL can be used to do many of the usual operations you see in stack oriented languages:
+  // 2 ROLL ---> ROTR --> ( a b c -- c a b )
+  // -2 ROLL --> ROTL --> ( a b c -- b c a )
+  // 1 ROLL ---> SWAP --> ( a b -- b a )
+  // 0 ROLL ---> NOOP --> ( a -- a )
+  ctx.stack.roll();
 }

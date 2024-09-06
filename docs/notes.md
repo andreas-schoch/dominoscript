@@ -884,3 +884,103 @@ DominoScript atm doesn't have a way to do that. Currently I can only think of th
 I cannot think of other ways. The second way is probably so useful that it should be part of the language itself. With a TIME instruction alone the language suddenly gains the ability to do game loops at constant 60fps, timers, delays, timeouts, events, input polling interupts etc.
 
 The implementation itself of something like an "event loop" would still be up to the dev. I think the most important thing is to add an ability to tell how much time has passed.
+
+
+## more advanced Stack manipulating instructions
+
+I want an instruction to fascilitate deep stack access and stack manipulation without using GET and SET as a form of temporary data storage. Currently with just pop, push (num str), dup, swap and rotl DominoScript is unable to perform something simple like reversing a string without using temporary data storage.
+
+With a piet like ROLL I could get rid of SWAP because `NUM 2 NUM 1 ROLL` is the same as a swap but at the expense of using 5 dominos instead of 1. Also can get rid of ROTL with `NUM 3 NUM 1 NEG ROLL` using 6 dominos instead of 1.
+
+With a forth like ROLL that only takes a single argument for the depth, I can replace SWAP with `NUM 1 ROLL` and ROTL with `NUM 2 ROLL` which both take 3 dominos.
+
+After experimenting with both, I think I prefer a forth like ROLL better but with the addition of using negative depth to move the top value down to specific depth. 
+
+Below is a piet like roll with tests. In case I want to use it in the future I'll keep it here.
+
+```ts
+// These methods are part of the Stack class
+roll(): void {
+  const rolls = this.pop();
+  const depth = this.pop();
+
+  if (depth < 0) throw new DSInvalidValueError(depth);
+
+  // const tmp = this.data.slice(depth, this.length);
+  const tmp: number[] = []; // In place would be better to avoid GC
+  for (let i = 0; i < depth; i++) tmp.push(this.pop());
+
+  if (rolls > 0) {
+    for (let i = rolls; i > 0; i--) {
+      const value = tmp.shift();
+      if (value === undefined) throw new DSInterpreterError('Roll failed');
+      tmp.push(value);
+    }
+  } else {
+    for (let i = rolls; i < 0; i++) {
+      const value = tmp.pop();
+      if (value === undefined) throw new DSInterpreterError('Roll failed');
+      tmp.unshift(value);
+    }
+  }
+
+  // push the values back to the stack
+  for (let i = 0; i < depth; i++) {
+    const value = tmp.pop();
+    if (value === undefined) throw new DSInterpreterError('Roll failed');
+    this.push(value);
+  }
+}
+
+  // In place alternative which is probably a bit more performant due to reduced GC
+roll(ctx: Context): void {
+  const rolls = this.pop();
+  const depth = this.pop();
+
+  if (depth < 0) throw new DSInvalidValueError(depth);
+
+  if (rolls > 0) {
+    for (let i = 0; i < rolls; i++) {
+      const top = this.data[this.length - 1];
+      for (let j = this.length - 1; j > this.length - depth; j--) {
+        this.data[j] = this.data[j - 1];
+      }
+      this.data[this.length - depth] = top;
+    }
+  } else {
+    for (let i = 0; i < -rolls; i++) {
+      const bottom = this.data[this.length - depth];
+      for (let j = this.length - depth; j < this.length - 1; j++) {
+        this.data[j] = this.data[j + 1];
+      }
+      this.data[this.length - 1] = bottom;
+    }
+  }
+}
+
+  // testcases for piet like roll
+describe('ROLL', () => {
+  it('should roll top 3 items once to the right from [1, 2, 3, 3, 1] to [3, 1, 2]', async () => {
+    // (Example: If the stack is currently 1,2,3, with 3 at the top, and then you push 3 and then 1, and then roll, the new stack is 3,1,2.)
+    // NUM 1 NUM 2 NUM 3 NUM 3 NUM 1 ROLL
+    const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 0-1 0-1 0-6');
+    const ctx = await ds.run();
+    strictEqual(ctx.stack.toString(), '[3 1 2]');
+  });
+  it('should roll top 3 items once to the left from [1, 2, 3, 3, 1] to [2, 3, 1]', async () => {
+    // NUM 1 NUM 2 NUM 3 NUM 3 NUM 1 NEG ROLL
+    const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 0-1 0-1 1-5 0-6');
+    const ctx = await ds.run();
+    strictEqual(ctx.stack.toString(), '[2 3 1]');
+  });
+  it('should throw InvalidValueError when depth arg is negative', async () => {
+    // NUM 1 NUM 2 NUM 3 NUM 3 NEG NUM 1 ROLL
+    const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 1-5 0-1 0-1 0-6');
+    rejects(ds.run(), DSInvalidValueError);
+  });
+  it('should throw EmptyStackError when trying to ROLL on empty stack', async () => {
+    const ds = createRunner('0-6');
+    rejects(ds.run(), DSEmptyStackError);
+  });
+});
+```
