@@ -1695,3 +1695,6 @@ A list of examples to help you understand the language better.
 13. [String Input](./examples/013_string_input.md)
 14. [Import script into another](./examples/014_import_parent.md)
 15. [Call imported function](./examples/015_import_call_parent.md)
+16. [Ansi clear screen](./examples/016_game_loop_ansi_clear_screen.md)
+17. [Using delay](./examples/017_using_wait.md)
+18. [Reverse String](./examples/018_reverse_string.md)
