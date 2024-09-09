@@ -1,6 +1,6 @@
 {
   "name": "dominoscript",
-  "version": "0.0.6",
+  "version": "0.2.0",
   "description": "A recreational stack-oriented concatenative two-dimensional non-linear self-modifying esoteric programming language that uses the dots on domino pieces to represent code.",
   "type": "module",
   "main": "./dist/Runner.js",
@@ -38,17 +38,17 @@
   "author": "Andreas Schoch",
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "^9.9.0",
-    "@stylistic/eslint-plugin": "^2.6.4",
+    "@eslint/js": "^9.10.0",
+    "@stylistic/eslint-plugin": "^2.7.2",
     "@types/eslint__js": "^8.42.3",
     "@types/mocha": "^10.0.7",
-    "@types/node": "^22.4.0",
+    "@types/node": "^22.5.4",
     "c8": "^10.1.2",
-    "eslint": "^9.9.0",
+    "eslint": "^9.10.0",
     "mocha": "^10.7.3",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.1.0"
+    "typescript-eslint": "^8.4.0"
   }
 }
