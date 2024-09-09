@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.1.0`**
+**Current version `0.2.0`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -13,7 +13,7 @@ This repository contains the reference implementation written in TypeScript as w
 
 **It's still very much a work-in-progress. Not everything is fully fleshed out yet.**
 
-*Feel free to open issues for clarification requests, feature suggestions, bugs etc. I am grateful for any interest and help in eliminating bugs, edgecases and improve the documentation but be warned that I will probably not accept any major pull requests for the reference interpreter until it matures into a stable version. That being said, I'd love for people to make their own Interpreters or Compilers and will link to all of them. Just be warned about potential breaking changes this early on!*
+*Feel free to open issues for clarification requests, feature suggestions, bugs etc. I am grateful for any interest and help in eliminating bugs, edgecases and improve the documentation. I'd love for people to make their own Interpreters or Compilers and will link to all of them. Just be warned about potential breaking changes this early on!*
 
 <p align="center">
   <img style="aspect-ratio: 1;" src="docs/dominoscript-logo.png" alt="Domino" width="450">
@@ -104,9 +104,14 @@ Maybe even a repository of user submitted DominoScript programs.
 
 ## How does it work
 
-DominoScript uses Double-Six (aka `D6`) dominos to represent code. Double-six here means that each domino has 2 sides with up to 6 dots on each side.
+DominoScript by default uses Double-Six (aka `D6`) dominos to represent code. Double-six here means that each domino has 2 sides with up to 6 dots on each side.
 
-> I want DominoScript to eventually support `D3`, `D6`, `D9`, `D12` and `D15` dominos. But for now the `D-modes` won't be explained in much detail. Almost everything in this repo assumes `D6-mode` to be used. 
+Everything is either:
+- an instruction
+- a number literal
+- or a string literal
+
+By default, everything will be parsed using base7. This behaviour can be changed using the [BASE](#Base) instruction. This means that with a higher base you can use dominos with more dots to represent larger numbers with fewer dominos.
 
 ### The Grid
 
@@ -124,13 +129,11 @@ A text based format is used to represent domino pieces.
 
 > This format is used as source code. At the beginning it will be the only way to write DominoScript until a visual editor is created that shows actual dominos. Eventually I want to be able to convert images of real dominos on a (reasonably sized) grid into the text format.
 
-- The digits `0` to `6` represent the dots on half of a D6 domino. To indicate an empty cell, use a dot `.`
+- The digits `0` to `f` represent the dots on half of a domino. To indicate an empty cell, use a dot `.`
 - The "long hyphen" character `—` indicates a horizontal domino *(regular hyphen `-` also accepted to make it easier to type)*. It can only appear on **even** columns and **odd** rows.
 - The "pipe" character `|` indicates a vertical domino. It can only appear on **odd** columns and **even** rows.
-- Any other lines <ins>before</ins> and <ins>after</ins> the actual code are ignored.
+- Any other line <ins>before</ins> and <ins>after</ins> the actual code is ignored.
 - It is just a text format, so the file extension doesn't matter for now. You can make it `.md` and comment using markdown if you want! [See example](./examples/002_hello_world_commented.md)
-
-*(Note: The use of alternative connectors like `║` (U+2551), `═` (U+2550), `━` (U+2501) and such might be supported in the future but for now you should not use them. For modes other than D6, the number of possible dots will be different. For example with D15 dominos, each half can have 15 dots, making it basically hexadecimal, so you'd use `0` to `f` to represent them)*
 
 **Example:**
 
@@ -140,10 +143,12 @@ TITLE
 
 You can write the soure code as a normal text file (.ds extension recommended) or as a .md file with markdown comments like here.
 
-There are only 3 rules to be aware of:
+Be aware of the following rules:
 > 1. You cannot start a non-code line with a dot `.`
-> 2. You cannot start a non-code line with a number `0 to 6`
+> 2. You cannot start a non-code line with a number `0 to f`
 > 3. You cannot comment within the code. Only above and below it.
+
+For comments starting with any non-allowed character, add a space or any other allowed char before it.
 
 ## DominoScript
 
@@ -489,7 +494,7 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 </tr>
 </table>
 
-*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript.)*
+*All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript.*
 
 - `index 0` the IP will move to `1—1` (Primary, Forward)
 - `index 1` the IP will move to `1—1` (Primary, Forward)
@@ -757,7 +762,7 @@ The patterns are universal for all cardinal directions the Instruction Pointer c
 I only showed examples where the IP moves from left to right but you have to understand that the same domino can either mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
 
 ```
-0—1 . 1-0 . 1 . 0 . . .
+0—1 . 1—0 . 1 . 0 . . .
             |   |
 . . . . . . 0 . 1 . . .
 ```
@@ -766,21 +771,23 @@ I only showed examples where the IP moves from left to right but you have to und
 
 ## Instructions
 
-A single "double-six" domino can represent numbers from 0 to 6 twice giving us a 7x7 matrix of possible instructions. The first number represents the row and the second number represents the column. This gives us 49 possible instructions.
+The base instruction set is designed to fit on a single "double-six" domino. It consists of up to 49 instructions and is shown below on a 7x7 matrix.
 
-(Note: These are the instructions for the default D6-mode. Other D-modes might extend it as they will have a larger opcode range. The dominos are presented as if the IP moves eastwards - See [Rule_01](#rule_01))
+> Keep in mind that if you change into a higher "base", you will need to use a different domino to represent the same opcode than shown in the images you see alongside each instruction. E.g. a NOOP in base7 is `6—6` but in base16 it would be `3—0`.
 
 |     |  0                | 1               | 2                | 3                | 4                | 5                | 6                | CATEGORY                                      |
 |-----|-------------------|-----------------|------------------|------------------|------------------|------------------|------------------|-----------------------------------------------|
-|**0**|[POP](#pop)       |[NUM](#num)       |[STR](#str)       |[DUPE](#dupe)     |[ROLL](#roll)     |[_](#reserved_0_5)|[_](#reserved_0_6)|[Stack Management](#data-management)          |
+|**0**|[POP](#pop)       |[NUM](#num)       |[STR](#str)       |[DUPE](#dupe)     |[ROLL](#roll)     |[LEN](#len)       |[CLR](#clr)       |[Stack Management](#stack-management)          |
 |**1**|[ADD](#add)       |[SUB](#sub)       |[MULT](#mult)     |[DIV](#div)       |[MOD](#mod)       |[NEG](#neg)       |[_](#reserved_1_6)|[Arithmetic](#arithmetic)                      |
 |**2**|[NOT](#not)       |[AND](#and)       |[OR](#or)         |[EQL](#eql)       |[GTR](#gtr)       |[_](#reserved_2_5)|[_](#reserved_2_6)|[Comparison & Logical](#comparison-and-logical)|
 |**3**|[BNOT](#bnot)     |[BAND](#band)     |[BOR](#bor)       |[BXOR](#bxor)     |[LSL](#lsl)       |[LSR](#lsr)       |[ASR](#asr)       |[Bitwise](#bitwise)                            |
 |**4**|[NAVM](#navm)     |[BRANCH](#branch) |[LABEL](#label)   |[JUMP](#jump)     |[CALL](#call)     |[IMPORT](#import) |[WAIT](#wait)     |[Control Flow](#control-flow)                  |
 |**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[_](#reserved_5_4)|[_](#reserved_5_5)|[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
-|**6**|[GET](#get)       |[SET](#set)       |[_](#reserved_6_2)|[_](#reserved_6_3)|[EXT](#ext)       |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
+|**6**|[GET](#get)       |[SET](#set)       |[_](#reserved_6_2)|[BASE](#base)     |[EXT](#ext)       |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
 
+*(DominoScript isn't limited to these 49 instructions though. The way the language is designed, it can theoretically be extended to up to 1000 instructions)*
 
+<br>
 <h3 id="stack-management">Stack Management</h3>
 
 #### `POP`
@@ -855,7 +862,7 @@ Only once the interpreter does encounter the NULL character, will it push the ch
 
 This is how you push the string `"hi!"` to the stack and output it:
 ```
-0—2 1—2 0—6 1—2 1—0 1-0 4—5 0—0 5—3
+0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 5—3
 ```
 
 It equals the following pseudo code: `STR "hi!" STROUT`
@@ -896,7 +903,7 @@ Keep in mind that the IP can move in 4 cardinal direction so the following varia
 
 IP moves right to left:
 ```
-3—5 0—0 5—4 0-1 0—1 2—1 6—0 2—1 2—0
+3—5 0—0 5—4 0—1 0—1 2—1 6—0 2—1 2—0
 ```
 
 IP moves in multiple directions:
@@ -907,7 +914,7 @@ IP moves in multiple directions:
               |
 1 . . 2 1—0 . 0
 |     | 
-2 0—6 1 . . 3-5
+2 0—6 1 . . 3—5
 ```
 
 #### `DUPE`
@@ -939,15 +946,15 @@ With roll you can implement common stack operations like `SWAP` and `ROT`:
 | 2          | ROTL           | `[a, b, c]`     | `[b, c, a]`    |
 | 3          | -              | `[a, b, c, d]`  | `[b, c, d, a]` |
 
-#### `RESERVED_0_5`
+#### `LEN`
 <img src="assets/horizontal/0-5.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Pushes the number of items on the stack.
 
-#### `RESERVED_0_6`
+#### `CLR`
 <img src="assets/horizontal/0-6.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Removes all items from the stack.
 
 <br>
 <h3 id="arithmetic">Arithmetic</h3>
@@ -1102,7 +1109,7 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
           |
 . . . . . 6 . .
 
-0-1 0-1 4-1 . .
+0—1 0—1 4—1 . .
           
 . . . . . X . .
           |
@@ -1116,7 +1123,7 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
           |
 . . . . . X . .
 
-0-1 0-0 4-1 . .
+0—1 0—0 4—1 . .
           
 . . . . . 6 . .
           |
@@ -1334,10 +1341,55 @@ For example here we have a 10x3 grid:
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
-#### `RESERVED_6_3`
+#### `BASE`
 <img src="assets/horizontal/6-3.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Pops one number from the stack to use as the "base" for future parsing of dominos (opcodes, number literals, string literals)
+
+By default, DominoScript uses double six (D6) dominos to represent everything, so the default base is 7.
+
+The max cell value of half of a domino is always 1 less than the Base. So in base 7, the max value is 6. In base 10, the max value is 9. In base 16, the max value is 15 (aka `f`).
+
+> If the number of dots on a domino half exceeds the base, it is clamped.
+
+In below table you can see how the same domino sequence results in different decimal numbers depending on the base:
+
+| Domino Sequence     | Base 7 (D6)   | Base 10 (D9) | Base 16 (D15) |
+|---------------------|---------------|--------------|---------------|
+| `0—6`               | 6             | 6            | 6             |
+| `0—9`               | 6             | 9            | 9             |
+| `0—f`               | 6             | 9            | 15            |
+| `1—6 6—6`           | 342           | 666          | 1638          |
+| `1—9 9—9`           | 342           | 999          | 2457          |
+| `1—f f—f`           | 342           | 999          | 4095          |
+| `2—6 6—6 6—6`       | 16806         | 66666        | 419430        |
+| `2—9 9—9 9—9`       | 16806         | 99999        | 629145        |
+| `2—f f—f f—f`       | 16806         | 99999        | 1048575       |
+
+With a higher Base, you have access to higher opcodes without needing to switch to extended mode.
+
+| Base | Opcode Range |
+|------|--------------|
+| 7    | 0 to 48      |
+| 10   | 0 to 99      |
+| 16   | 0 to 255     |
+
+While the <ins>opcode-to-instruction</ins> mapping never changes, the <ins>domino-to-opcode</ins> mapping is completely different in each base.
+
+The below table shows how the domino `3—0` is mapped to different opcodes depending on the base.
+
+| Base | Opcode | Instruction |
+|------|--------|-------------|
+| 7    | 21     | `BNOT`      |
+| 8    | 24     | `BOR`       |
+| 9    | 27     | `LSL`       |
+| 10   | 30     | `BRANCH`    |
+| 11   | 33     | `IMPORT`    |
+| 12   | 36     | `NUMIN`     |
+| 13   | 39     | undefined   |
+| 14   | 42     | `GET`       |
+| 15   | 45     | `BASE`      |
+| 16   | 48     | `NOOP`      |
 
 #### `EXT`
 <img src="assets/horizontal/6-4.png" alt="Domino" width="128">
@@ -1363,7 +1415,7 @@ Useful for things like a gameloop, animations, cooldowns etc.
 
 No operation. The IP will move to the next domino without executing any instruction.
 
-*If you have 10 NOOPs in a row it will do 10 steps without doing anything. Over time, the interpreter **may** optimize this and do an implicit jump to the end of the NOOP chain when it things you are within a loop and the navigation mode doesn't change*
+*(If you have 10 NOOPs in a row it will do 10 steps without doing anything. Over time, the interpreter **may** optimize this and do an implicit jump to the end of the NOOP chain when it things you are within a loop and the navigation mode doesn't change)*
 
 <br>
 
@@ -1390,13 +1442,13 @@ Out of three directions, the IP will prioritize moving to the one with the highe
 
 | Index | Priorities               | Domino ->  |
 |-------|--------------------------|------------|
-| 0     | `Forward` `Left` `Right` | `0-0`      |
-| 1     | `Forward` `Right` `Left` | `0-1`      |
-| 2     | `Left` `Forward` `Right` | `0-2`      |
-| 3     | `Left` `Right` `Forward` | `0-3`      |
-| 4     | `Right` `Forward` `Left` | `0-4`      |
-| 5     | `Right` `Left` `Forward` | `0-5`      |
-| 6     | `RANDOM`                 | `0-6`      |
+| 0     | `Forward` `Left` `Right` | `0—0`      |
+| 1     | `Forward` `Right` `Left` | `0—1`      |
+| 2     | `Left` `Forward` `Right` | `0—2`      |
+| 3     | `Left` `Right` `Forward` | `0—3`      |
+| 4     | `Right` `Forward` `Left` | `0—4`      |
+| 5     | `Right` `Left` `Forward` | `0—5`      |
+| 6     | `RANDOM`                 | `0—6`      |
 
 ### Basic Two Way
 
@@ -1404,13 +1456,13 @@ Out of two directions, the IP will prioritize moving to the one with the highest
 
 | Index  | Priorities               | Domino -> |
 |--------|--------------------------|-----------|
-| 7      | `Forward` `Left`         | `1-0`     |
-| 8      | `Forward` `Right`        | `1-1`     |
-| 9      | `Left` `Forward`         | `1-2`     |
-| 10     | `Left` `Right`           | `1-3`     |
-| 11     | `Right` `Forward`        | `1-4`     |
-| 12     | `Right` `Left`           | `1-5`     |
-| 13     | `RANDOM`                 | `1-6`     |
+| 7      | `Forward` `Left`         | `1—0`     |
+| 8      | `Forward` `Right`        | `1—1`     |
+| 9      | `Left` `Forward`         | `1—2`     |
+| 10     | `Left` `Right`           | `1—3`     |
+| 11     | `Right` `Forward`        | `1—4`     |
+| 12     | `Right` `Left`           | `1—5`     |
+| 13     | `RANDOM`                 | `1—6`     |
 
 ### Basic One Way
 
@@ -1418,13 +1470,13 @@ IP can only move in one direction.
 
 | Index  | Only Direction           | Domino -> |
 |--------|--------------------------|-----------|
-| 14     | `Forward`                | `2-0`     |
-| 15     | `Forward`                | `2-1`     |
-| 16     | `Left`                   | `2-2`     |
-| 17     | `Left`                   | `2-3`     |
-| 18     | `Right`                  | `2-4`     |
-| 19     | `Right`                  | `2-5`     |
-| 20     | `RANDOM`                 | `2-6`     |
+| 14     | `Forward`                | `2—0`     |
+| 15     | `Forward`                | `2—1`     |
+| 16     | `Left`                   | `2—2`     |
+| 17     | `Left`                   | `2—3`     |
+| 18     | `Right`                  | `2—4`     |
+| 19     | `Right`                  | `2—5`     |
+| 20     | `RANDOM`                 | `2—6`     |
 
 ### Cycle Three Way
 
@@ -1434,13 +1486,13 @@ All 3 directions are available in all cycles.
 
 | Index | Cycle 1     | Cycle 2     | Cycle 3     | Domino -> |
 |-------|-------------|-------------|-------------|-----------|
-| 21    | `F` `L` `R` | `L` `R` `F` | `R` `F` `L` | `3-0`     |
-| 22    | `F` `R` `L` | `R` `F` `F` | `L` `F` `R` | `3-1`     |
-| 23    | `L` `F` `R` | `F` `R` `F` | `R` `L` `F` | `3-2`     |
-| 24    | `L` `R` `F` | `R` `F` `L` | `F` `L` `R` | `3-3`     |
-| 25    | `R` `F` `L` | `F` `L` `R` | `L` `R` `F` | `3-4`     |
-| 26    | `R` `L` `F` | `L` `F` `R` | `F` `R` `L` | `3-5`     |
-| 27    | (unmapped)  | (unmapped)  | (unmapped)  | `3-6`     |
+| 21    | `F` `L` `R` | `L` `R` `F` | `R` `F` `L` | `3—0`     |
+| 22    | `F` `R` `L` | `R` `F` `F` | `L` `F` `R` | `3—1`     |
+| 23    | `L` `F` `R` | `F` `R` `F` | `R` `L` `F` | `3—2`     |
+| 24    | `L` `R` `F` | `R` `F` `L` | `F` `L` `R` | `3—3`     |
+| 25    | `R` `F` `L` | `F` `L` `R` | `L` `R` `F` | `3—4`     |
+| 26    | `R` `L` `F` | `L` `F` `R` | `F` `R` `L` | `3—5`     |
+| 27    | (unmapped)  | (unmapped)  | (unmapped)  | `3—6`     |
 
 ### Cycle Two Way
 
@@ -1450,13 +1502,13 @@ Only 2 directions are available in a single cycle.
 
 | Index | Cycle 1     | Cycle 2     | Cycle 3     | Domino -> |
 |-------|-------------|-------------|-------------|-----------|
-| 28    | `F` `L`     | `L` `R`     | `R` `F`     | `4-0`     |
-| 29    | `F` `R`     | `R` `F`     | `L` `F`     | `4-1`     |
-| 30    | `L` `F`     | `F` `R`     | `R` `L`     | `4-2`     |
-| 31    | `L` `R`     | `R` `F`     | `F` `L`     | `4-3`     |
-| 32    | `R` `F`     | `F` `L`     | `L` `R`     | `4-4`     |
-| 33    | `R` `L`     | `L` `F`     | `F` `R`     | `4-5`     |
-| 34    | (unmapped)  | (unmapped)  | (unmapped)  | `4-6`     |
+| 28    | `F` `L`     | `L` `R`     | `R` `F`     | `4—0`     |
+| 29    | `F` `R`     | `R` `F`     | `L` `F`     | `4—1`     |
+| 30    | `L` `F`     | `F` `R`     | `R` `L`     | `4—2`     |
+| 31    | `L` `R`     | `R` `F`     | `F` `L`     | `4—3`     |
+| 32    | `R` `F`     | `F` `L`     | `L` `R`     | `4—4`     |
+| 33    | `R` `L`     | `L` `F`     | `F` `R`     | `4—5`     |
+| 34    | (unmapped)  | (unmapped)  | (unmapped)  | `4—6`     |
 
 ### Cycle One Way
 
@@ -1466,13 +1518,13 @@ Only 1 direction is available in a single cycle.
 
 | Index | Cycle 1     | Cycle 2     | Cycle 3     | Domino -> |
 |-------|-------------|-------------|-------------|-----------|
-| 35    | `F`         | `L`         | `R`         | `5-0`     |
-| 36    | `F`         | `R`         | `L`         | `5-1`     |
-| 37    | `L`         | `F`         | `R`         | `5-2`     |
-| 38    | `L`         | `R`         | `F`         | `5-3`     |
-| 39    | `R`         | `F`         | `L`         | `5-4`     |
-| 40    | `R`         | `L`         | `F`         | `5-5`     |
-| 41    | (unmapped)  | (unmapped)  | (unmapped)  | `5-6`     |
+| 35    | `F`         | `L`         | `R`         | `5—0`     |
+| 36    | `F`         | `R`         | `L`         | `5—1`     |
+| 37    | `L`         | `F`         | `R`         | `5—2`     |
+| 38    | `L`         | `R`         | `F`         | `5—3`     |
+| 39    | `R`         | `F`         | `L`         | `5—4`     |
+| 40    | `R`         | `L`         | `F`         | `5—5`     |
+| 41    | (unmapped)  | (unmapped)  | (unmapped)  | `5—6`     |
 
 ### Flip Flop
 
@@ -1480,13 +1532,13 @@ The priority flip flops between 2 primary directions.
 
 | Index  | Flip       | Flop       | Domino -> |
 |--------|------------|------------|-----------|
-| 42     | `F`        | `L`        | `6-0`     |
-| 43     | `F`        | `R`        | `6-1`     |
-| 44     | `L`        | `F`        | `6-2`     |
-| 45     | `L`        | `R`        | `6-3`     |
-| 46     | `R`        | `F`        | `6-4`     |
-| 47     | `R`        | `L`        | `6-5`     |
-| 48     | (unmapped) | (unmapped) | `6-6`     |
+| 42     | `F`        | `L`        | `6—0`     |
+| 43     | `F`        | `R`        | `6—1`     |
+| 44     | `L`        | `F`        | `6—2`     |
+| 45     | `L`        | `R`        | `6—3`     |
+| 46     | `R`        | `F`        | `6—4`     |
+| 47     | `R`        | `L`        | `6—5`     |
+| 48     | (unmapped) | (unmapped) | `6—6`     |
 
 
 <br>
@@ -1659,22 +1711,6 @@ The spec doesn't define a way to "catch" errors in a graceful way yet. For now, 
 - **InvalidValueError**: Invalid value {value}
 - **InvalidInputError**: Invalid input {reason}
 - **MissingListenerError**: NUMIN, NUMOUT, STRIN or STROUT instructions were called and the DominoScript "runtime" did not provide a way on how to handle input or output
-
-### Domino Modes
-By default DominoScript uses "Double Six" dominoes (D&) which have 6 dots on each side. It will support higher modes in the future. Each mode will expand the opcode range.
-
-Opcode ranges for different modes:
-- `D3`: 0-8
-- `D6`: 0-48 *(default)*
-- `D9`: 0-99
-- `D12`: 0-169
-- `D15`: 0-255
-
-All modes above `D6` will build on top of the previous one. So `D6` will be the base mode and `D9` will have the instructions mapped to the same opcodes as `D6` plus some additional ones.
-
-The only exception is `D3` which will use the most important instructions and map them to the 0-8 range.
-
-D9 mode will likely extend DominoScript with instructions for floating point arithmetic, trigonometric functions and helpful math functions. Not sure yet if floats will be true IEEE754 floats or just fixed point numbers like in pico-8.
 
 ### Examples
 

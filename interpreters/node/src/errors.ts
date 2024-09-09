@@ -142,6 +142,13 @@ export class DSInvalidValueError extends Error {
   }
 }
 
+export class DSInvalidBaseError extends Error {
+  constructor(base: number) {
+    super(`Invalid base ${base}. You can only set the base to a number between 7 and 16`);
+    this.name = 'InvalidBaseError';
+  }
+}
+
 export class DSInvalidInputError extends Error {
   constructor(reason = '') {
     super('Invalid input. ' + reason);

@@ -1,9 +1,9 @@
 import {ADD, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
 import {AND, EQL, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
+import {BASE, EXT, GET, NOOP, SET, TIME} from './Misc.js';
 import {BRANCH, CALL, IMPORT, JUMP, LABEL, NAVM, WAIT} from './ControlFlow.js';
-import {DUP, NUM, POP, ROLL, STR} from './StackManipulations.js';
-import {EXT, GET, NOOP, SET, TIME} from './Misc.js';
+import {CLR, DUP, LEN, NUM, POP, ROLL, STR} from './StackManipulations.js';
 import {NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
 
@@ -18,8 +18,8 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   STR,
   DUP,
   ROLL,
-  undefined,
-  undefined,
+  LEN,
+  CLR,
 
   // Arithmetic
   ADD,
@@ -70,7 +70,7 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   GET,
   SET,
   undefined,
-  undefined,
+  BASE,
   EXT, // Toggle extended mode
   TIME,
   NOOP

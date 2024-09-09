@@ -1,5 +1,5 @@
 import {Cell, CellValue} from '../Board.js';
-import {DSInterpreterError, DSInvalidValueError} from '../errors.js';
+import {DSInterpreterError, DSInvalidBaseError, DSInvalidValueError} from '../errors.js';
 import {Context} from '../Context.js';
 
 // TODO consider using param to determine how to parse it: opcode, number or string 
@@ -18,7 +18,8 @@ export function SET(ctx: Context): void {
   const value = ctx.stack.pop();
   const cell = ctx.board.getOrThrow(address);
 
-  if (value < -1 || value > 48) throw new DSInvalidValueError(value);
+  const max = ctx.base * ctx.base - 1;
+  if (value < -1 || value > max) throw new DSInvalidValueError(value);
 
   let otherCell: Cell;
   // Here we check the last cardinal direction of the IP to determine where to put the second half of the set domino
@@ -37,6 +38,12 @@ export function SET(ctx: Context): void {
     const otherCellValue = value % ctx.base as CellValue;
     ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
   }
+}
+
+export function BASE(ctx: Context): void {
+  const base = ctx.stack.pop();
+  if (base < 7 || base > 16) throw new DSInvalidBaseError(base);
+  ctx.base = base;
 }
 
 export function EXT(ctx: Context): void {
@@ -59,5 +66,7 @@ export function parseDominoValue(ctx: Context, cell: Cell): number {
   const otherCell = ctx.board.getOrThrow(cell.connection);
   /* c8 ignore next */
   if (otherCell.value === null) throw new DSInterpreterError('The other cell cannot be empty');
-  return cell.value * ctx.base + otherCell.value;
+  const cellValueClamped = Math.min(cell.value, ctx.base - 1);
+  const otherCellValueClamped = Math.min(otherCell.value, ctx.base - 1);
+  return cellValueClamped * ctx.base + otherCellValueClamped;
 }

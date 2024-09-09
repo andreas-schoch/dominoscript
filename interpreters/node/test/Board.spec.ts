@@ -49,7 +49,8 @@ describe('Board', () => {
       # TITLE
       ===============
       As long as:
-      - line doesn't start with a number 0 to 6
+      - line doesn't start with a number 0 to 9
+      - line doesn't start with a letter a to f
       - line doesn't start with a DSCallToItselfError
       You can write comments anywhere above and below the code.
 
@@ -59,7 +60,7 @@ describe('Board', () => {
       \`\`\`
       STR "hello world" STROUT
       \`\`\`
-               
+              
       . . . . . . . . . . . . . . .
                                    
       . . . . . . . . 0—2 1 . 0—3 .

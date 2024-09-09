@@ -43,7 +43,7 @@ export interface Context {
   isExtendedMode: boolean;
 
   lastOpcode: number | null;
-  base: 7 | 10 | 12 | 16; // indicates if using D6, D9, D12 or D15 dominos
+  base: number; // indicates if using D6, D9, D12 or D15 dominos
 
   listeners: {
     stdin: (ctx: Context, type: 'num' | 'str') => Promise<number | string>;
@@ -95,9 +95,9 @@ export function createContext(source: string, parent: Context | null = null, opt
 
   async function handleStdin(ctx: Context, type: 'num' | 'str'): Promise<void> {
     const value = await ctx.listeners.stdin(ctx, type);
-    if (typeof value === 'number' && !isNaN(value) && Number.isInteger(value)) {
+    if (type === 'num' && typeof value === 'number' && !isNaN(value) && Number.isInteger(value)) {
       ctx.stack.push(value);
-    } else if (typeof value === 'string') {
+    } else if (type === 'str' && typeof value === 'string') {
       ctx.stack.push(0);
       for (let i = value.length - 1; i >= 0; i--) ctx.stack.push(value.charCodeAt(i));
     } else {

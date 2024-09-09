@@ -13,7 +13,7 @@ describe('StackManipulations', () => {
     });
     it('should throw EmptyStackError when trying to pop from empty stack', async () => {
       const ds = createRunner('0-0');
-      rejects(ds.run(), DSEmptyStackError);
+      await rejects(ds.run(), DSEmptyStackError);
     });
   });
 
@@ -36,15 +36,15 @@ describe('StackManipulations', () => {
     it('should throw UnexpectedEndOfNumberError', async () => {
       // First half of the domino after NUM instruction indicates how many more dominos will be parsed as part of the number
       const ds = createRunner('0-1 2-6 6-6');
-      rejects(ds.run(), DSUnexpectedEndOfNumberError);
+      await rejects(ds.run(), DSUnexpectedEndOfNumberError);
     });
-    it('should throw FullStackError when trying to push a number to a full stack', () => {
+    it('should throw FullStackError when trying to push a number to a full stack', async () => {
       const ds = createRunner(dedent(`\
         6-6 0-1 0-6
                    
         . . 6-0 1-0`
       ));
-      rejects(ds.run(), DSFullStackError);
+      await rejects(ds.run(), DSFullStackError);
     });
   });
 
@@ -55,13 +55,13 @@ describe('StackManipulations', () => {
       strictEqual(ctx.stack.toString(), '[0 100 108 114 111 119 32 111 108 108 101 104]', 'expected string literal to be pushed in reverse order');
 
     });
-    it('should throw FullStackError when NULL terminator is missing and IP is stuck in a loop', () => {
+    it('should throw FullStackError when NULL terminator is missing and IP is stuck in a loop', async () => {
       const ds = createRunner(dedent(`\
         0-2 1-0 4-4
                    
         . . 4-4 0-1`
       ));
-      rejects(ds.run(), DSFullStackError);
+      await rejects(ds.run(), DSFullStackError);
     });
   });
   it('should parse dominos as instructions again once null terminator encountered during STR parsing', async () => {
@@ -73,7 +73,7 @@ describe('StackManipulations', () => {
   it('should throw UnexpectedEndOfNumberError when character incomplete', async () => {
     // First half of each domino representing a character indicates how many more dominos will be parsed as part of the character
     const ds = createRunner('0-2 1-2 0-6 1-2');
-    rejects(ds.run(), DSUnexpectedEndOfNumberError);
+    await rejects(ds.run(), DSUnexpectedEndOfNumberError);
   });
 
   describe('DUPE', () => {
@@ -84,7 +84,7 @@ describe('StackManipulations', () => {
     });
     it('should throw EmptyStackError when trying to DUPE on empty stack', async () => {
       const ds = createRunner('0-3');
-      rejects(ds.run(), DSEmptyStackError);
+      await rejects(ds.run(), DSEmptyStackError);
     });
   });
 
@@ -137,23 +137,54 @@ describe('StackManipulations', () => {
       const ctx = await ds.run();
       strictEqual(ctx.stack.toString(), '[6 5 4 3 2 1]', 'expected stack items to be reversed');
     });
-    it('should throw EmptyStackError when trying to ROLL on empty stack', async () => {
+    it('should throw EmptyStackError when trying to ROLL without depth argument', async () => {
       const ds = createRunner('0-4');
-      rejects(ds.run(), DSEmptyStackError);
+      await rejects(ds.run(), DSEmptyStackError);
     });
-    it('should throw EmptyStackError when trying to ROLL on empty stack', async () => {
-      const ds = createRunner('0-1 0-1 0-4');
-      rejects(ds.run(), DSEmptyStackError);
+    it('should not throw InvalidValueError when stack is empty and rolling with depth 0', async () => {
+      const ds = createRunner('0-1 0-0 0-4');
+      await ds.run();
     });
     it('should throw InvalidValueError when depth is greater or equal to stack size', async () => {
       // NUM 1 NUM 2 NUM 3 NUM 3 NUM 6 ROLL
       const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-4 0-4');
-      rejects(ds.run(), DSInvalidValueError);
+      await rejects(ds.run(), DSInvalidValueError);
     });
     it('should throw InvalidValueError when negative depth, after applying abs(), is greater or equal to stack size', async () => {
       // NUM 1 NUM 2 NUM 3 NUM 3 NUM 6 NEG ROLL
       const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-4 1-5 0-4');
-      rejects(ds.run(), DSInvalidValueError);
+      await rejects(ds.run(), DSInvalidValueError);
+    });
+  });
+
+  describe('LEN', () => {
+    it('should push the stack size to the stack', async () => {
+      const ds = createRunner('0-1 0-6 0-1 0-6 0-5');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[6 6 2]', 'expected stack size to be pushed to the stack');
+    });
+    it('should push zero if stack is empty', async () => {
+      const ds = createRunner('0-5');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[0]', 'expected stack size to be zero');
+    });
+    it('should be able to use LEN as a shortcut to push incrementing numbers', async () => {
+      const ds = createRunner('0-5 0-5 0-5 0-5 0-5 0-5 0-5 0-5 0-5 0-5');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[0 1 2 3 4 5 6 7 8 9]', 'expected size to be incrementing');
+    });
+  });
+
+  describe('CLEAR', () => {
+    it('should remove all items from the stack', async () => {
+      // NUM 1 NUM 2 NUM 3 CLEAR
+      const ds = createRunner('0-1 0-6 0-1 0-2 0-1 0-3 0-6');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[]', 'expected stack to be empty');
+    });
+    it('should not throw any error when trying to clear an empty stack', async () => {
+      const ds = createRunner('0-6');
+      await ds.run();
     });
   });
 });

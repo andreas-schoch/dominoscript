@@ -75,7 +75,7 @@ describe('ControlFlow', () => {
     });
     it('should not be allowed to label out-of-bound address', async () => {
       const ds = createRunner('0-1 1-6 6-6 4-2');
-      rejects(ds.run(), DSAddressError);
+      await rejects(ds.run(), DSAddressError);
     });
   });
 
@@ -94,23 +94,23 @@ describe('ControlFlow', () => {
     });
     it('should throw StepToEmptyCellError when jumping to empty cell', async () => {
       const ds = createRunner('0-1 1-0 2-0 4-3 . . . . . . . . . . .');
-      rejects(ds.run(), DSStepToEmptyCellError);
+      await rejects(ds.run(), DSStepToEmptyCellError);
     });
     it('should throw JumpToItselfError when jumping to connection of current cell', async () => {
       const ds = createRunner('0-1 0-4 4-3 6-6');
-      rejects(ds.run(), DSJumpToItselfError);
+      await rejects(ds.run(), DSJumpToItselfError);
     });
     it('should throw JumpToItselfError when jumping to current cell', async () => {
       const ds = createRunner('0-1 0-5 4-3');
-      rejects(ds.run(), DSJumpToItselfError);
+      await rejects(ds.run(), DSJumpToItselfError);
     });
     it('should throw AddressError when trying to jump to non-existing address', async () => {
       const ds = createRunner('0-1 1-6 6-6 4-3');
-      rejects(ds.run(), DSAddressError);
+      await rejects(ds.run(), DSAddressError);
     });
     it('should throw InvalidLabelError when trying to jump using invalid label', async () => {
       const ds = createRunner('0-1 0-1 1-5 4-3');
-      rejects(ds.run(), DSInvalidLabelError);
+      await rejects(ds.run(), DSInvalidLabelError);
     });
   });
 
@@ -135,30 +135,30 @@ describe('ControlFlow', () => {
     });
     it('should throw StepToEmptyCellError when call moves to empty cell', async () => {
       const ds = createRunner('0-1 1-0 2-0 4-4 . . . . . . . . . . .');
-      rejects(ds.run(), DSStepToEmptyCellError);
+      await rejects(ds.run(), DSStepToEmptyCellError);
     });
     it('should throw CallToItselfError when call moves to connection of current cell', async () => {
       const ds = createRunner('0-1 0-4 4-4 6-6');
-      rejects(ds.run(), DSCallToItselfError);
+      await rejects(ds.run(), DSCallToItselfError);
     });
     it('should throw CallToItselfError when call moves to current cell', async () => {
       const ds = createRunner('0-1 0-5 4-4');
-      rejects(ds.run(), DSCallToItselfError);
+      await rejects(ds.run(), DSCallToItselfError);
     });
     it('should throw AddressError when trying to call a non-existing address', async () => {
       const ds = createRunner('0-1 1-6 6-6 4-4');
-      rejects(ds.run(), DSAddressError);
+      await rejects(ds.run(), DSAddressError);
     });
     it('should throw InvalidLabelError when trying to call using invalid label', async () => {
       const ds = createRunner('0-1 0-1 1-5 4-4');
-      rejects(ds.run(), DSInvalidLabelError);
+      await rejects(ds.run(), DSInvalidLabelError);
     });
   });
 
   describe('IMPORT', () => {
     it('should throw MissingListenerError when API consumer did not use Context.onImport(...) to load the import', async () => {
       const ds = createRunner('0-2 1-2 0-3 0-0 4-5');
-      rejects(ds.run(), DSMissingListenerError);
+      await rejects(ds.run(), DSMissingListenerError);
     });
     it('should expose label from import correctly', async () => {
       // NUM 2 LABEL STR "a" IMPORT NUM 0 LABEL
@@ -210,7 +210,7 @@ describe('ControlFlow', () => {
     });
     it('should throw a ValueError when WAIT is executed with a negative delay', async () => {
       const ds = createRunner('0-1 0-1 1-5 4-6');
-      rejects(ds.run(), DSInvalidValueError);
+      await rejects(ds.run(), DSInvalidValueError);
     });
   });
 });

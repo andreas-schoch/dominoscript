@@ -13,17 +13,17 @@ describe('InputOutput', () => {
     });
     it('should throw MissingListenerError when API consumer did not use Context.onStdin(...) to specify how to get number input', async () => {
       const ds = createRunner('5-0');
-      rejects(ds.run(), DSMissingListenerError);
+      await rejects(ds.run(), DSMissingListenerError);
     });
     it('should throw InvalidInputError when a number input is a float', async () => {
       const ds = createRunner('5-0');
       ds.onStdin(() => Promise.resolve(123.456));
-      rejects(ds.run(), DSInvalidInputError);
+      await rejects(ds.run(), DSInvalidInputError);
     });
     it('should throw InvalidInputError when a number input contains non-numeric characters', async () => {
       const ds = createRunner('5-0');
       ds.onStdin(() => Promise.resolve('123abc'));
-      rejects(ds.run(), DSInvalidInputError);
+      await rejects(ds.run(), DSInvalidInputError);
     });
   });
 
@@ -42,7 +42,7 @@ describe('InputOutput', () => {
     });
     it('should throw MissingListenerError when API consumer did not use Context.onStdout(...) to specify where to print number output', async () => {
       const ds = createRunner('0-1 0-1 5-1');
-      rejects(ds.run(), DSMissingListenerError);
+      await rejects(ds.run(), DSMissingListenerError);
     });
   });
 
@@ -56,11 +56,11 @@ describe('InputOutput', () => {
     });
     it('should throw MissingListenerError when API consumer did not use Context.onStdin(...) to specify how to get string input', async () => {
       const ds = createRunner('5-2');
-      rejects(ds.run(), DSMissingListenerError);
+      await rejects(ds.run(), DSMissingListenerError);
     });
     it('should throw MissingListenerError when API consumer did not use Context.onStdout(...) to specify where to print string output', async () => {
       const ds = createRunner('0-2 1-1 0-0 0-0 5-3');
-      rejects(ds.run(), DSMissingListenerError);
+      await rejects(ds.run(), DSMissingListenerError);
     });
   });
 

@@ -976,11 +976,11 @@ describe('ROLL', () => {
   it('should throw InvalidValueError when depth arg is negative', async () => {
     // NUM 1 NUM 2 NUM 3 NUM 3 NEG NUM 1 ROLL
     const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 1-5 0-1 0-1 0-6');
-    rejects(ds.run(), DSInvalidValueError);
+    await rejects(ds.run(), DSInvalidValueError);
   });
   it('should throw EmptyStackError when trying to ROLL on empty stack', async () => {
     const ds = createRunner('0-6');
-    rejects(ds.run(), DSEmptyStackError);
+    await rejects(ds.run(), DSEmptyStackError);
   });
 });
 ```

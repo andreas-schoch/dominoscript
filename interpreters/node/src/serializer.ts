@@ -7,15 +7,7 @@ export interface Grid {
   height: number;
 }
 
-const AllowedValueCharsByDMode = {
-  D3: '0123.',
-  D6: '0123456.',
-  D9: '0123456789.',
-  D12: '0123456789abc.',
-  D15: '0123456789abcdef.',
-};
-
-const allowedValueChars = AllowedValueCharsByDMode.D6; // TODO for now D6 mode is hardcoded
+const allowedValueChars = '.0123456789abcdef';
 const allowedHorizontalConnectorChars = '—-=═ ';
 const allowedVerticalConnectorChars = '|║ ';
 
@@ -99,7 +91,7 @@ export function sourceToGrid(source: string): Grid {
         // SET VALUES
         if (!allowedValueChars.includes(line[x])) throw new DSSyntaxError(line[x], y+1, x);
         const cell = grid.cells[totalCellsSoFar++];
-        cell.value = line[x] === '.' ? null : parseInt(line[x]) as CellValue;
+        cell.value = line[x] === '.' ? null : parseInt(line[x], 16) as CellValue;
       } else if (y % 2 === 0 && x % 2 === 1) {
         // SET HORIZONTAL CONNECTIONS
         if (!allowedHorizontalConnectorChars.includes(line[x])) throw new DSSyntaxError(line[x], y+1, x);

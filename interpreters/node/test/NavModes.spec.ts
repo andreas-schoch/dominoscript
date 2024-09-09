@@ -50,14 +50,14 @@ function testResult(ctx: Context, lastCell: number, currentCell: number, totalIn
 
 describe('NavigationModes', () => {
 
-  it('should throw an InvalidNavigationModeError ahead of time in  NAVM instruction', () => {
-    rejects(() => createRunner(getCode('1-6 6-6')).run(), DSInvalidNavigationModeError);
+  it('should throw an InvalidNavigationModeError ahead of time in  NAVM instruction', async () => {
+    await rejects(() => createRunner(getCode('1-6 6-6')).run(), DSInvalidNavigationModeError);
   });
 
-  it('should throw an InvalidNavigationModeError within step() if navm override is invalid', () => {
+  it('should throw an InvalidNavigationModeError within step() if navm override is invalid', async () => {
     const ds = createRunner(getCode('1-6 6-6'));
     ds.ctx.navModeOverrides.push(9001);
-    rejects(() => ds.run(), DSInvalidNavigationModeError);
+    await rejects(() => ds.run(), DSInvalidNavigationModeError);
   });
 
   describe('Basic Three Way', () => {
@@ -271,8 +271,8 @@ describe('NavigationModes', () => {
       const ctx = await createRunner(getCode('1-0 3-5')).run();
       testResult(ctx, coordsToAddress(14, 9), coordsToAddress(13, 9), 9, 22);
     });
-    it('should throw an InvalidNavigationModeError', () => {
-      rejects(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
+    it('should throw an InvalidNavigationModeError', async () => {
+      await rejects(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
     });
   });
 
@@ -301,8 +301,8 @@ describe('NavigationModes', () => {
       const ctx = await createRunner(getCode('1-0 4-5')).run();
       testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
     });
-    it('should throw an InvalidNavigationModeError', () => {
-      rejects(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
+    it('should throw an InvalidNavigationModeError', async () => {
+      await rejects(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
     });
   });
 
@@ -331,8 +331,8 @@ describe('NavigationModes', () => {
       const ctx = await createRunner(getCode('1-0 5-5')).run();
       testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
     });
-    it('should throw an InvalidNavigationModeError', () => {
-      rejects(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
+    it('should throw an InvalidNavigationModeError', async () => {
+      await rejects(() => createRunner(getCode('1-0 5-6')).run(), DSInvalidNavigationModeError);
     });
   });
 
@@ -361,8 +361,8 @@ describe('NavigationModes', () => {
       const ctx = await createRunner(getCode('1-0 6-5')).run();
       testResult(ctx, coordsToAddress(11, 0), coordsToAddress(12, 0), 2, 8);
     });
-    it('should throw an InvalidNavigationModeError', () => {
-      rejects(() => createRunner(getCode('1-0 6-6')).run(), DSInvalidNavigationModeError);
+    it('should throw an InvalidNavigationModeError', async () => {
+      await rejects(() => createRunner(getCode('1-0 6-6')).run(), DSInvalidNavigationModeError);
     });
   });
 });

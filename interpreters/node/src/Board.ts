@@ -2,7 +2,7 @@ import {DSAddressError, DSInterpreterError} from './errors.js';
 import {Grid, gridToSource, sourceToGrid} from './serializer.js';
 
 export type Address = number;
-export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | null;
+export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0xa | 0xb | 0xc | 0xd | 0xe | 0xf | null;
 
 // A cell represents a half of a domino
 export interface Cell {

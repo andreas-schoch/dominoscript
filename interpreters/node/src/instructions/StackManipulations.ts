@@ -16,15 +16,17 @@ function parseNum(ctx: Context): number {
 
   const numberHalfs = (firstHalf.value * 2) + 1;
 
-  let base7 = '';
-  for (let i = 0; i < numberHalfs; i++) {
-    const half = step(ctx);
-    if (!half) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
-    if (half.value === null) throw new DSUnexpectedEndOfNumberError(half.address);
-    base7 += half.value;
+  let num = 0;
+  for (let i = numberHalfs; i > 0; i--) {
+    const cell = step(ctx);
+    if (!cell) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
+    if (cell.value === null) throw new DSUnexpectedEndOfNumberError(cell.address);
+    const multiplier = ctx.base ** (i - 1);
+    const clampedValue = Math.min(cell.value, ctx.base - 1);
+    num += clampedValue * multiplier;
   }
 
-  return parseInt(base7, 7);
+  return num;
 }
 
 // Pushes 1 number to the stack using up to 7 dominoes
@@ -59,4 +61,14 @@ export function ROLL(ctx: Context): void {
   // 1 ROLL ---> SWAP --> ( a b -- b a )
   // 0 ROLL ---> NOOP --> ( a -- a )
   ctx.stack.roll();
+}
+
+export function LEN(ctx: Context): void {
+  // ( a b c -- a b c 3 )
+  ctx.stack.push(ctx.stack.size());
+}
+
+export function CLR(ctx: Context): void {
+  // ( a b c -- )
+  ctx.stack.clear();
 }
