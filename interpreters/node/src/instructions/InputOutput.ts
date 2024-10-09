@@ -15,13 +15,15 @@ export function STRIN(ctx: Context): Promise<void> {
 }
 
 export function STROUT(ctx: Context): void {
-  const chars: string[] = [];
-  while (true) {
-    const value = ctx.stack.pop();
-    if (value === 0) break;
-    chars.push(String.fromCharCode(value));
-  }
+  ctx.stdout(ctx, ctx.stack.popString());
+}
 
-  const str = chars.join('');
-  ctx.stdout(ctx, str);
+export function KEY(ctx: Context): void {
+  const key = ctx.stack.popString();
+  const wasDown = ctx.keys.has(key);
+  ctx.stack.push(wasDown ? 1 : 0);
+}
+
+export function KEYRES(ctx: Context): void {
+  ctx.keys.clear();
 }

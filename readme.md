@@ -775,15 +775,15 @@ The base instruction set is designed to fit on a single "double-six" domino. It 
 
 > Keep in mind that if you change into a higher "base", you will need to use a different domino to represent the same opcode than shown in the images you see alongside each instruction. E.g. a NOOP in base7 is `6—6` but in base16 it would be `3—0`.
 
-|     |  0                | 1               | 2                | 3                | 4                | 5                | 6                | CATEGORY                                      |
-|-----|-------------------|-----------------|------------------|------------------|------------------|------------------|------------------|-----------------------------------------------|
-|**0**|[POP](#pop)       |[NUM](#num)       |[STR](#str)       |[DUPE](#dupe)     |[ROLL](#roll)     |[LEN](#len)       |[CLR](#clr)       |[Stack Management](#stack-management)          |
-|**1**|[ADD](#add)       |[SUB](#sub)       |[MULT](#mult)     |[DIV](#div)       |[MOD](#mod)       |[NEG](#neg)       |[_](#reserved_1_6)|[Arithmetic](#arithmetic)                      |
-|**2**|[NOT](#not)       |[AND](#and)       |[OR](#or)         |[EQL](#eql)       |[GTR](#gtr)       |[_](#reserved_2_5)|[_](#reserved_2_6)|[Comparison & Logical](#comparison-and-logical)|
-|**3**|[BNOT](#bnot)     |[BAND](#band)     |[BOR](#bor)       |[BXOR](#bxor)     |[LSL](#lsl)       |[LSR](#lsr)       |[ASR](#asr)       |[Bitwise](#bitwise)                            |
-|**4**|[NAVM](#navm)     |[BRANCH](#branch) |[LABEL](#label)   |[JUMP](#jump)     |[CALL](#call)     |[IMPORT](#import) |[WAIT](#wait)     |[Control Flow](#control-flow)                  |
-|**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[_](#reserved_5_4)|[_](#reserved_5_5)|[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
-|**6**|[GET](#get)       |[SET](#set)       |[_](#reserved_6_2)|[BASE](#base)     |[EXT](#ext)       |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
+|     |  0                | 1               | 2                | 3                | 4            | 5                | 6                | CATEGORY                                      |
+|-----|-------------------|-----------------|------------------|------------------|--------------|------------------|------------------|-----------------------------------------------|
+|**0**|[POP](#pop)       |[NUM](#num)       |[STR](#str)       |[DUPE](#dupe)     |[ROLL](#roll) |[LEN](#len)       |[CLR](#clr)       |[Stack Management](#stack-management)          |
+|**1**|[ADD](#add)       |[SUB](#sub)       |[MULT](#mult)     |[DIV](#div)       |[MOD](#mod)   |[NEG](#neg)       |[_](#reserved_1_6)|[Arithmetic](#arithmetic)                      |
+|**2**|[NOT](#not)       |[AND](#and)       |[OR](#or)         |[EQL](#eql)       |[GTR](#gtr)   |[EQLSTR](#eqlstr) |[_](#reserved_2_6)|[Comparison & Logical](#comparison-and-logical)|
+|**3**|[BNOT](#bnot)     |[BAND](#band)     |[BOR](#bor)       |[BXOR](#bxor)     |[LSL](#lsl)   |[LSR](#lsr)       |[ASR](#asr)       |[Bitwise](#bitwise)                            |
+|**4**|[NAVM](#navm)     |[BRANCH](#branch) |[LABEL](#label)   |[JUMP](#jump)     |[CALL](#call) |[IMPORT](#import) |[WAIT](#wait)     |[Control Flow](#control-flow)                  |
+|**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[KEY](#key)   |[KEYRES](#keyres) |[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
+|**6**|[GET](#get)       |[SET](#set)       |[_](#reserved_6_2)|[BASE](#base)     |[EXT](#ext)   |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
 
 *(DominoScript isn't limited to these 49 instructions though. The way the language is designed, it can theoretically be extended to up to 1000 instructions)*
 
@@ -1034,10 +1034,16 @@ Pops the top 2 items off the stack, compares them and pushes the result back ont
 
 Pops the top 2 items off the stack, compares them and pushes the result back onto the stack. If the first item is greater than the second, it pushes `1` to the stack, otherwise `0`.
 
-#### `RESERVED_2_5`
+#### `EQLSTR`
 <img src="assets/horizontal/2-5.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Assumes that 2 strings are on the stack. It pops them, compares them and pushes `1` to the stack if equal, otherwise `0`.
+
+**For example:**  
+You push the strings `"AC"` then `"DC"`. They are represented on the stack as `[NULL, C, A, NULL, C, D]` (In reality it is `[0, 67, 65, 0, 67, 68]`). Since the strings are not equal, it will push `0` to the stack. It is now `[0]`.
+
+**Another example:**  
+Imagine you want to check if the user pressed arrow left. You execute the `KEY` instruction after which the stack looks like `[<existing>, 0, 68, 91, 27]` then you push the <ins>escape sequence</ins> which represents the left arrow key. The stack is now `[<existing>, 0, 68, 91, 27, 0, 68, 91, 27]`. You then execute the `EQLSTR` instruction which will pop the top 2 strings and since the strings are equal, it will push `1` to the stack. It is now `[<existing>, 1]` *(See the [KEY](#key) instruction for more info about escape sequences)*.
 
 #### `RESERVED_2_6`
 <img src="assets/horizontal/2-6.png" alt="Domino" width="128">
@@ -1237,15 +1243,32 @@ For convenience you might often see the stack represented  But remember that in 
 
 Pops numbers (representing Unicode char codes) from the stack until it encounters a null terminator (number 0). It will then output the string to stdout.  
 
-#### `RESERVED_5_4`
+#### `KEY`
 <img src="assets/horizontal/5-4.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Check if the user pressed a specific key since the last reset with `KEYRES`. If the key was pressed, it pushes `1` to the stack, otherwise `0`.
 
-#### `RESERVED_5_5`
+It pops a "string sequence" of the stack to represent the key you want to check for.
+
+**What string sequence?:**
+- If a key is a printable character, the sequence is the Unicode value of the key. For example, to check if the user pressed the `a` key, you would push the string `a`.
+- If a key is a special key like arrow left, right etc, the sequence is an escape sequence. For example, to check if the user pressed the left arrow key, you would push the escape sequence `\u001b[D` to the stack.
+
+**What is an escape sequence?:**  
+Escape sequences are sequences of characters that are used to represent special keys like arrow keys *(but can also be used to control terminal behavior, such as cursor movement and text formatting)*. They usually start with the escape character `\u001b` (unicode: 27). For example, the escape sequence for the left arrow key is `\u001b[D`. Check out the [Escape Sequence reference](#Special-keyboard-Characters) instruction to see how to reset the state of all keys.
+
+Unlike `NUMIN` and `STRIN` it doesn't block the program, so you can use it in a loop to check for user input.
+
+Here are some common escape sequences for keys on a keyboard:
+
+These sequences are commonly used in terminal applications to detect key presses and control terminal behavior.
+
+#### `KEYRES`
 <img src="assets/horizontal/5-5.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Resets the state of all keys to "not pressed". It is used in combination with `KEY` to check if a key was pressed since the last reset. It has no effect on the stack.
+
+Imagine you have a game running at 20fps. Every 50ms you check if the user pressed any of the arrow keys and act accordingly. Then at the end of the frame you reset the state of all keys to "not pressed" with `KEYRES`.
 
 #### `RESERVED_5_6`
 <img src="assets/horizontal/5-6.png" alt="Domino" width="128">
@@ -1540,152 +1563,192 @@ The priority flip flops between 2 primary directions.
 | 47     | `R`        | `L`        | `6—5`     |
 | 48     | (unmapped) | (unmapped) | `6—6`     |
 
-
 <br>
 
 ## Other References:
 
 ### Unicode to Domino Lookup Table
 
-Wiith DominoScript you can output Unicode characters to the console. Here is a lookup table for the ASCII range.
-
-### Control characters (ASCII 0-31)
-
-| CHARACTER                           | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
-|-------------------------------------|---------------|---------|-------|-----------|
-| `NUL` *(null character)*            | U+0000        | 0       | 0     | `0—0`     |
-| `SOH` *(start of heading)*          | U+0001        | 1       | 1     | `0—1`     |
-| `STX` *(start of text)*             | U+0002        | 2       | 2     | `0—2`     |
-| `ETX` *(end of text)*               | U+0003        | 3       | 3     | `0—3`     |
-| `EOT` *(end of transmission)*       | U+0004        | 4       | 4     | `0—4`     |
-| `ENQ` *(enquiry)*                   | U+0005        | 5       | 5     | `0—5`     |
-| `ACK` *(acknowledge)*               | U+0006        | 6       | 6     | `0—6`     |
-| `BEL` *(bell)*                      | U+0007        | 7       | 10    | `1—0 1—0` |
-| `BS` *(backspace)*                  | U+0008        | 8       | 11    | `1—0 1—1` |
-| `HT` *(horizontal tab)*             | U+0009        | 9       | 12    | `1—0 1—2` |
-| `LF` *(line feed)*                  | U+000A        | 10      | 13    | `1—0 1—3` |
-| `VT` *(vertical tab)*               | U+000B        | 11      | 14    | `1—0 1—4` |
-| `FF` *(form feed)*                  | U+000C        | 12      | 15    | `1—0 1—5` |
-| `CR` *(carriage return)*            | U+000D        | 13      | 16    | `1—0 1—6` |
-| `SO` *(shift out)*                  | U+000E        | 14      | 20    | `1—0 2—0` |
-| `SI` *(shift in)*                   | U+000F        | 15      | 21    | `1—0 2—1` |
-| `DLE` *(data link escape)*          | U+0010        | 16      | 22    | `1—0 2—2` |
-| `DC1` *(device control 1)*          | U+0011        | 17      | 23    | `1—0 2—3` |
-| `DC2` *(device control 2)*          | U+0012        | 18      | 24    | `1—0 2—4` |
-| `DC3` *(device control 3)*          | U+0013        | 19      | 25    | `1—0 2—5` |
-| `DC4` *(device control 4)*          | U+0014        | 20      | 26    | `1—0 2—6` |
-| `NAK` *(negative acknowledge)*      | U+0015        | 21      | 30    | `1—0 3—0` |
-| `SYN` *(synchronous idle)*          | U+0016        | 22      | 31    | `1—0 3—1` |
-| `ETB` *(end of transmission block)* | U+0017        | 23      | 32    | `1—0 3—2` |
-| `CAN` *(cancel)*                    | U+0018        | 24      | 33    | `1—0 3—3` |
-| `EM` *(end of medium)*              | U+0019        | 25      | 34    | `1—0 3—4` |
-| `SUB` *(substitute)*                | U+001A        | 26      | 35    | `1—0 3—5` |
-| `ESC` *(escape)*                    | U+001B        | 27      | 36    | `1—0 3—6` |
-| `FS` *(file separator)*             | U+001C        | 28      | 40    | `1—0 4—0` |
-| `GS` *(group separator)*            | U+001D        | 29      | 41    | `1—0 4—1` |
-| `RS` *(record separator)*           | U+001E        | 30      | 42    | `1—0 4—2` |
-| `US` *(unit separator)*             | U+001F        | 31      | 43    | `1—0 4—3` |
+#### Control characters (ASCII 0-31)
+| CHARACTER                           | UNICODE (Hex) | DECIMAL | Base 7    | BASE 16   |
+|-------------------------------------|---------------|---------|-----------|-----------|
+| `NUL` *(null character)*            | U+0000        | 0       | `0—0`     | `0—0`     |
+| `SOH` *(start of heading)*          | U+0001        | 1       | `0—1`     | `0—1`     |
+| `STX` *(start of text)*             | U+0002        | 2       | `0—2`     | `0—2`     |
+| `ETX` *(end of text)*               | U+0003        | 3       | `0—3`     | `0—3`     |
+| `EOT` *(end of transmission)*       | U+0004        | 4       | `0—4`     | `0—4`     |
+| `ENQ` *(enquiry)*                   | U+0005        | 5       | `0—5`     | `0—5`     |
+| `ACK` *(acknowledge)*               | U+0006        | 6       | `0—6`     | `0—6`     |
+| `BEL` *(bell)*                      | U+0007        | 7       | `1—0 1—0` | `0—7`     |
+| `BS` *(backspace)*                  | U+0008        | 8       | `1—0 1—1` | `0—8`     |
+| `HT` *(horizontal tab)*             | U+0009        | 9       | `1—0 1—2` | `0—9`     |
+| `LF` *(line feed)*                  | U+000A        | 10      | `1—0 1—3` | `0—A`     |
+| `VT` *(vertical tab)*               | U+000B        | 11      | `1—0 1—4` | `0—B`     |
+| `FF` *(form feed)*                  | U+000C        | 12      | `1—0 1—5` | `0—C`     |
+| `CR` *(carriage return)*            | U+000D        | 13      | `1—0 1—6` | `0—D`     |
+| `SO` *(shift out)*                  | U+000E        | 14      | `1—0 2—0` | `0—E`     |
+| `SI` *(shift in)*                   | U+000F        | 15      | `1—0 2—1` | `0—F`     |
+| `DLE` *(data link escape)*          | U+0010        | 16      | `1—0 2—2` | `1—0 1—0` |
+| `DC1` *(device control 1)*          | U+0011        | 17      | `1—0 2—3` | `1—0 1—1` |
+| `DC2` *(device control 2)*          | U+0012        | 18      | `1—0 2—4` | `1—0 1—2` |
+| `DC3` *(device control 3)*          | U+0013        | 19      | `1—0 2—5` | `1—0 1—3` |
+| `DC4` *(device control 4)*          | U+0014        | 20      | `1—0 2—6` | `1—0 1—4` |
+| `NAK` *(negative acknowledge)*      | U+0015        | 21      | `1—0 3—0` | `1—0 1—5` |
+| `SYN` *(synchronous idle)*          | U+0016        | 22      | `1—0 3—1` | `1—0 1—6` |
+| `ETB` *(end of transmission block)* | U+0017        | 23      | `1—0 3—2` | `1—0 1—7` |
+| `CAN` *(cancel)*                    | U+0018        | 24      | `1—0 3—3` | `1—0 1—8` |
+| `EM` *(end of medium)*              | U+0019        | 25      | `1—0 3—4` | `1—0 1—9` |
+| `SUB` *(substitute)*                | U+001A        | 26      | `1—0 3—5` | `1—0 1—A` |
+| `ESC` *(escape)*                    | U+001B        | 27      | `1—0 3—6` | `1—0 1—B` |
+| `FS` *(file separator)*             | U+001C        | 28      | `1—0 4—0` | `1—0 1—C` |
+| `GS` *(group separator)*            | U+001D        | 29      | `1—0 4—1` | `1—0 1—D` |
+| `RS` *(record separator)*           | U+001E        | 30      | `1—0 4—2` | `1—0 1—E` |
+| `US` *(unit separator)*             | U+001F        | 31      | `1—0 4—3` | `1—0 1—F` |
 
 ### ASCI Printable Characters
+| CHARACTER     | UNICODE (Hex) | DECIMAL | BASE 7    | BASE 16   |
+|---------------|---------------|---------|-----------|-----------|
+| *space*       | U+0020        | 32      | `1—0 4—4` | `1—0 2—0` |
+| `!`           | U+0021        | 33      | `1—0 4—5` | `1—0 2—1` |
+| `"`           | U+0022        | 34      | `1—0 4—6` | `1—0 2—2` |
+| `#`           | U+0023        | 35      | `1—0 5—0` | `1—0 2—3` |
+| `$`           | U+0024        | 36      | `1—0 5—1` | `1—0 2—4` |
+| `%`           | U+0025        | 37      | `1—0 5—2` | `1—0 2—5` |
+| `&`           | U+0026        | 38      | `1—0 5—3` | `1—0 2—6` |
+| `'`           | U+0027        | 39      | `1—0 5—4` | `1—0 2—7` |
+| `(`           | U+0028        | 40      | `1—0 5—5` | `1—0 2—8` |
+| `)`           | U+0029        | 41      | `1—0 5—6` | `1—0 2—9` |
+| `*`           | U+002A        | 42      | `1—0 6—0` | `1—0 2—A` |
+| `+`           | U+002B        | 43      | `1—0 6—1` | `1—0 2—B` |
+| `,`           | U+002C        | 44      | `1—0 6—2` | `1—0 2—C` |
+| `-`           | U+002D        | 45      | `1—0 6—3` | `1—0 2—D` |
+| `.`           | U+002E        | 46      | `1—0 6—4` | `1—0 2—E` |
+| `/`           | U+002F        | 47      | `1—0 6—5` | `1—0 2—F` |
+| `0`           | U+0030        | 48      | `1—0 6—6` | `1—0 3—0` |
+| `1`           | U+0031        | 49      | `1—1 0—0` | `1—0 3—1` |
+| `2`           | U+0032        | 50      | `1—1 0—1` | `1—0 3—2` |
+| `3`           | U+0033        | 51      | `1—1 0—2` | `1—0 3—3` |
+| `4`           | U+0034        | 52      | `1—1 0—3` | `1—0 3—4` |
+| `5`           | U+0035        | 53      | `1—1 0—4` | `1—0 3—5` |
+| `6`           | U+0036        | 54      | `1—1 0—5` | `1—0 3—6` |
+| `7`           | U+0037        | 55      | `1—1 0—6` | `1—0 3—7` |
+| `8`           | U+0038        | 56      | `1—1 1—0` | `1—0 3—8` |
+| `9`           | U+0039        | 57      | `1—1 1—1` | `1—0 3—9` |
+| `:`           | U+003A        | 58      | `1—1 1—2` | `1—0 3—A` |
+| `;`           | U+003B        | 59      | `1—1 1—3` | `1—0 3—B` |
+| `<`           | U+003C        | 60      | `1—1 1—4` | `1—0 3—C` |
+| `=`           | U+003D        | 61      | `1—1 1—5` | `1—0 3—D` |
+| `>`           | U+003E        | 62      | `1—1 1—6` | `1—0 3—E` |
+| `?`           | U+003F        | 63      | `1—1 2—0` | `1—0 3—F` |
+| `@`           | U+0040        | 64      | `1—1 2—1` | `1—0 4—0` |
+| `A`           | U+0041        | 65      | `1—1 2—2` | `1—0 4—1` |
+| `B`           | U+0042        | 66      | `1—1 2—3` | `1—0 4—2` |
+| `C`           | U+0043        | 67      | `1—1 2—4` | `1—0 4—3` |
+| `D`           | U+0044        | 68      | `1—1 2—5` | `1—0 4—4` |
+| `E`           | U+0045        | 69      | `1—1 2—6` | `1—0 4—5` |
+| `F`           | U+0046        | 70      | `1—1 3—0` | `1—0 4—6` |
+| `G`           | U+0047        | 71      | `1—1 3—1` | `1—0 4—7` |
+| `H`           | U+0048        | 72      | `1—1 3—2` | `1—0 4—8` |
+| `I`           | U+0049        | 73      | `1—1 3—3` | `1—0 4—9` |
+| `J`           | U+004A        | 74      | `1—1 3—4` | `1—0 4—A` |
+| `K`           | U+004B        | 75      | `1—1 3—5` | `1—0 4—B` |
+| `L`           | U+004C        | 76      | `1—1 3—6` | `1—0 4—C` |
+| `M`           | U+004D        | 77      | `1—1 4—0` | `1—0 4—D` |
+| `N`           | U+004E        | 78      | `1—1 4—1` | `1—0 4—E` |
+| `O`           | U+004F        | 79      | `1—1 4—2` | `1—0 4—F` |
+| `P`           | U+0050        | 80      | `1—1 4—3` | `1—0 5—0` |
+| `Q`           | U+0051        | 81      | `1—1 4—4` | `1—0 5—1` |
+| `R`           | U+0052        | 82      | `1—1 4—5` | `1—0 5—2` |
+| `S`           | U+0053        | 83      | `1—1 4—6` | `1—0 5—3` |
+| `T`           | U+0054        | 84      | `1—1 5—0` | `1—0 5—4` |
+| `U`           | U+0055        | 85      | `1—1 5—1` | `1—0 5—5` |
+| `V`           | U+0056        | 86      | `1—1 5—2` | `1—0 5—6` |
+| `W`           | U+0057        | 87      | `1—1 5—3` | `1—0 5—7` |
+| `X`           | U+0058        | 88      | `1—1 5—4` | `1—0 5—8` |
+| `Y`           | U+0059        | 89      | `1—1 5—5` | `1—0 5—9` |
+| `Z`           | U+005A        | 90      | `1—1 5—6` | `1—0 5—A` |
+| `[`           | U+005B        | 91      | `1—1 6—0` | `1—0 5—B` |
+| `\`           | U+005C        | 92      | `1—1 6—1` | `1—0 5—C` |
+| `]`           | U+005D        | 93      | `1—1 6—2` | `1—0 5—D` |
+| `^`           | U+005E        | 94      | `1—1 6—3` | `1—0 5—E` |
+| `_`           | U+005F        | 95      | `1—1 6—4` | `1—0 5—F` |
+| `` ` ``       | U+0060        | 96      | `1—1 6—5` | `1—0 6—0` |
+| `a`           | U+0061        | 97      | `1—1 6—6` | `1—0 6—1` |
+| `b`           | U+0062        | 98      | `1—2 0—0` | `1—0 6—2` |
+| `c`           | U+0063        | 99      | `1—2 0—1` | `1—0 6—3` |
+| `d`           | U+0064        | 100     | `1—2 0—2` | `1—0 6—4` |
+| `e`           | U+0065        | 101     | `1—2 0—3` | `1—0 6—5` |
+| `f`           | U+0066        | 102     | `1—2 0—4` | `1—0 6—6` |
+| `g`           | U+0067        | 103     | `1—2 0—5` | `1—0 6—7` |
+| `h`           | U+0068        | 104     | `1—2 0—6` | `1—0 6—8` |
+| `i`           | U+0069        | 105     | `1—2 1—0` | `1—0 6—9` |
+| `j`           | U+006A        | 106     | `1—2 1—1` | `1—0 6—A` |
+| `k`           | U+006B        | 107     | `1—2 1—2` | `1—0 6—B` |
+| `l`           | U+006C        | 108     | `1—2 1—3` | `1—0 6—C` |
+| `m`           | U+006D        | 109     | `1—2 1—4` | `1—0 6—D` |
+| `n`           | U+006E        | 110     | `1—2 1—5` | `1—0 6—E` |
+| `o`           | U+006F        | 111     | `1—2 1—6` | `1—0 6—F` |
+| `p`           | U+0070        | 112     | `1—2 2—0` | `1—0 7—0` |
+| `q`           | U+0071        | 113     | `1—2 2—1` | `1—0 7—1` |
+| `r`           | U+0072        | 114     | `1—2 2—2` | `1—0 7—2` |
+| `s`           | U+0073        | 115     | `1—2 2—3` | `1—0 7—3` |
+| `t`           | U+0074        | 116     | `1—2 2—4` | `1—0 7—4` |
+| `u`           | U+0075        | 117     | `1—2 2—5` | `1—0 7—5` |
+| `v`           | U+0076        | 118     | `1—2 2—6` | `1—0 7—6` |
+| `w`           | U+0077        | 119     | `1—2 3—0` | `1—0 7—7` |
+| `x`           | U+0078        | 120     | `1—2 3—1` | `1—0 7—8` |
+| `y`           | U+0079        | 121     | `1—2 3—2` | `1—0 7—9` |
+| `z`           | U+007A        | 122     | `1—2 3—3` | `1—0 7—A` |
+| `{`           | U+007B        | 123     | `1—2 3—4` | `1—0 7—B` |
+| `\|`          | U+007C        | 124     | `1—2 3—5` | `1—0 7—C` |
+| `}`           | U+007D        | 125     | `1—2 3—6` | `1—0 7—D` |
+| `~`           | U+007E        | 126     | `1—2 4—0` | `1—0 7—E` |
 
-| CHARACTER     | UNICODE (Hex) | DECIMAL | BASE7 | DOMINO -->|
-|---------------|---------------|---------|-------|-----------|
-| *space*       | U+0020        | 32      | 44    | `1—0 4—4` |
-| `!`           | U+0021        | 33      | 45    | `1—0 4—5` |
-| `"`           | U+0022        | 34      | 46    | `1—0 4—6` |
-| `#`           | U+0023        | 35      | 50    | `1—0 5—0` |
-| `$`           | U+0024        | 36      | 51    | `1—0 5—1` |
-| `%`           | U+0025        | 37      | 52    | `1—0 5—2` |
-| `&`           | U+0026        | 38      | 53    | `1—0 5—3` |
-| `'`           | U+0027        | 39      | 54    | `1—0 5—4` |
-| `(`           | U+0028        | 40      | 55    | `1—0 5—5` |
-| `)`           | U+0029        | 41      | 56    | `1—0 5—6` |
-| `*`           | U+002A        | 42      | 60    | `1—0 6—0` |
-| `+`           | U+002B        | 43      | 61    | `1—0 6—1` |
-| `,`           | U+002C        | 44      | 62    | `1—0 6—2` |
-| `-`           | U+002D        | 45      | 63    | `1—0 6—3` |
-| `.`           | U+002E        | 46      | 64    | `1—0 6—4` |
-| `/`           | U+002F        | 47      | 65    | `1—0 6—5` |
-| `0`           | U+0030        | 48      | 66    | `1—0 6—6` |
-| `1`           | U+0031        | 49      | 100   | `1—1 0—0` |
-| `2`           | U+0032        | 50      | 101   | `1—1 0—1` |
-| `3`           | U+0033        | 51      | 102   | `1—1 0—2` |
-| `4`           | U+0034        | 52      | 103   | `1—1 0—3` |
-| `5`           | U+0035        | 53      | 104   | `1—1 0—4` |
-| `6`           | U+0036        | 54      | 105   | `1—1 0—5` |
-| `7`           | U+0037        | 55      | 106   | `1—1 0—6` |
-| `8`           | U+0038        | 56      | 110   | `1—1 1—0` |
-| `9`           | U+0039        | 57      | 111   | `1—1 1—1` |
-| `:`           | U+003A        | 58      | 112   | `1—1 1—2` |
-| `;`           | U+003B        | 59      | 113   | `1—1 1—3` |
-| `<`           | U+003C        | 60      | 114   | `1—1 1—4` |
-| `=`           | U+003D        | 61      | 115   | `1—1 1—5` |
-| `>`           | U+003E        | 62      | 116   | `1—1 1—6` |
-| `?`           | U+003F        | 63      | 120   | `1—1 2—0` |
-| `@`           | U+0040        | 64      | 121   | `1—1 2—1` |
-| `A`           | U+0041        | 65      | 122   | `1—1 2—2` |
-| `B`           | U+0042        | 66      | 123   | `1—1 2—3` |
-| `C`           | U+0043        | 67      | 124   | `1—1 2—4` |
-| `D`           | U+0044        | 68      | 125   | `1—1 2—5` |
-| `E`           | U+0045        | 69      | 126   | `1—1 2—6` |
-| `F`           | U+0046        | 70      | 130   | `1—1 3—0` |
-| `G`           | U+0047        | 71      | 131   | `1—1 3—1` |
-| `H`           | U+0048        | 72      | 132   | `1—1 3—2` |
-| `I`           | U+0049        | 73      | 133   | `1—1 3—3` |
-| `J`           | U+004A        | 74      | 134   | `1—1 3—4` |
-| `K`           | U+004B        | 75      | 135   | `1—1 3—5` |
-| `L`           | U+004C        | 76      | 136   | `1—1 3—6` |
-| `M`           | U+004D        | 77      | 140   | `1—1 4—0` |
-| `N`           | U+004E        | 78      | 141   | `1—1 4—1` |
-| `O`           | U+004F        | 79      | 142   | `1—1 4—2` |
-| `P`           | U+0050        | 80      | 143   | `1—1 4—3` |
-| `Q`           | U+0051        | 81      | 144   | `1—1 4—4` |
-| `R`           | U+0052        | 82      | 145   | `1—1 4—5` |
-| `S`           | U+0053        | 83      | 146   | `1—1 4—6` |
-| `T`           | U+0054        | 84      | 150   | `1—1 5—0` |
-| `U`           | U+0055        | 85      | 151   | `1—1 5—1` |
-| `V`           | U+0056        | 86      | 152   | `1—1 5—2` |
-| `W`           | U+0057        | 87      | 153   | `1—1 5—3` |
-| `X`           | U+0058        | 88      | 154   | `1—1 5—4` |
-| `Y`           | U+0059        | 89      | 155   | `1—1 5—5` |
-| `Z`           | U+005A        | 90      | 156   | `1—1 5—6` |
-| `[`           | U+005B        | 91      | 160   | `1—1 6—0` |
-| `\`           | U+005C        | 92      | 161   | `1—1 6—1` |
-| `]`           | U+005D        | 93      | 162   | `1—1 6—2` |
-| `^`           | U+005E        | 94      | 163   | `1—1 6—3` |
-| `_`           | U+005F        | 95      | 164   | `1—1 6—4` |
-| `` ` ``       | U+0060        | 96      | 165   | `1—1 6—5` |
-| `a`           | U+0061        | 97      | 166   | `1—1 6—6` |
-| `b`           | U+0062        | 98      | 200   | `1—2 0—0` |
-| `c`           | U+0063        | 99      | 201   | `1—2 0—1` |
-| `d`           | U+0064        | 100     | 202   | `1—2 0—2` |
-| `e`           | U+0065        | 101     | 203   | `1—2 0—3` |
-| `f`           | U+0066        | 102     | 204   | `1—2 0—4` |
-| `g`           | U+0067        | 103     | 205   | `1—2 0—5` |
-| `h`           | U+0068        | 104     | 206   | `1—2 0—6` |
-| `i`           | U+0069        | 105     | 210   | `1—2 1—0` |
-| `j`           | U+006A        | 106     | 211   | `1—2 1—1` |
-| `k`           | U+006B        | 107     | 212   | `1—2 1—2` |
-| `l`           | U+006C        | 108     | 213   | `1—2 1—3` |
-| `m`           | U+006D        | 109     | 214   | `1—2 1—4` |
-| `n`           | U+006E        | 110     | 215   | `1—2 1—5` |
-| `o`           | U+006F        | 111     | 216   | `1—2 1—6` |
-| `p`           | U+0070        | 112     | 220   | `1—2 2—0` |
-| `q`           | U+0071        | 113     | 221   | `1—2 2—1` |
-| `r`           | U+0072        | 114     | 222   | `1—2 2—2` |
-| `s`           | U+0073        | 115     | 223   | `1—2 2—3` |
-| `t`           | U+0074        | 116     | 224   | `1—2 2—4` |
-| `u`           | U+0075        | 117     | 225   | `1—2 2—5` |
-| `v`           | U+0076        | 118     | 226   | `1—2 2—6` |
-| `w`           | U+0077        | 119     | 230   | `1—2 3—0` |
-| `x`           | U+0078        | 120     | 231   | `1—2 3—1` |
-| `y`           | U+0079        | 121     | 232   | `1—2 3—2` |
-| `z`           | U+007A        | 122     | 233   | `1—2 3—3` |
-| `{`           | U+007B        | 123     | 234   | `1—2 3—4` |
-| `\|`          | U+007C        | 124     | 235   | `1—2 3—5` |
-| `}`           | U+007D        | 125     | 236   | `1—2 3—6` |
-| `~`           | U+007E        | 126     | 240   | `1—2 4—0` |
+### Special keyboard Characters
 
+Below you see the escape sequences for special keyboard characters. You can use the [KEY](#key) instruction to check if a specific key was pressed. For normal printable characters, you just push the single character onto the stack. For special chars, you need to push an escape sequence which you can find in the table below:
+
+#### Arrow Keys
+| Key                  | Escape Sequence | DECIMAL      | BASE 7                      |
+|----------------------|-----------------|--------------|-----------------------------|
+| Up Arrow             | `ESC [ A`       | 27 91 65     | `1—0 3—6 1—1 6—0 1—1 2—2`   |
+| Down Arrow           | `ESC [ B`       | 27 91 66     | `1—0 3—6 1—1 6—0 1—1 2—3`   |
+| Right Arrow          | `ESC [ C`       | 27 91 67     | `1—0 3—6 1—1 6—0 1—1 2—4`   |
+| Left Arrow           | `ESC [ D`       | 27 91 68     | `1—0 3—6 1—1 6—0 1—1 2—5`   |
+
+#### Control Keys
+| Key                  | Escape Sequence | DECIMAL         | BASE 7                      |
+|----------------------|-----------------|-----------------|-----------------------------|
+| End (normal mode)    | `ESC [ F`       | 27 91 70        | `1—0 3—6 1—1 6—0 1—1 3—0`   |
+| Home (normal mode)   | `ESC [ H`       | 27 91 72        | `1—0 3—6 1—1 6—0 1—1 3—2`   |
+| Page Up              | `ESC [ 5 ~`     | 27 91 53 126    | `1—0 3—6 1—1 6—0 1—1 3—3`   |
+| Page Down            | `ESC [ 6 ~`     | 27 91 54 126    | `1—0 3—6 1—1 6—0 1—1 3—4`   |
+| Insert               | `ESC [ 2 ~`     | 27 91 50 126    | `1—0 3—6 1—1 6—0 1—1 3—5`   |
+| Delete               | `ESC [ 3 ~`     | 27 91 51 126    | `1—0 3—6 1—1 6—0 1—1 3—6`   |
+
+#### Function Keys
+| Key                  | Escape Sequence | DECIMAL         | BASE 7                                    |
+|----------------------|-----------------|-----------------|-------------------------------------------|
+| F1                   | `ESC O P`       | 27 79 80        | `1—0 3—6 1—1 4—2 1—1 4—3`                 |
+| F2                   | `ESC O Q`       | 27 79 81        | `1—0 3—6 1—1 4—2 1—1 4—4`                 |
+| F3                   | `ESC O R`       | 27 79 82        | `1—0 3—6 1—1 4—2 1—1 4—5`                 |
+| F4                   | `ESC O S`       | 27 79 83        | `1—0 3—6 1—1 4—2 1—1 4—6`                 |
+| F5                   | `ESC [ 15 ~`    | 27 91 49 53 126 | `1—0 3—6 1—1 6—0 1—1 0—0 1—1 0—4 1—2 4—0` |
+| F6                   | `ESC [ 17 ~`    | 27 91 49 55 126 | `1—0 3—6 1—1 6—0 1—1 0—0 1—1 0—6 1—2 4—0` |
+| F7                   | `ESC [ 18 ~`    | 27 91 49 56 126 | `1—0 3—6 1—1 6—0 1—1 0—0 1—1 1—0 1—2 4—0` |
+| F8                   | `ESC [ 19 ~`    | 27 91 49 57 126 | `1—0 3—6 1—1 6—0 1—1 0—0 1—1 1—1 1—2 4—0` |
+| F9                   | `ESC [ 20 ~`    | 27 91 50 48 126 | `1—0 3—6 1—1 6—0 1—1 0—1 1—0 6—6 1—2 4—0` |
+| F10                  | `ESC [ 21 ~`    | 27 91 50 49 126 | `1—0 3—6 1—1 6—0 1—1 0—1 1—1 0—0 1—2 4—0` |
+| F11                  | `ESC [ 23 ~`    | 27 91 50 51 126 | `1—0 3—6 1—1 6—0 1—1 0—1 1—1 0—2 1—2 4—0` |
+| F12                  | `ESC [ 24 ~`    | 27 91 50 52 126 | `1—0 3—6 1—1 6—0 1—1 0—1 1—1 0—3 1—2 4—0` |
+
+#### Other Keys
+| Key        | DECIMAL   | BASE 7      |
+|------------|-----------|-------------|
+| Escape     | 27        | `1—0 3—6`   |
+| Backspace  | 8         | `1—0 1—1`   |
+| Tab        | 9         | `1—0 1—2`   |
+| Enter      | 13        | `1—0 1—6`   |
 
 ### Error Types
 The spec doesn't define a way to "catch" errors in a graceful way yet. For now, whenever an error occurs, the program will terminate and the interpreter will throw an error to stderr.

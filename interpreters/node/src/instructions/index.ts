@@ -1,10 +1,10 @@
 import {ADD, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
-import {AND, EQL, GTR, NOT, OR} from './ComparisonAndLogical.js';
+import {AND, EQL, EQLSTR, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
 import {BASE, EXT, GET, NOOP, SET, TIME} from './Misc.js';
 import {BRANCH, CALL, IMPORT, JUMP, LABEL, NAVM, WAIT} from './ControlFlow.js';
 import {CLR, DUP, LEN, NUM, POP, ROLL, STR} from './StackManipulations.js';
-import {NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
+import {KEY, KEYRES, NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
 
 export type Instruction = (ctx: Context) => void;
@@ -36,7 +36,7 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   OR,
   EQL,
   GTR,
-  undefined,
+  EQLSTR,
   undefined,
 
   // Bitwise
@@ -62,9 +62,9 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   NUMOUT,
   STRIN,
   STROUT,
-  undefined,
-  undefined,
-  undefined,
+  KEY,
+  KEYRES,
+  undefined, // TODO consider adding MOUSE btn which pushes last clicked col and row to the stack or -1 twice if not clicked. Use KEYRES to also reset the mouse state 
 
   // Reflection & Meta
   GET,

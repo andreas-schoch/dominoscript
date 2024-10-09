@@ -78,4 +78,28 @@ describe('InputOutput', () => {
       ds.run();
     });
   });
+
+  describe('KEY', () => {
+    it('should push 1 to the stack when the key was registered, otherwise 0', async () => {
+      // STR 'w' KEY STR 'd' KEY STR 'a' KEY
+      const ds = createRunner('0-2 1—2 3—0 0-0 5-4 0-2 1—2 0—2 0-0 5-4 0-2 1—1 6—6 0-0 5-4');
+      // The API user needs to register keypresses by whatever means they have available
+      // For example, the node CLI version that is supposed to run in a terminal would use the process.stdin.on('data', ...) event listener
+      // A browser version (e.g. when you install dominoscript as an npm package and create an app using it) would use the addEventListener('keydown', ...) event listener
+      ds.registerKeyDown('w');
+      ds.registerKeyDown('a');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[1 0 1]');
+    });
+  });
+
+  describe('KEYRES', () => {
+    it('should unregister pressed keys after KEYRES', async () => {
+      // STR 'w' KEY KEYRES STR 'w' KEY
+      const ds = createRunner('0-2 1—2 3—0 0-0 5-4 5-5 0-2 1—2 3—0 0-0 5-4');
+      ds.registerKeyDown('w');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[1 0]');
+    });
+  });
 });

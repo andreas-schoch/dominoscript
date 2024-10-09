@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import {Context, contexts} from '../Context.js';
+import {DominoScriptRunner, createRunner} from '../Runner.js';
 import {dedent, getTotalInfo} from '../helpers.js';
-import {createRunner} from '../Runner.js';
 import path from 'path';
 import {readFile} from 'fs/promises';
 import readline from 'readline';
@@ -51,23 +51,77 @@ if (!filePath) {
 /************************************/
 /** Initialize DominoScript Runner **/
 /************************************/
-const rl = readline.createInterface({
+let rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   prompt: '> ',
+  terminal: false,
 });
 
+// While the NUMIN or STRIN instructions are active, terminal should be set to true to see the input
+// Otherwise, terminal should be set to false to prevent the input from being displayed on the terminal
+// Not sure if there is a better way to handle this
+function recreateReadlineInterface(terminal: boolean): void {
+  rl.close();
+
+  rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: '> ',
+    terminal: terminal,
+  });
+}
+
+let inputBlocked = false;
 function handleNumIn(_ctx: Context): Promise<number> {
+  recreateReadlineInterface(true);
+  inputBlocked = true;
   return new Promise(resolve => {
-    rl.once('line', line => resolve(parseInt(line, 10)));
+    rl.once('line', line => {
+      inputBlocked = false;
+      recreateReadlineInterface(false);
+      resolve(parseInt(line, 10));
+    });
     rl.prompt();
   });
 }
 
 function handleStrIn(_ctx: Context): Promise<string> {
+  inputBlocked = true;
+  recreateReadlineInterface(true);
   return new Promise(resolve => {
-    rl.once('line', line => resolve(line));
+    rl.once('line', line => {
+      inputBlocked = false;
+      recreateReadlineInterface(false);
+      resolve(line);
+    });
     rl.prompt();
+  });
+}
+
+function initKeyListener(runner: DominoScriptRunner): void {
+  process.stdin.setRawMode(true);
+  // process.stdin.pause();
+  // process.stdin.resume();
+  process.stdout.write('\x1B[?25l'); // Hide the cursor
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', (key: string) => {
+    // console.log('Key:', key);
+
+    // const keycode = key.charCodeAt(0);
+    // console.log('Keycode:', keycode);
+    // if (key === '\u001b[D') {
+    //   console.log('Left arrow key pressed');
+    // } else if (key === '\u001b[C') {
+    //   console.log('Right arrow key pressed');
+    // }
+
+    if (inputBlocked) return;
+
+    // While input is not-blocked (meaning NUMIN and STRIN are not active), the cli will not automatically exit on ctrl+c
+    if (key === '\u0003') process.exit(); // ctrl+c
+    runner.registerKeyDown(key);
+    // process.stdin.resume();
   });
 }
 
@@ -86,7 +140,6 @@ function handleOnBeforeRun(ctx: Context): void {
   console.debug(padding + '╔' + '═'.repeat(message.length - 2) + '╗');
   console.debug(padding + message);
   console.debug(padding + '╚' + '═'.repeat(message.length - 2) + '╝');
-
 }
 
 function handleOnAfterInstruction(ctx: Context, instruction: string): void {
@@ -116,6 +169,7 @@ const file = path.resolve(filePath);
 const dirname = path.dirname(file);
 const filename = path.basename(file);
 
+recreateReadlineInterface(false);
 const script = await readFile(file, 'utf8');
 const runner = createRunner(script, {filename, debug});
 runner.onStdout((ctx, msg) => ctx.config.debug ? console.debug(paddings[ctx.id] + '╠══ STDOUT: ' + msg.replaceAll('\n', '\\n')) : process.stdout.write(msg));
@@ -124,8 +178,14 @@ runner.onImport((ctx, importFilePath) => readFile(path.resolve(dirname, importFi
 runner.onBeforeRun(handleOnBeforeRun);
 runner.onAfterInstruction(handleOnAfterInstruction);
 runner.onAfterRun(handleOnAfterRun);
+initKeyListener(runner);
+
+// process.stdin.resume();
+// process.stdout.write('\x1B[?25l'); // Hide the cursor
+process.on('exit', () => process.stdout.write('\x1B[?25h')); // Show the cursor again when the process exits
 
 await runner.run();
+
 process.stdout.write('\n'); // Add a newline after the last instruction to ensure output isn't cleared
 rl.close();
 

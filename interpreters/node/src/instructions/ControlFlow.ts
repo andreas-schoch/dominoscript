@@ -57,14 +57,7 @@ export function CALL(ctx: Context): void {
 }
 
 export async function IMPORT(ctx: Context): Promise<void> {
-  const chars: string[] = [];
-  while (true) {
-    const value = ctx.stack.pop();
-    if (value === 0) break;
-    chars.push(String.fromCharCode(value));
-  }
-
-  const filename = chars.join('');
+  const filename = ctx.stack.popString();
   const script = await ctx.import(ctx, filename);
   ctx.nextImport = {filename, script};
 }

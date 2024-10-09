@@ -984,3 +984,52 @@ describe('ROLL', () => {
   });
 });
 ```
+
+## Rethinking how number are parsed
+Now that I implemented variable bases, the way I decided to parse numbers started to bother me. In the default base7, it hardly makes a difference when pushing strings you do generally need to use 2 dominos anyway to have access to the full ascii range. In base 16 mode however, it becomes quite annoying...
+
+Currently, to represent a number, we use the first half of the very first domino to indicate how many more will follow. For strings it is the same exact thing but for every character. Not an issue in base7 but in base 16 you basically need twice as many dominos than would be necessary.
+
+I was thinking that it would be less annoying if there was an instruction which can be used to specify how many dominos will be used for literals. I think early on I had similar ideas but decided against it as I believed the current approach was a good compromise.
+
+It would be a major pain to change how NUM and STR work now, as it would break all existing example code. BUT I think I can have the best of both worlds.
+
+By adding yet another instruction similar to BASE, I can switch between "literal-parse-modes". The default would stay the same as it is now but by doing for example `NUM 1 LIT` I tell the interpreter that all following literals will use 1 domino long. So to push hello world in base16 I need half the dominos because I don't encode the length of the character in the first half of the first domino:
+
+- This: `0-2 6-8 6-5 6-C 6-C 6-F 2-0 7-7 6-F 7-2 6-C 6-4 0-0`
+- Insted of: `0-2 1-0 6-8 1-0 6-5 1-0 6-C 1-0 6-C 1-0 6-F 1-0 2-0 1-0 7-7 1-0 6-F 1-0 7-2 1-0 6-C 1-0 6-4 0-0`
+
+To go back to using a variable amount of dominos I just do `NUM 0 LIT`.
+
+For the most part this would work perfectly fine. It increases the "cognitive load" a bit because you as a dev now need to be aware of the: Base, Navigation mode and now literal parse mode... But then again, DS is an esolang, sooo... yeah...
+
+The one potentially really annoying thing is that this might make GET and SET more tricky. Once I refactor GET and SET to be able to store literals, I will always need to remember with what literal parse mode the literal was stored. Maybe I can use the first domino to encode that directly on the board with each variable. I could use on half to specify the parse mode 0-6 and the other half to specify if the literal is a string or a number. This means, I lose the ability to get arbitrary dominos or single characters using GET but will be able to retrieve literals without having to switch to the correct literal parse mode first.
+
+
+## Ability to fetch data within dominoscript
+It would be fun to be able to make http requests within dominoscript. I think I can do it in a fun abstracted way. The first version will support json-only responses of "structured-data".
+
+For example, you have a DB with users and when fetching a single user you get the following json response
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "
+}
+```
+
+Within dominoscript you would do something like `STR "https://example.com/users/1" HTTPGET`
+
+This will NOT actually push the json data itself to the stack, that would be a nightmare to deal with. Instead it will push an integer ID to the stack. The interpreter will map the json data internally to this ID. In dominoscript you can then do something like `NUM <ID> STR "name" JSONGET` which will push the field's value `"John Doe"` to the stack.
+
+Now imagine I want to change the name of the user. I could do something like `NUM <ID> STR "name" STR "Jane Doe" JSONSET`. This will update the internal json data. If I want to send the updated data back to the server I could do `NUM <ID> STR "https://example.com/users" HTTPUT`.
+
+And so on...
+
+Not sure exactly how to deal with array responses and nested data. I guess for nested fields, I could just do `NUM <ID> STR "prop.nestedProp.name" JSONGET`.
+
+I would like to support binary data as well. For that instead of field names we would probably have to deal with byte offsets as well as byte lengths. So something like `NUM <ID> NUM <OFFSET> NUM <NUM_BYTES> NUM <TYPE> BINARYGET`.
+
+Adding instructions like `JSONGET` and `JSONSET` essentially introduces a third kind of data storage besides the stack and data stored on the board itself. I am not sure how to feel about that yet. Doing it this way almost feels like cheating. It feels too easy. Too high level. The alternative would be to allow all kinds of http response data and bd pushed to the stack but since I don't want to make the stack size dynamic, I don't see that very practical. Storing it on the board however, would be possible but a nightmare to deal with (multiple files could be imported to store huge amounts of data).
+
+*(If anyone reads this, I am not planning to implement this feature anytime soon. If you want to make it part of the language, feel free to open a pull request with a design proposal where we can discuss the details first. It doesn't have to be the way I described above if you have a better idea, I am quite interested to hear about it!)*

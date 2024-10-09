@@ -20,6 +20,16 @@ export class Stack {
     return value;
   }
 
+  popString(): string {
+    let str = '';
+    while (true) {
+      const value = this.pop();
+      if (value === 0) break;
+      str += String.fromCharCode(value);
+    }
+    return str;
+  }
+
   peek(): number | undefined {
     return this.data[this.length - 1];
   }

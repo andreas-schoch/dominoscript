@@ -14,6 +14,7 @@ export interface DominoScriptRunner {
   onBeforeRun(fn: Context['listeners']['beforeRun']): void;
   onAfterRun(fn: Context['listeners']['afterRun']): void;
   onAfterInstruction(fn: Context['listeners']['afterInstruction']): void;
+  registerKeyDown(key: string): void
 }
 
 export interface DSConfig {
@@ -31,7 +32,8 @@ export function createRunner(source: string, options: Partial<DSConfig> = {}): D
     onImport: fn => ctx.listeners.import = fn,
     onBeforeRun: fn => ctx.listeners.beforeRun = fn,
     onAfterInstruction: fn => ctx.listeners.afterInstruction = fn,
-    onAfterRun: fn => ctx.listeners.afterRun = fn
+    onAfterRun: fn => ctx.listeners.afterRun = fn,
+    registerKeyDown: key => ctx.registerKeyDown(key),
   };
 }
 

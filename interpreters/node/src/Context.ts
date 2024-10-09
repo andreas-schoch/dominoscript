@@ -32,6 +32,7 @@ export interface Context {
   navModeOverrides: number[];
 
   labels: Record<Label['id'], Label>; // label ids are always negative numbers
+  keys: Set<string>; // stores all keys that were pressed since the last reset with KEYRES
 
   // jump and call address can either refer to a real address or a label if negative
   nextJumpAddress: number | null;
@@ -57,6 +58,7 @@ export interface Context {
   stdin: (ctx: Context, type: 'num' | 'str') => Promise<void>;
   stdout: (ctx: Context, msg: string) => void;
   import: (ctx: Context, filename: string) => Promise<string>;
+  registerKeyDown: (key: string) => void;
   beforeRun?: (ctx: Context) => void;
   afterRun?: (ctx: Context) => void;
   afterInstruction?: (ctx: Context, instruction: string) => void;
@@ -125,6 +127,10 @@ export function createContext(source: string, parent: Context | null = null, opt
     if (ctx.listeners.afterRun) ctx.listeners.afterRun(ctx);
   }
 
+  function handleRegisterKeyDown(key: string): void {
+    ctx.keys.add(key);
+  }
+
   const ctx: Context = {
     id: Math.random().toString(36).slice(2),
     parent: parent?.id || null,
@@ -140,6 +146,7 @@ export function createContext(source: string, parent: Context | null = null, opt
     navMode: 0,
     navModeOverrides: [],
     labels: {},
+    keys: new Set(),
     nextJumpAddress: null,
     nextCallAddress: null,
     nextImport: null,
@@ -152,6 +159,7 @@ export function createContext(source: string, parent: Context | null = null, opt
     stdin: handleStdin,
     stdout: handleStdout,
     import: handleImport,
+    registerKeyDown: handleRegisterKeyDown,
     beforeRun: handleBeforeRun,
     afterInstruction: handleOnAfterInstruction,
     afterRun: handleAfterRun,

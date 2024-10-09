@@ -27,3 +27,9 @@ export function GTR(ctx: Context): void {
   const a = ctx.stack.pop();
   ctx.stack.push(a > b ? 1 : 0);
 }
+
+export function EQLSTR(ctx: Context): void {
+  const strA = ctx.stack.popString();
+  const strB = ctx.stack.popString();
+  ctx.stack.push(strA === strB ? 1 : 0);
+}
