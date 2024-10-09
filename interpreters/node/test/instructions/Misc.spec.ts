@@ -176,6 +176,68 @@ describe('Misc', () => {
     });
   });
 
+  describe('LIT', () => {
+    it('should use the first half of the first domino to decide how many dominos to use for the number literal (LIT mode 0)', async () => {
+      // NUM 0 LIT
+      const ds = createRunner('0-1 0-0 6-2 0-1 1-6 6-6 0-1 2-6 6-6 6-6');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[342 16806]');
+    });
+    it('should use 1-6 domino to parse number literals (LIT mode 1-6, Base 7)', async () => {
+      const data = [
+        ['0-1', '6-6', 48],
+        ['0-2', '6-6 6-6', 2400],
+        ['0-3', '6-6 6-6 6-6', 117648],
+        ['0-4', '6-6 6-6 6-6 6-6', 5764800],
+        ['0-5', '6-6 6-6 6-6 6-6 6-6', 282475248],
+        ['0-6', '6-6 6-6 6-6 6-6 6-6 6-6', 956385312], // number wraps around because larger than max int32
+        // Check prefixing with 0's
+        ['0-1', '6-6', 48],
+        ['0-2', '0-0 6-6', 48],
+        ['0-3', '0-0 0-0 6-6', 48],
+        ['0-4', '0-0 0-0 0-0 6-6', 48],
+        ['0-5', '0-0 0-0 0-0 0-0 6-6', 48],
+        ['0-6', '0-0 0-0 0-0 0-0 0-0 6-6', 48],
+      ];
+
+      for (const [litMode, literal, expectedValue] of data) {
+        // NUM <litMode> LIT NUM <literal>
+        const ds = createRunner(`0-1 ${litMode} 6-2 0-1 ${literal}`);
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+      }
+    });
+    it('should use 1-6 domino to parse number literals (LIT mode 1-6, Base 16)', async () => {
+      const data = [
+        ['0-1', '6-6', 102],
+        ['0-2', '6-6 6-6', 26214],
+        ['0-3', '6-6 6-6 6-6', 6710886],
+        // Interestingly the 3 next expectedValues wrap around to the exact same number.
+        ['0-4', '6-6 6-6 6-6 6-6', 1717986918],
+        ['0-5', '6-6 6-6 6-6 6-6 6-6', 1717986918],
+        ['0-6', '6-6 6-6 6-6 6-6 6-6 6-6', 1717986918],
+        // Checking the max int32 value just to make sure
+        ['0-4', '7-f f-f f-f f-f', 2147483647],
+        ['0-5', '0-0 7-f f-f f-f f-f', 2147483647],
+        ['0-6', '0-0 0-0 7-f f-f f-f f-f', 2147483647],
+        // Check prefixing with 0's
+        ['0-1', 'f-f', 255],
+        ['0-2', '0-0 f-f', 255],
+        ['0-3', '0-0 0-0 f-f', 255],
+        ['0-4', '0-0 0-0 0-0 f-f', 255],
+        ['0-5', '0-0 0-0 0-0 0-0 f-f', 255],
+        ['0-6', '0-0 0-0 0-0 0-0 0-0 f-f', 255],
+      ];
+
+      for (const [litMode, literal, expectedValue] of data) {
+      // NUM 16 BASE NUM <litMode> LIT NUM <literal>
+        const ds = createRunner(`0-1 1-0 2-2 6-3 0-1 ${litMode} 2-c 0-1 ${literal}`);
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+      }
+    });
+  });
+
   describe('BASE', () => {
     const base = ['1-0 1-0', '1-0 1-1', '1-0 1-2', '1-0 1-3', '1-0 1-4', '1-0 1-5', '1-0 1-6', '1-0 2-0', '1-0 2-1', '1-0 2-2']; // 7 to 16
     it('should clamp max cell values when using 2 domino long literal "1-f f-f"', async () => {

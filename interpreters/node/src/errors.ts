@@ -149,6 +149,13 @@ export class DSInvalidBaseError extends Error {
   }
 }
 
+export class DSInvalidLiteralParseModeError extends Error {
+  constructor(base: number) {
+    super(`Invalid literal parse mode ${base}. You can only set the parse mode to a number between 0 and 6`);
+    this.name = 'InvalidLiteralParseModeError';
+  }
+}
+
 export class DSInvalidInputError extends Error {
   constructor(reason = '') {
     super('Invalid input. ' + reason);

@@ -1,5 +1,5 @@
 import {Cell, CellValue} from '../Board.js';
-import {DSInterpreterError, DSInvalidBaseError, DSInvalidValueError} from '../errors.js';
+import {DSInterpreterError, DSInvalidBaseError, DSInvalidLiteralParseModeError, DSInvalidValueError} from '../errors.js';
 import {Context} from '../Context.js';
 
 // TODO consider using param to determine how to parse it: opcode, number or string 
@@ -38,6 +38,12 @@ export function SET(ctx: Context): void {
     const otherCellValue = value % ctx.base as CellValue;
     ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
   }
+}
+
+export function LIT(ctx: Context): void {
+  const parseMode = ctx.stack.pop();
+  if (parseMode < 0 || parseMode > 6) throw new DSInvalidLiteralParseModeError(parseMode);
+  ctx.literalParseMode = parseMode;
 }
 
 export function BASE(ctx: Context): void {

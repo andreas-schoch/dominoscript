@@ -783,7 +783,7 @@ The base instruction set is designed to fit on a single "double-six" domino. It 
 |**3**|[BNOT](#bnot)     |[BAND](#band)     |[BOR](#bor)       |[BXOR](#bxor)     |[LSL](#lsl)   |[LSR](#lsr)       |[ASR](#asr)       |[Bitwise](#bitwise)                            |
 |**4**|[NAVM](#navm)     |[BRANCH](#branch) |[LABEL](#label)   |[JUMP](#jump)     |[CALL](#call) |[IMPORT](#import) |[WAIT](#wait)     |[Control Flow](#control-flow)                  |
 |**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[KEY](#key)   |[KEYRES](#keyres) |[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
-|**6**|[GET](#get)       |[SET](#set)       |[_](#reserved_6_2)|[BASE](#base)     |[EXT](#ext)   |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
+|**6**|[GET](#get)       |[SET](#set)       |[LIT](#lit)       |[BASE](#base)     |[EXT](#ext)   |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
 
 *(DominoScript isn't limited to these 49 instructions though. The way the language is designed, it can theoretically be extended to up to 1000 instructions)*
 
@@ -802,14 +802,14 @@ Discards the top of the stack.
 #### `NUM`
 <img src="assets/horizontal/0-1.png" alt="Domino" width="128">
 
-Switch to "number mode". The first half of the next domino will indicate how many dominos to read as a number. Then the other halfs will all be read as base7 digits (in D6 mode) to form the number that will be pushed to the stack.
+Switch to "number mode". By default the first half of the next domino will indicate how many dominos to read as a number. Then the other halfs will all be read as base7 digits (in D6 mode) to form the number that will be pushed to the stack.
 
 With 7 dominos, 13 out of 14 halfs are used for the number. You can theoretically represent a number much larger than the max int32 value. However, if the number exceeds the maximum int32 value, it will wrap around from the minimum value, and vice versa *(exactly the same as when doing bitwise operations in JS --> `(96889010406 | 0) === -1895237402`)*.
 
 You might think that since internally numbers are int32s, that we parse from base7 to two's complement. That is not the case. We simple push the decimal version of the positive base7 number to the stack
 
 **For example:**
-- `0—0` represents the number `0` in both deciamal and base7
+- `0—0` represents the number `0` in both decimal and base7
 - `0—6` represents the number `6` in both decimal and base7
 - `1—6 6—6` represents the number `342` in decimal and `666` in base7
 - `2—6 6—6 6—6` represents the number `16,806` in decimal and `6,666` in base7
@@ -839,6 +839,10 @@ You might think that since internally numbers are int32s, that we parse from bas
   - `0—1` is NUM again
   - `0—5` is 5 in both base7 and decimal
   - `1—5` is NEG
+
+**What if I want to use a fixed amount of dominos for each number?**  
+
+Use the [LIT](#lit) instruction to permanently change how literals are parsed. For example with parse mode `2` it will use 2 dominos for each number. While `6—6 6—6` in default parse mode 0 results in `UnexpectedEndOfNumberError` (because it expects 6 more dominos to follow but only got 1 more), in parse mode `2` it represents the decimal number `2400`.
 
 <br>
 
@@ -1359,10 +1363,37 @@ For example here we have a 10x3 grid:
 - If the value argument is not within 0-48, an `InvalidDominoValueError` is thrown.
 - If the address of the other domino half is out of bounds, an `AddressError` is thrown.
 
-#### `RESERVED_6_2`
+#### `LIT`
 <img src="assets/horizontal/6-2.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Changes how number and string literals are parsed. It pops a number from the stack to use as the "literal parse mode". The popped number must be between 0 to 6. If the number is out of bounds, an `DSInvalidLiteralParseModeError` is thrown. 
+
+If the popped argument is:
+- `0`: Dynamic parse mode. Used by default. The first domino half of every number literal indicates how many more dominos should be parsed as part of the number. For string literals it is exactly the same but for each character.
+- `1` - `6`: Static parse modes. Uses 1 to 6 dominos for each number literal or each character of a string literal.
+
+In the following 3 examples `"Hello world"` is encoded in 3 different ways:
+
+In Base7 with Literal Parse Mode 0 (default): 
+```
+// Every character requires 2 dominos to be encoded on dominos
+0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0
+```
+
+In Base 16 with Literal Parse Mode 0:
+```
+// Still every character requires 2 dominos to be encoded. Considering that we are in base 16, very wasteful!
+0—2 1—0 6—8 1—0 6—5 1—0 6—c 1—0 6—c 1—0 6—f 1—0 2—0 1—0 7—7 1—0 6—f 1—0 7—2 1—0 6—c 1—0 6—4 0—0
+```
+
+In Base 16 with Literal Parse Mode 1:
+```
+// Every character requires 1 domino to be encoded.
+// Notice how now it is pretty much just hexadecimal (ignore first and last domino) with a "—" in between.
+0—2 6—8 6—5 6—c 6—c 6—f 2—0 7—7 6—f 7—2 6—c 6—4 0—0
+```
+
+As you can see, <ins>changing the default parse mode can significantly reduce the amount of dominos required to encode strings</ins>. For numbers it is less impactful but can still be significant if you are working mostly within a specific range.
 
 #### `BASE`
 <img src="assets/horizontal/6-3.png" alt="Domino" width="128">
@@ -1765,6 +1796,7 @@ The spec doesn't define a way to "catch" errors in a graceful way yet. For now, 
 - **InvalidLabelError**: Label {name} is not a valid label
 - **StepToEmptyCellError**: Trying to step from cell {currentAddress} to empty cell {emptyAddress}
 - **JumpToItselfError**: Jumping to itself at address {address} is forbidden as it results in an infinite loop
+- **JumpToExternalLabelError**: Jumping to an external label from {name} at address {address} is forbidden. External labels can only be used by CALL instruction
 - **CallToItselfError**:Calling to itself at address {address} is forbidden as it results in an infinite loop
 - **UnexpectedEndOfNumberError**: Unexpected end of number at address {address}
 - **EmptyStackError**: Cannot pop from an empty stack
@@ -1772,6 +1804,8 @@ The spec doesn't define a way to "catch" errors in a graceful way yet. For now, 
 - **InvalidInstructionError**: Invalid instruction opcode {opcode}
 - **InvalidNavigationModeError**: Invalid navigation mode {mode}
 - **InvalidValueError**: Invalid value {value}
+- **DSInvalidBaseError**: Invalid base {base}. You can only set the base to a number between 7 and 16
+- **DSInvalidLiteralParseModeError**: Invalid literal parse mode {value}. You can only set the parse mode to a number between 0 and 6
 - **InvalidInputError**: Invalid input {reason}
 - **MissingListenerError**: NUMIN, NUMOUT, STRIN or STROUT instructions were called and the DominoScript "runtime" did not provide a way on how to handle input or output
 
@@ -1797,3 +1831,8 @@ A list of examples to help you understand the language better.
 16. [Ansi clear screen](./examples/016_game_loop_ansi_clear_screen.md)
 17. [Using delay](./examples/017_using_wait.md)
 18. [Reverse String](./examples/018_reverse_string.md)
+19. [Input Controls](./examples/019_input_controls.md)
+20. [Check String Equality](./examples/020_check_string_equality.md)
+21. [Reduce domino amount](./examples/021_reduce_domino_amount.md)
+
+*If you want your example to be added to this list, please create a PR.*

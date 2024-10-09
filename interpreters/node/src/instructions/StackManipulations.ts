@@ -10,11 +10,19 @@ export function POP(ctx: Context): void {
 }
 
 function parseNum(ctx: Context): number {
-  const firstHalf = step(ctx);
-  if (!firstHalf) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
-  if (firstHalf.value === null) throw new DSUnexpectedEndOfNumberError(firstHalf.address);
+  let numberHalfs: number;
 
-  const numberHalfs = (firstHalf.value * 2) + 1;
+  if (ctx.literalParseMode === 0) {
+    // The number of domino halfs to read depends on the first half (this is the default).
+    const firstHalf = step(ctx);
+    if (!firstHalf) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
+    if (firstHalf.value === null) throw new DSUnexpectedEndOfNumberError(firstHalf.address);
+    numberHalfs = (firstHalf.value * 2) + 1;
+  } else {
+    // The number of domino halfs used for each number literal or character of a string is static.
+    // This is the case when the LIT instruction was executed with an argument of 1-7.
+    numberHalfs = ctx.literalParseMode * 2;
+  }
 
   let num = 0;
   for (let i = numberHalfs; i > 0; i--) {

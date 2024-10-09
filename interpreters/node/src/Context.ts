@@ -44,6 +44,7 @@ export interface Context {
   isExtendedMode: boolean;
 
   lastOpcode: number | null;
+  literalParseMode: number; // indicates how many dominos are used for NUM and STR literals
   base: number; // indicates if using D6, D9, D12 or D15 dominos
 
   listeners: {
@@ -154,6 +155,7 @@ export function createContext(source: string, parent: Context | null = null, opt
     isFinished: false,
     isExtendedMode: false,
     lastOpcode: null,
+    literalParseMode: 0,
     base: 7,
     listeners: parent?.listeners || getDefaultListeners(),
     stdin: handleStdin,

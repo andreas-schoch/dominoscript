@@ -1,7 +1,7 @@
 import {ADD, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
 import {AND, EQL, EQLSTR, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
-import {BASE, EXT, GET, NOOP, SET, TIME} from './Misc.js';
+import {BASE, EXT, GET, LIT, NOOP, SET, TIME} from './Misc.js';
 import {BRANCH, CALL, IMPORT, JUMP, LABEL, NAVM, WAIT} from './ControlFlow.js';
 import {CLR, DUP, LEN, NUM, POP, ROLL, STR} from './StackManipulations.js';
 import {KEY, KEYRES, NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
@@ -69,7 +69,7 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   // Reflection & Meta
   GET,
   SET,
-  undefined,
+  LIT,
   BASE,
   EXT, // Toggle extended mode
   TIME,
