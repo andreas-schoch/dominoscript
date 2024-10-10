@@ -1286,18 +1286,27 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `GET`
 <img src="assets/horizontal/6-0.png" alt="Domino" width="128">
 
-Get the value of a single whole domino at a specific address on the grid.
+Read data from the board and pushes it to the stack. Takes 2 arguments from the stack:
+- The mode of operation (imagine it like a "type")
+- The address of the first domino half
 
-Pops an item from the stack representing the address of the <ins>first</ins> domino half, then gets the number of dots on that first half and the other half. Out of both halves it forms a number the same way it does when parsing opcodes. The resulting decimal value will then be pushed to the stack.
+There are 3 modes of operation:
+- 0: Domino: results in a single number to be pushed to the stack representing the domino value
+- 1: Number: results in a single number to be pushed to the stack like when using [NUM](#num)
+- 2: String: results in a sequence of unicode char codes to be pushed to the stack like when using [STR](#str)
 
-**For example:**
-- `0—6`: First half 0, second half 6 -> 6 in base7 -> 6 in decimal pushed to stack
-- `1—0`: First half 1, second half 0 -> 10 in base7 -> 7 in decimal pushed to stack
-- `6—6`: First half 6, second half 6 -> 66 in base7 -> 48 in decimal pushed to stack
+> IMPORTANT: You can only GET (and SET) data that is within a single horizontal or vertical line. No direction changes are allowed!
+> If you have a very large string to encode I recommend:
+> - using the technique described in [Example 021 - Reduce Domino Amount](./examples/021_reduce_domino_amount.md).
+> - moving all data to a different file which can be imported when needed (with some trickery you could make it into a key value store)
+> - making a function which pushes the data to the stack when called. This allows you to change direction however you like.
 
 **Errors:**
 - If the address is out of bounds, an `InvalidAddressError` is thrown.
 - If the address references an empty cell the number -1 will be pushed to the stack. No error.
+- If during parsing the direction changes, an `UnexpectedChangeInDirectionError` is thrown.
+- If the data ends abruptly, an `UnexpectedEndOfNumberError` is thrown.
+- If the data is too big to fit in the stack, a `FullStackError` is thrown.
 
 #### `SET`
 <img src="assets/horizontal/6-1.png" alt="Domino" width="128">
@@ -1799,6 +1808,8 @@ The spec doesn't define a way to "catch" errors in a graceful way yet. For now, 
 - **JumpToExternalLabelError**: Jumping to an external label from {name} at address {address} is forbidden. External labels can only be used by CALL instruction
 - **CallToItselfError**:Calling to itself at address {address} is forbidden as it results in an infinite loop
 - **UnexpectedEndOfNumberError**: Unexpected end of number at address {address}
+- **UnexpectedChangeInDirectionError**: Unexpected change in direction at address {address}. When using GET or SET the direction is dictated by the first domino and cannot change
+
 - **EmptyStackError**: Cannot pop from an empty stack
 - **FullStackError**: Cannot push to a full stack
 - **InvalidInstructionError**: Invalid instruction opcode {opcode}

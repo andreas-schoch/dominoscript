@@ -141,8 +141,8 @@ export function createContext(source: string, parent: Context | null = null, opt
     currentInstruction: null,
     lastInstruction: null,
     board: new Board(source),
-    stack: parent?.stack || new Stack(512), // data stack is shared between all contexts
-    returnStack: new Stack(512), // return stack is unique to each context
+    stack: parent?.stack || new Stack(options.dataStackSize || 512), // data stack is shared between all contexts
+    returnStack: new Stack(options.returnStackSize || 512), // return stack is unique to each context
     navModeNeedsReset: false,
     navMode: 0,
     navModeOverrides: [],
@@ -179,7 +179,9 @@ export function createContext(source: string, parent: Context | null = null, opt
     },
     config: {
       filename: options.filename || 'inline',
-      debug: options.debug || false
+      debug: options.debug || false,
+      dataStackSize: options.dataStackSize || 512,
+      returnStackSize: options.returnStackSize || 512,
     },
   };
 

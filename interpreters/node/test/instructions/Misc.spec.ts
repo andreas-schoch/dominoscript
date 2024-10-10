@@ -1,4 +1,4 @@
-import {DSAddressError, DSInvalidBaseError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidValueError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
+import {DSAddressError, DSFullStackError, DSInvalidBaseError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
 import {rejects, strictEqual} from 'assert';
 import {createRunner} from '../../src/Runner.js';
 import {dedent} from '../../src/helpers.js';
@@ -6,52 +6,276 @@ import {dedent} from '../../src/helpers.js';
 describe('Misc', () => {
 
   describe('GET', () => {
-    it('should push the correct decimal value representing the domino from either left or right', async () => {
-      // NUM 21 NUM 20 GET GET
-      const ds = createRunner('0-1 1-0 3-0 6-0 0-1 1-0 2-6 6-0 . . 0-0 4-2 0-0 . .');
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[18 30]');
-    });
-    it('should push the correct decimal value representing the domino from either top or bottom', async () => {
-      // NUM 46 GET NUM 20 GET
-      const ds = createRunner(dedent(`\
-        0-1 1-0 6-4 6-0 0-1 1-0 2-6 6-0 . . . 0 4 0 . . . .
+
+    describe('type 0 - DOMINO', () => {
+      it('should push the correct opcode value from both left and right', async () => {
+      // NUM 0 NUM 26 GET (1-2) NUM 0 NUM 29 GET (4-3) 
+        const ds = createRunner('0-1 0-0 0-1 1-0 3-5 6-0 0-1 0-0 0-1 1-0 4-1 6-0 . . 1-2 3-4 .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[9 31]');
+      });
+      it('should push the correct decimal value representing the domino from either top or bottom', async () => {
+      // NUM 0 NUM 46 GET NOOP NUM 0 NUM 20 GET
+        const ds = createRunner(dedent(`\
+        . . 0-1 0-0 0-1 1-0 6-4 6-0 . . . . . 0 4 0 . . . .
                                               | | |        
-        . . . . . . . . . . . . . . . . . . . 5 2 6 . . . .`
-      ));
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[18 30]');
+        0-6 6-2 0-1 1-0 0-0 1-0 6-6 . . . . . 5 2 6 . . . .`
+        ));
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[18 30]');
+      });
+      it('should push -1 when getting non-existing domino', async () => {
+      // NUM 0 NUM 13 GET
+        const ds = createRunner('0-1 0-0 0-1 1-0 2-0 6-0 . . . . . . . . . . . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[-1]');
+      });
+      it('should throw an AddressError when trying to get out of bound single domino', async () => {
+      // NUM 0 NUM 342 GET
+        const ds = createRunner('0-1 0-0 0-1 1-6 6-6 6-0');
+        await rejects(ds.run(), DSAddressError);
+      });
     });
-    it('should push -1 when getting empty cell', async () => {
-      // NUM 13 GET
-      const ds = createRunner('0-1 1-0 2-0 6-0 . . . . . . . . . . . . . . . . . .');
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[-1]');
+
+    describe('type 1 - NUMBER', () => {
+      it('should parse number literals from both left and right using dynamic amount of dominos (LIT 0)', async () => {
+        // NUM 1 NUM 26 GET (1-2 3-1 === 120) NUM 1 NUM 29 GET (1-3 2-1 === 162) 
+        const ds = createRunner('0-1 0-1 0-1 1-0 3-5 6-0 0-1 0-1 0-1 1-0 4-1 6-0 . . 1-2 3-1 .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[120 162]');
+      });
+      it('should parse number literals in the correct BASE', async () => {
+        // NUM 16 BASE NUM 1 NUM 26 GET (1-f a-f === 4015)
+        const ds = createRunner('0-1 1-0 2-2 6-3 0-1 0-1 0-1 1-0 1-a 2-a . . . . . . 1-f a-f .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[4015]');
+      });
+      it('should clamp individual cell values to the max possible value in the current BASE', async () => {
+        // NUM 16 BASE NUM 1 NUM 26 GET (1-f a-f === 1-6 6-6 === 342)
+        const ds = createRunner('. . . . . . . . 0-1 0-1 0-1 1-0 3-5 6-0 . . . . . . 1-f a-f .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[342]');
+      });
+      it('should throw UnexpectedEndOfNumberError when reaching edge of board before having parsed the number (LIT 4)', async () => {
+        // NUM 1 NUM 20 NUM 4 LIT GET
+        const ds = createRunner('0-1 0-1 0-1 1-0 2-6 0-1 0-4 6-2 6-0 . . 1-2 3-4 5-6');
+        await rejects(ds.run(), DSUnexpectedEndOfNumberError);
+      });
+      it('should throw UnexpectedChangeInDirectionError when moving to the entry of a domino whose connection points in a different direction', async () => {
+        // NUM 1 NUM 20 NUM 3 LIT GET
+        const ds = createRunner(dedent(`\
+          0-1 0-1 0-1 1-0 2-6 0-1 0-3 6-2 6-0 . . 1-2 3-4 5 6
+                                                          | |
+          . . . . . . . . . . . . . . . . . . . . . . . . 6 6`
+        ));
+        await rejects(ds.run(), DSUnexpectedChangeInDirectionError);
+      });
+      it('should throw an AddressError when trying to get out of bound number literal', async () => {
+        // NUM 1 NUM 342 GET
+        const ds = createRunner('0-1 0-1 0-1 1-6 6-6 6-0');
+        await rejects(ds.run(), DSAddressError);
+      });
+      it('should parse number literals from left to right using fixed amount of dominos (LIT 1-6)', async () => {
+        const data = [
+          // NUM 1 NUM 18 NUM <1-6> LIT GET
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-1 6-2 6-0', 7], // expected to parse only 1 dominos 1-0
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-2 6-2 6-0', 372], // expected to parse only 2 dominos 1-0 4-1
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-3 6-2 6-0', 18253], // expected to parse only 3 dominos 1-0 4-1 3-4
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-4 6-2 6-0', 894412], // expected to parse only 4 dominos 1-0 4-1 3-4 2-1
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-5 6-2 6-0', 43826196], // expected to parse only 5 dominos 1-0 4-1 3-4 2-1 1-1
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-6 6-2 6-0', 2147483647], // expected to parse all 6 dominos 1-0 4-1 3-4 2-1 1-1 6-1
+        ];
+
+        for (const [code, expectedValue] of data) {
+          const ds = createRunner(dedent(`\
+          ${code}
+                                             
+          1-0 4-1 3-4 2-1 1-1 6-1 . . . . . .`
+          ));
+          const ctx = await ds.run();
+          strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+        }
+      });
+      it('should parse number literals from right to left using fixed amount of dominos (LIT 1-6)', async () => {
+        const data = [
+          // NUM 1 NUM 29 NUM <1-6> LIT GET
+          ['0-1 0-1 0-1 1-0 4-1 0-1 0-1 6-2 6-0', 7], // expected to parse only 1 dominos 1-0
+          ['0-1 0-1 0-1 1-0 4-1 0-1 0-2 6-2 6-0', 372], // expected to parse only 2 dominos 1-0 4-1
+          ['0-1 0-1 0-1 1-0 4-1 0-1 0-3 6-2 6-0', 18253], // expected to parse only 3 dominos 1-0 4-1 3-4
+          ['0-1 0-1 0-1 1-0 4-1 0-1 0-4 6-2 6-0', 894412], // expected to parse only 4 dominos 1-0 4-1 3-4 2-1
+          ['0-1 0-1 0-1 1-0 4-1 0-1 0-5 6-2 6-0', 43826196], // expected to parse only 5 dominos 1-0 4-1 3-4 2-1 1-1
+          ['0-1 0-1 0-1 1-0 4-1 0-1 0-6 6-2 6-0', 2147483647], // expected to parse all 6 dominos 1-0 4-1 3-4 2-1 1-1 6-1
+        ];
+
+        for (const [code, expectedValue] of data) {
+          const ds = createRunner(dedent(`\
+          ${code}
+                                             
+          1-6 1-1 1-2 4-3 1-4 0-1 . . . . . .`
+          ));
+          const ctx = await ds.run();
+          strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+        }
+      });
+      it('should parse number literals from top to bottom using fixed amount of dominos (LIT 1-6)', async () => {
+        const data = [
+          // NUM 1 NUM 18 NUM <1-6> LIT GET
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-1 6-2 6-0', 7], // expected to parse only 1 dominos 1-0
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-2 6-2 6-0', 372], // expected to parse only 2 dominos 1-0 4-1
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-3 6-2 6-0', 18253], // expected to parse only 3 dominos 1-0 4-1 3-4
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-4 6-2 6-0', 894412], // expected to parse only 4 dominos 1-0 4-1 3-4 2-1
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-5 6-2 6-0', 43826196], // expected to parse only 5 dominos 1-0 4-1 3-4 2-1 1-1
+          ['0-1 0-1 0-1 1-0 2-4 0-1 0-6 6-2 6-0', 2147483647], // expected to parse all 6 dominos 1-0 4-1 3-4 2-1 1-1 6-1
+        ];
+
+        for (const [code, expectedValue] of data) {
+          const ds = createRunner(dedent(`\
+            ${code}
+                                               
+            1 . . . . . . . . . . . . . . . . .
+            |                                  
+            0 . . . . . . . . . . . . . . . . .
+                                               
+            4 . . . . . . . . . . . . . . . . .
+            |                                  
+            1 . . . . . . . . . . . . . . . . .
+                                               
+            3 . . . . . . . . . . . . . . . . .
+            |                                  
+            4 . . . . . . . . . . . . . . . . .
+                                               
+            2 . . . . . . . . . . . . . . . . .
+            |                                  
+            1 . . . . . . . . . . . . . . . . .
+                                               
+            1 . . . . . . . . . . . . . . . . .
+            |                                  
+            1 . . . . . . . . . . . . . . . . .
+                                               
+            6 . . . . . . . . . . . . . . . . .
+            |                                  
+            1 . . . . . . . . . . . . . . . . .`
+          ));
+          const ctx = await ds.run();
+          strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+        }
+      });
+      it('should parse number literals from bottom to top using fixed amount of dominos (LIT 1-6)', async () => {
+        const data = [
+          // NUM 1 NUM 198 NUM <1-6> LIT GET
+          ['0-1 0-1 0-1 1-4 2-6 0-1 0-1 6-2 6-0', 7], // expected to parse only 1 dominos 1-0
+          ['0-1 0-1 0-1 1-4 2-6 0-1 0-2 6-2 6-0', 372], // expected to parse only 2 dominos 1-0 4-1
+          ['0-1 0-1 0-1 1-4 2-6 0-1 0-3 6-2 6-0', 18253], // expected to parse only 3 dominos 1-0 4-1 3-4
+          ['0-1 0-1 0-1 1-4 2-6 0-1 0-4 6-2 6-0', 894412], // expected to parse only 4 dominos 1-0 4-1 3-4 2-1
+          ['0-1 0-1 0-1 1-4 2-6 0-1 0-5 6-2 6-0', 43826196], // expected to parse only 5 dominos 1-0 4-1 3-4 2-1 1-1
+          ['0-1 0-1 0-1 1-4 2-6 0-1 0-6 6-2 6-0', 2147483647], // expected to parse all 6 dominos 1-0 4-1 3-4 2-1 1-1 6-1
+        ];
+
+        for (const [code, expectedValue] of data) {
+          const ds = createRunner(dedent(`\
+            ${code}
+                                               
+            1 . . . . . . . . . . . . . . . . .
+            |                                  
+            6 . . . . . . . . . . . . . . . . .
+                                               
+            1 . . . . . . . . . . . . . . . . .
+            |                                  
+            1 . . . . . . . . . . . . . . . . .
+                                               
+            1 . . . . . . . . . . . . . . . . .
+            |                                  
+            2 . . . . . . . . . . . . . . . . .
+                                               
+            4 . . . . . . . . . . . . . . . . .
+            |                                  
+            3 . . . . . . . . . . . . . . . . .
+                                               
+            1 . . . . . . . . . . . . . . . . .
+            |                                  
+            4 . . . . . . . . . . . . . . . . .
+                                               
+            0 . . . . . . . . . . . . . . . . .
+            |                                  
+            1 . . . . . . . . . . . . . . . . .`
+          ));
+          const ctx = await ds.run();
+          strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+        }
+      });
+      it('should push -1 when getting empty number literal', async () => {
+        // NUM 1 NUM 14 GET
+        const ds = createRunner('0-1 0-1 0-1 1-0 2-0 6-0 . . . . . . . . . . . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[-1]');
+      });
     });
-    it('should clamp cell value based on current "base"', async () => {
-      // NUM 1 GET NUM 3 GET NUM 5 GET
-      const ds = createRunner(dedent(`\
-        6 f-f 6-d d-6 . . . . . . . . . . . .
-        |                                    
-        6 0-1 0-1 6-0 0-1 0-3 6-0 0-1 0-5 6-0`
-      ));
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[48 48 48]');
-    });
-    it('should clamp cell value based on current "base" while in non-default base', async () => {
-      // NUM 16 BASE NUM 1 GET NUM 3 GET NUM 5 GET
-      const ds = createRunner(dedent(`\
-        0 f-f 6-d d-6 . . . . . . . . . . . . . . . . . .
-        |                                                
-        1 1-0 2-2 6-3 0-1 0-1 2-a 0-1 0-3 2-a 0-1 0-5 2-a`
-      ));
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[255 109 214]');
-    });
-    it('should throw an AddressError when trying to get out of bound address', async () => {
-      // NUM 342 GET
-      const ds = createRunner('0-1 1-6 6-6 6-0');
-      await rejects(ds.run(), DSAddressError);
+
+    describe('type 2 - STRING', () => {
+      it('should push -1 when getting empty string literal', async () => {
+        // NUM 2 NUM 14 GET
+        const ds = createRunner('0-1 0-2 0-1 1-0 2-0 6-0 . . . . . . . . . . . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[-1]');
+      });
+      it('should throw an AddressError when trying to get out of bound string literal', async () => {
+        // NUM 2 NUM 342 GET
+        const ds = createRunner('0-1 0-2 0-1 1-6 6-6 6-0');
+        await rejects(ds.run(), DSAddressError);
+      });
+      it('should get the stored string literal "hi!"', async () => {
+        // NUM 2 NUM 14 GET
+        const ds = createRunner('0-1 0-2 0-1 1-0 2-0 6-0 . . 1—2 0—6 1—2 1—0 1—0 4—5 0—0');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[0 33 105 104]');
+      });
+      it('should get string literal "hello world" that is stored from right to left in BASE 16 and LIT 1', async () => {
+        // NUM 1 LIT NUM 16 BASE NUM 2 NUM 45 GET ("Hello world")
+        const ds = createRunner('0-1 0-1 6-2 0-1 2-2 6-3 0-1 0-2 0-1 2-f 2-a . . 0—0 4—6 c—6 2—7 f—6 7—7 0—2 f—6 c—6 c—6 5—6 8—6');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[0 100 108 114 111 119 32 111 108 108 101 104]');
+      });
+      it('should get string literal "Hi!" that is stored vertically in BASE 16 and LIT 1', async () => {
+        // NUM 1 LIT NUM 16 BASE NUM 2 NUM 198 GET ("Hi!") NUM 2 NUM 25 GET ("Hi!")
+        const ds = createRunner(dedent(`\
+          0-1 0-1 6-2 0-1 2-2 6-3 0-1 0-2 0-1 c-6 2-a . 0 6
+                                                        | |
+          . . . . . . . . . . . . . 2 8-1 1-0 2-0 1-0 . 0 8
+                                    |                      
+          . . . . . . . . . . . . . a . . . . . . . . . 1 6
+                                                        | |
+          . . . . . . . . . . . . . . . . . . . . . . . 2 9
+                                                           
+          . . . . . . . . . . . . . . . . . . . . . . . 9 2
+                                                        | |
+          . . . . . . . . . . . . . . . . . . . . . . . 6 1
+                                                           
+          . . . . . . . . . . . . . . . . . . . . . . . 8 0
+                                                        | |
+          . . . . . . . . . . . . . . . . . . . . . . . 6 0`
+        ));
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[0 33 105 104 0 33 105 104]');
+      });
+      it('should throw a UnexpectedEndOfNumberError when string suddenly stops before NULL terminator', async () => {
+        // NUM 1 LIT NUM 16 BASE NUM 2 NUM 45 GET
+        const ds = createRunner('0-1 0-1 6-2 0-1 2-2 6-3 0-1 0-2 0-1 2-f 2-a . . 0—0 4—6 c—6 . . f—6 7—7 0—2 f—6 c—6 c—6 5—6 8—6');
+        await rejects(ds.run(), DSUnexpectedEndOfNumberError);
+      });
+      it('should throw a FullStackError when string we are trying to GET is larger than the available stack space', async () => {
+        // NUM 1 LIT NUM 16 BASE NUM 2 NUM 45 GET
+        const ds = createRunner('0-1 0-1 6-2 0-1 2-2 6-3 0-1 0-2 0-1 2-f 2-a . . 0—0 4—6 c—6 2-7 f—6 7—7 0—2 f—6 c—6 c—6 5—6 8—6', {dataStackSize: 5});
+        await rejects(ds.run(), DSFullStackError);
+      });
+      it('should throw a DSUnexpectedChangeInDirectionError when string suddenly moves in the wrong cardinal direction', async () => {
+        // NUM 1 LIT NUM 16 BASE NUM 2 NUM 45 GET
+        const ds = createRunner(dedent(`\
+          0-1 0-1 6-2 0-1 2-2 6-3 0-1 0-2 0-1 2-f 2-a . . . . 0—0 4—6 c—6 2—7 f 7 0—2 f—6 c—6 c—6 5—6 8—6
+                                                                              | |                        
+          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6 6 . . . . . . . . . . . .`
+        ));
+        await rejects(ds.run(), DSUnexpectedChangeInDirectionError);
+      });
     });
   });
 

@@ -107,6 +107,13 @@ export class DSUnexpectedEndOfNumberError extends Error {
   }
 }
 
+export class DSUnexpectedChangeInDirectionError extends Error {
+  constructor(address: number) {
+    super(`Unexpected change in cardinal direction at address ${address}. When using GET or SET the direction is dictated by the first domino and cannot change.`);
+    this.name = 'UnexpectedChangeInDirectionError';
+  }
+}
+
 export class DSEmptyStackError extends Error {
   constructor() {
     super('Cannot pop from an empty stack');

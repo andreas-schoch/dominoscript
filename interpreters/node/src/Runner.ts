@@ -20,6 +20,8 @@ export interface DominoScriptRunner {
 export interface DSConfig {
   filename: string;
   debug: boolean;
+  dataStackSize: number;
+  returnStackSize: number;
 }
 
 export function createRunner(source: string, options: Partial<DSConfig> = {}): DominoScriptRunner {
