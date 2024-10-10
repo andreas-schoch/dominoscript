@@ -30,25 +30,24 @@ export function GET(ctx: Context): void {
 
   case 2: {
     // STRING LITERAL
-    const numbers: number[] = []; // TODO try to reuse this and the one in the equivalent STR instruction
     const available = ctx.stack.maxSize - ctx.stack.size();
+    let totalChars = 0;
     let nextCell = cell;
     const initialCardinalDirection = getCardinalDirection(cell);
 
     out.value = -1;
     while (out.value !== 0) {
       parseNumberInCardinalDirection(ctx, nextCell, out);
-      numbers.push(out.value);
+      ctx.numberBuffer[totalChars++] = out.value;
       if (out.dir !== initialCardinalDirection) throw new DSUnexpectedChangeInDirectionError(nextCell.address);
-      if (numbers.length >= available) throw new DSFullStackError();
+      if (totalChars >= available) throw new DSFullStackError();
       if (out.value === 0) break; // null terminator reached
       if (!out.endCell) throw new DSUnexpectedEndOfNumberError(nextCell.address);
       nextCell = out.endCell;
     }
 
-    numbers.reverse().forEach(n => ctx.stack.push(n));
-  }
-  }
+    for (let i = totalChars - 1; i >= 0; i--) ctx.stack.push(ctx.numberBuffer[i]);
+  }}
 }
 
 export function SET(ctx: Context): void {

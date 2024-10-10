@@ -26,6 +26,7 @@ export interface Context {
   board: Board;
   stack: Stack;
   returnStack: Stack; // to know where to go back after a CALL
+  numberBuffer: Int32Array; // temp buffer mainly for STR instruction
 
   navModeNeedsReset: boolean;
   navMode: number;
@@ -132,6 +133,9 @@ export function createContext(source: string, parent: Context | null = null, opt
     ctx.keys.add(key);
   }
 
+  const dataStackSize = options.dataStackSize || 512;
+  const returnStackSize = options.returnStackSize || 512;
+
   const ctx: Context = {
     id: Math.random().toString(36).slice(2),
     parent: parent?.id || null,
@@ -141,8 +145,9 @@ export function createContext(source: string, parent: Context | null = null, opt
     currentInstruction: null,
     lastInstruction: null,
     board: new Board(source),
-    stack: parent?.stack || new Stack(options.dataStackSize || 512), // data stack is shared between all contexts
-    returnStack: new Stack(options.returnStackSize || 512), // return stack is unique to each context
+    stack: parent?.stack || new Stack(dataStackSize), // data stack is shared between all contexts
+    returnStack: new Stack(returnStackSize), // return stack is unique to each context
+    numberBuffer: new Int32Array(dataStackSize),
     navModeNeedsReset: false,
     navMode: 0,
     navModeOverrides: [],
@@ -180,8 +185,8 @@ export function createContext(source: string, parent: Context | null = null, opt
     config: {
       filename: options.filename || 'inline',
       debug: options.debug || false,
-      dataStackSize: options.dataStackSize || 512,
-      returnStackSize: options.returnStackSize || 512,
+      dataStackSize,
+      returnStackSize,
     },
   };
 

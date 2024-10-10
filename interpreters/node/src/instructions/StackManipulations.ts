@@ -45,16 +45,16 @@ export function NUM(ctx: Context): void {
 
 // Pushes numbers representing unicode characters to the stack until a NULL character is found
 export function STR(ctx: Context): void {
-  const numbers: number[] = [];
+  let totalChars = 0;
   const available = ctx.stack.maxSize - ctx.stack.size();
   while (true) {
     const unicode = parseNum(ctx);
-    numbers.push(unicode);
-    if (numbers.length >= available) throw new DSFullStackError(); // can prevent infinite loops when NULL terminator is missing and IP is stuck in a loop
+    ctx.numberBuffer[totalChars++] = unicode;
+    if (totalChars >= available) throw new DSFullStackError(); // can prevent infinite loops when NULL terminator is missing and IP is stuck in a loop
     if (unicode === 0) break;
   }
 
-  numbers.reverse().forEach(n => ctx.stack.push(n));
+  for (let i = totalChars - 1; i >= 0; i--) ctx.stack.push(ctx.numberBuffer[i]);
 }
 
 export function DUP(ctx: Context): void {
