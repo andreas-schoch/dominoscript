@@ -63,17 +63,17 @@ describe('StackManipulations', () => {
       ));
       await rejects(ds.run(), DSFullStackError);
     });
-  });
-  it('should parse dominos as instructions again once null terminator encountered during STR parsing', async () => {
-    // First half of each domino representing a character indicates how many more dominos will be parsed as part of the character
-    const ds = createRunner('0-2 1-2 0-6 0-0 0-1 0-6');
-    const ctx = await ds.run();
-    strictEqual(ctx.stack.toString(), '[0 104 6]');
-  });
-  it('should throw UnexpectedEndOfNumberError when character incomplete', async () => {
-    // First half of each domino representing a character indicates how many more dominos will be parsed as part of the character
-    const ds = createRunner('0-2 1-2 0-6 1-2');
-    await rejects(ds.run(), DSUnexpectedEndOfNumberError);
+    it('should parse dominos as instructions again once null terminator encountered during STR parsing', async () => {
+      // First half of each domino representing a character indicates how many more dominos will be parsed as part of the character
+      const ds = createRunner('0-2 1-2 0-6 0-0 0-1 0-6');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[0 104 6]');
+    });
+    it('should throw UnexpectedEndOfNumberError when character incomplete', async () => {
+      // First half of each domino representing a character indicates how many more dominos will be parsed as part of the character
+      const ds = createRunner('0-2 1-2 0-6 1-2');
+      await rejects(ds.run(), DSUnexpectedEndOfNumberError);
+    });
   });
 
   describe('DUPE', () => {

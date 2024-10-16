@@ -1287,26 +1287,38 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 <img src="assets/horizontal/6-0.png" alt="Domino" width="128">
 
 Read data from the board and pushes it to the stack. Takes 2 arguments from the stack:
-- The mode of operation (imagine it like a "type")
+- The type Index to parse it as. It indicates the type and the direction of the data.
 - The address of the first domino half
 
-There are 3 modes of operation:
-- 0: Domino: results in a single number to be pushed to the stack representing the domino value
-- 1: Number: results in a single number to be pushed to the stack like when using [NUM](#num)
-- 2: String: results in a sequence of unicode char codes to be pushed to the stack like when using [STR](#str)
+<ins>There are essentially 4 types you can parse it as</ins>:
+- **Domino**: The value of the cell at the address and its connection. Essentially a single domino
+- **Unsigned Number**: Up to 6 dominos used to represent a positive number.
+- **Signed Number**:  Up to 6 dominos used to represent a number. 1 half of a domino is used to indicate the sign.
+- **String**: A string is a sequence of null terminated unicode characters
 
-> IMPORTANT: You can only GET (and SET) data that is within a single horizontal or vertical line. No direction changes are allowed!
-> If you have a very large string to encode I recommend:
-> - using the technique described in [Example 021 - Reduce Domino Amount](./examples/021_reduce_domino_amount.md).
-> - moving all data to a different file which can be imported when needed (with some trickery you could make it into a key value store)
-> - making a function which pushes the data to the stack when called. This allows you to change direction however you like.
+<ins>And the following directions</ins>:
+- **RawIncrement**: Reads domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
+- **SingleStraightLine**: The IP moves in a straight line towards the connection direction of the cell at the address. No wrap around like in "Raw" mode. If you have a 5x10 grid you can get at most 4 dominos in horizontal direction or 10 dominos in vertical direction.
+- **NavMode** (to be implemented): In this mode the [NavigationMode](#how-navigation-modes-work) used for regular InstructionPointer movement is used to determine the direction. 
+
+<ins>Here a table of supported type mappings:</ins>
+
+| Type Index | Type              | Direction                |
+|------------|-------------------|--------------------------|
+| 0          | Domino            | connection direction     |
+| 1          | Unsigned Number   | SingleStraightLine       |
+| 2          | Signed Number     | SingleStraightLine       |
+| 3          | String            | SingleStraightLine       |
+| 4 (TODO)   | Unsigned Number   | RawIncrement             |
+| 5 (TODO)   | Signed Number     | RawIncrement             |
+| 6 (TODO)   | String            | RawIncrement             |
 
 **Errors:**
 - If the address is out of bounds, an `InvalidAddressError` is thrown.
 - If the address references an empty cell the number -1 will be pushed to the stack. No error.
-- If during parsing the direction changes, an `UnexpectedChangeInDirectionError` is thrown.
 - If the data ends abruptly, an `UnexpectedEndOfNumberError` is thrown.
 - If the data is too big to fit in the stack, a `FullStackError` is thrown.
+- If during parsing for "straigh line" directions the direction changes, an `UnexpectedChangeInDirectionError` is thrown.
 
 #### `SET`
 <img src="assets/horizontal/6-1.png" alt="Domino" width="128">
@@ -1815,6 +1827,7 @@ The spec doesn't define a way to "catch" errors in a graceful way yet. For now, 
 - **InvalidInstructionError**: Invalid instruction opcode {opcode}
 - **InvalidNavigationModeError**: Invalid navigation mode {mode}
 - **InvalidValueError**: Invalid value {value}
+- **InvalidSignError**: Invalid sign {value} at address {address}. When getting a signed number, the sign cell must be either 0 (pos) or 1 (neg)
 - **DSInvalidBaseError**: Invalid base {base}. You can only set the base to a number between 7 and 16
 - **DSInvalidLiteralParseModeError**: Invalid literal parse mode {value}. You can only set the parse mode to a number between 0 and 6
 - **InvalidInputError**: Invalid input {reason}

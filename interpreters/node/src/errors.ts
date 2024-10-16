@@ -149,6 +149,13 @@ export class DSInvalidValueError extends Error {
   }
 }
 
+export class DSInvalidSignError extends Error {
+  constructor(value: number, address: number) {
+    super(`Invalid sign ${value} at address ${address}. When getting a signed number, the sign cell must be either 0 (pos) or 1 (neg)`);
+    this.name = 'InvalidValueError';
+  }
+}
+
 export class DSInvalidBaseError extends Error {
   constructor(base: number) {
     super(`Invalid base ${base}. You can only set the base to a number between 7 and 16`);

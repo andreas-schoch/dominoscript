@@ -1,35 +1,49 @@
 import {Cell, CellValue} from '../Board.js';
-import {DSFullStackError, DSInterpreterError, DSInvalidBaseError, DSInvalidLiteralParseModeError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError} from '../errors.js';
+import {DSFullStackError, DSInterpreterError, DSInvalidBaseError, DSInvalidLiteralParseModeError, DSInvalidSignError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError} from '../errors.js';
 import {CardinalDirection} from '../navModes.js';
 import {Context} from '../Context.js';
 
 // Reusing this object in an attempt to reduce GC
-interface parseOutput { value: number, endCell: Cell | null, dir: CardinalDirection }
-const out: parseOutput = {value: -1, endCell: null, dir: 'east'};
+interface ParseOutput {value: number, endCell: Cell | null, dir: CardinalDirection}
+const out: ParseOutput = {value: 0, endCell: null, dir: 'east'};
 
 export function GET(ctx: Context): void {
   const address = ctx.stack.pop();
   const type = ctx.stack.pop();
 
   const cell = ctx.board.getOrThrow(address);
-  if (cell.value === null) return ctx.stack.push(-1);
 
   switch (type) {
   case 0: {
     // SINGLE DOMINO
-    const cell = ctx.board.getOrThrow(address);
+    // Why push -1 instead of 0 like for the other types? - Because this gives us an unambiguous way to check if there is a domino at the address
+    // For unsigned and signed numbers as well as strings we get 0 when the cell is empty or when it (and its connection) is a zero value.
+    // If you truly need to know if cell is empty or just has a zero value, simply try to GET the cell with type 0 and check if pushed result is -1.
+    if (cell.value === null) return ctx.stack.push(-1);
     const value = parseDominoValue(ctx, cell);
-    return ctx.stack.push(value);
+    ctx.stack.push(value);
+    break;
   }
 
   case 1: {
-    // NUMBER LITERAL
-    parseNumberInCardinalDirection(ctx, cell, out);
-    return ctx.stack.push(out.value);
+    // UNSIGNED NUMBER LITERAL - Single Straight line
+    if (cell.value === null) return ctx.stack.push(0);
+    parseNumberInCardinalDirection(ctx, cell, out, false);
+    ctx.stack.push(out.value);
+    break;
   }
 
   case 2: {
-    // STRING LITERAL
+    // SIGNED NUMBER LITERAL - Single Straight line
+    if (cell.value === null) return ctx.stack.push(0);
+    parseNumberInCardinalDirection(ctx, cell, out, true);
+    ctx.stack.push(out.value);
+    break;
+  }
+
+  case 3: {
+    // STRING LITERAL - Single Straight line
+    if (cell.value === null) return ctx.stack.push(0);
     const available = ctx.stack.maxSize - ctx.stack.size();
     let totalChars = 0;
     let nextCell = cell;
@@ -37,7 +51,7 @@ export function GET(ctx: Context): void {
 
     out.value = -1;
     while (out.value !== 0) {
-      parseNumberInCardinalDirection(ctx, nextCell, out);
+      parseNumberInCardinalDirection(ctx, nextCell, out, false);
       ctx.numberBuffer[totalChars++] = out.value;
       if (out.dir !== initialCardinalDirection) throw new DSUnexpectedChangeInDirectionError(nextCell.address);
       if (totalChars >= available) throw new DSFullStackError();
@@ -47,6 +61,22 @@ export function GET(ctx: Context): void {
     }
 
     for (let i = totalChars - 1; i >= 0; i--) ctx.stack.push(ctx.numberBuffer[i]);
+    break;
+  }
+
+  case 4: {
+    // UNSIGNED NUMBER LITERAL - Raw Increment
+    throw new Error('Not implemented');
+  }
+
+  case 5: {
+    // SIGNED NUMBER LITERAL - Raw Increment
+    throw new Error('Not implemented');
+  }
+
+  case 6: {
+    // STRING LITERAL - Raw Increment
+    throw new Error('Not implemented');
   }}
 }
 
@@ -108,7 +138,8 @@ export function NOOP(_ctx: Context): void {
 //////////////////////////////////////
 
 export function parseDominoValue(ctx: Context, cell: Cell): number {
-  if (cell.value === null) return -1;
+  /* c8 ignore next */
+  if (cell.value === null) throw new DSInterpreterError('We should have gotten an AddressError before this');
   /* c8 ignore next */
   if (cell.connection === null) throw new DSInterpreterError('There cannot be a Cell without a connection');
   const otherCell = ctx.board.getOrThrow(cell.connection);
@@ -129,26 +160,53 @@ function getCardinalDirection(cell: Cell): CardinalDirection {
   else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
 }
 
-function parseNumberInCardinalDirection(ctx: Context, cell: Cell, out: parseOutput): void {
+function isNegativeSign(cell: Cell): boolean {
+  /* c8 ignore next */
+  if (cell.value === null) throw new DSInterpreterError('We should have gotten an AddressError before this');
+  if (cell.value !== 0 && cell.value !== 1) throw new DSInvalidSignError(cell.value, cell.address);
+  return cell.value === 1;
+}
+
+function parseNumberInCardinalDirection(ctx: Context, cell: Cell, out: ParseOutput, isSigned: boolean): void {
+  // "out" is a mutable object that we reuse in an attempt to minimize GC by not creating throwaway objects every time.
+  // Since we also have it referenced outside, there is not need to return it. Not the most elegant solution but works for now.
   const initialCardinalDirection = getCardinalDirection(cell);
   let isEntry: boolean;
   let numberHalfs: number;
+  let isNegativeNumber = false; // unsigned by default
 
   if (ctx.literalParseMode === 0) {
     const firstHalf = cell;
-    if (!firstHalf) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
-    if (firstHalf.value === null) throw new DSUnexpectedEndOfNumberError(firstHalf.address);
+    /* c8 ignore next */
+    if (firstHalf.value === null) throw new DSInterpreterError('We should have gotten an AddressError before this');
     numberHalfs = (firstHalf.value * 2) + 1;
     cell = ctx.board.getOrThrow(firstHalf.connection);
     isEntry = false;
+
+    if (isSigned) {
+      numberHalfs--;
+      // first domino used for numHalfs and sign, so we expect at least 1 more
+      if (numberHalfs < 1) throw new DSUnexpectedEndOfNumberError(cell.address);
+      isNegativeNumber = isNegativeSign(cell);
+      cell = ctx.board.getOrThrow(cell[initialCardinalDirection]); // move to first half of second domino
+      isEntry = true;
+    }
   } else {
     numberHalfs = ctx.literalParseMode * 2;
     isEntry = true;
+
+    if (isSigned) {
+      numberHalfs--;
+      isNegativeNumber = isNegativeSign(cell);
+      cell = ctx.board.getOrThrow(cell.connection); // move to second half of the first domino
+      isEntry = false;
+    }
   }
 
   let num = 0;
   for (let i = numberHalfs; i > 0; i--) {
-    if (!cell) throw new DSUnexpectedEndOfNumberError(ctx.currentCell?.address || -1);
+    /* c8 ignore next */
+    if (!cell) throw new DSInterpreterError('should have been verified before ever reaching here');
     if (cell.value === null) throw new DSUnexpectedEndOfNumberError(cell.address);
     if (isEntry && getCardinalDirection(cell) !== initialCardinalDirection) throw new DSUnexpectedChangeInDirectionError(cell.address);
 
@@ -165,7 +223,7 @@ function parseNumberInCardinalDirection(ctx: Context, cell: Cell, out: parseOutp
     isEntry = !isEntry;
   }
 
-  out.value = num;
+  out.value = isNegativeNumber ? -num : num;
   out.endCell = cell;
   out.dir = initialCardinalDirection;
 }
