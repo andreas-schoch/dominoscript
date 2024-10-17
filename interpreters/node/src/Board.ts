@@ -64,8 +64,15 @@ export class Board {
     // set the values and connections
     cellA.value = valueA;
     cellB.value = valueB;
-    cellA.connection = addressB;
-    cellB.connection = addressA;
+    cellA.connection = valueA === null ? null : addressB;
+    cellB.connection = valueB === null ? null : addressA;
+
+    /* c8 ignore start */
+    if (cellA.value === null && cellA.connection !== null) throw new DSInterpreterError('Cell A is empty but connected');
+    if (cellA.connection === null && cellA.value !== null) throw new DSInterpreterError('Cell A is connected but empty');
+    if (cellB.value === null && cellB.connection !== null) throw new DSInterpreterError('Cell B is empty but connected');
+    if (cellB.connection === null && cellB.value !== null) throw new DSInterpreterError('Cell B is connected but empty');
+    /* c8 ignore stop */
   }
 
   serialize(): string {

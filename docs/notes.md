@@ -339,13 +339,13 @@ ds.onrequestinput((msg) => prompt(msg));
 ds.onstep((x, y) => console.log(step));
 
 const result = await = ds.run(`
-0-1 0-2 0-6     
+0—1 0—2 0—6     
 
-          0-2 1-0
+          0—2 1—0
 
                 0
                 |
-                0 5-1
+                0 5—1
 `)
 ```
 
@@ -367,9 +367,9 @@ To parse the number each side of the domino represents a digit in base7. Let's l
           6—6 5—1
 ```
 
-`0-1` is the PUSH instruction which starts the push mode. Then we have `6-6 6-6` those are 2 dominos in primary direction. Followed by another `6-6` which is the first domino in non-primary direction which means the `6-6 6-6` are interpreted as 6666 in base7 (2400 in decimal) and pushed to the stack.
+`0—1` is the PUSH instruction which starts the push mode. Then we have `6—6 6—6` those are 2 dominos in primary direction. Followed by another `6—6` which is the first domino in non-primary direction which means the `6—6 6—6` are interpreted as 6666 in base7 (2400 in decimal) and pushed to the stack.
 
-Now we move "right" from the exit which by default is the secondary direction. Which means we start interpreting the sequence of dominos as a new number. `6-6 5-1` is interpreted as 6651 in base7 (2400+294=2694 in decimal) and pushed to the stack.
+Now we move "right" from the exit which by default is the secondary direction. Which means we start interpreting the sequence of dominos as a new number. `6—6 5-1` is interpreted as 6651 in base7 (2400+294=2694 in decimal) and pushed to the stack.
 
 Here are the max decimal numbers you can represent with 1-12 dominos.
 - 1 domino: 48
@@ -718,7 +718,7 @@ Basically the same as either inclusive or exclusive flipflop but the alternation
 
 The current unfinished version of the node interpreter was able to perform about **1.5 million instructions per second** on an HP aero 13 laptop with an AMD Ryzen 5 5625U CPU, single core, doing very basic operations.
 
-The following dominoScript was used for the benchmark: `0-1 3-6 6-6 6-6 6-6 0-3 1-2 0-0` it is the equivalent of `PUSH 823543 DUPE MULT POP`.
+The following dominoScript was used for the benchmark: `0—1 3—6 6—6 6—6 6—6 0—3 1—2 0—0` it is the equivalent of `PUSH 823543 DUPE MULT POP`.
 
 I created a file with a total of 2'395'008 instructions doing the above operations over and over again on a single line. On average it took about 1400-1600ms to execute.
 
@@ -778,7 +778,7 @@ So About 900-950k instructions per second for this benchmark. A bit slower than 
   | |                                                 |  
 . 1 3 . . . . . 5 0—0 6—2 1—1 1—4 1—1 2—4 1—1 5—2 1—1 2 .
                 |                                        
-. 3-3 . . . . . 3 . . . . . . . . . . . . . . . . . . . .
+. 3—3 . . . . . 3 . . . . . . . . . . . . . . . . . . . .
 </pre>
 
 - Time taken: 2228 ms total instructions: 11000001
@@ -963,23 +963,23 @@ describe('ROLL', () => {
   it('should roll top 3 items once to the right from [1, 2, 3, 3, 1] to [3, 1, 2]', async () => {
     // (Example: If the stack is currently 1,2,3, with 3 at the top, and then you push 3 and then 1, and then roll, the new stack is 3,1,2.)
     // NUM 1 NUM 2 NUM 3 NUM 3 NUM 1 ROLL
-    const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 0-1 0-1 0-6');
+    const ds = createRunner('0—1 0—1 0—1 0—2 0—1 0—3 0—1 0—3 0—1 0—1 0—6');
     const ctx = await ds.run();
     strictEqual(ctx.stack.toString(), '[3 1 2]');
   });
   it('should roll top 3 items once to the left from [1, 2, 3, 3, 1] to [2, 3, 1]', async () => {
     // NUM 1 NUM 2 NUM 3 NUM 3 NUM 1 NEG ROLL
-    const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 0-1 0-1 1-5 0-6');
+    const ds = createRunner('0—1 0—1 0—1 0—2 0—1 0—3 0—1 0—3 0—1 0—1 1—5 0—6');
     const ctx = await ds.run();
     strictEqual(ctx.stack.toString(), '[2 3 1]');
   });
   it('should throw InvalidValueError when depth arg is negative', async () => {
     // NUM 1 NUM 2 NUM 3 NUM 3 NEG NUM 1 ROLL
-    const ds = createRunner('0-1 0-1 0-1 0-2 0-1 0-3 0-1 0-3 1-5 0-1 0-1 0-6');
+    const ds = createRunner('0—1 0—1 0—1 0—2 0—1 0—3 0—1 0—3 1—5 0—1 0—1 0—6');
     await rejects(ds.run(), DSInvalidValueError);
   });
   it('should throw EmptyStackError when trying to ROLL on empty stack', async () => {
-    const ds = createRunner('0-6');
+    const ds = createRunner('0—6');
     await rejects(ds.run(), DSEmptyStackError);
   });
 });
@@ -996,8 +996,8 @@ It would be a major pain to change how NUM and STR work now, as it would break a
 
 By adding yet another instruction similar to BASE, I can switch between "literal-parse-modes". The default would stay the same as it is now but by doing for example `NUM 1 LIT` I tell the interpreter that all following literals will use 1 domino long. So to push hello world in base16 I need half the dominos because I don't encode the length of the character in the first half of the first domino:
 
-- This: `0-2 6-8 6-5 6-C 6-C 6-F 2-0 7-7 6-F 7-2 6-C 6-4 0-0`
-- Insted of: `0-2 1-0 6-8 1-0 6-5 1-0 6-C 1-0 6-C 1-0 6-F 1-0 2-0 1-0 7-7 1-0 6-F 1-0 7-2 1-0 6-C 1-0 6-4 0-0`
+- This: `0—2 6—8 6—5 6—C 6—C 6—F 2—0 7—7 6—F 7—2 6—C 6—4 0—0`
+- Insted of: `0—2 1—0 6—8 1—0 6—5 1—0 6—C 1—0 6—C 1—0 6—F 1—0 2—0 1—0 7—7 1—0 6—F 1—0 7—2 1—0 6—C 1—0 6—4 0—0`
 
 To go back to using a variable amount of dominos I just do `NUM 0 LIT`.
 

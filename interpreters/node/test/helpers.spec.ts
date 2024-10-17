@@ -18,9 +18,9 @@ describe('helpers', () => {
   describe('getTotalInfo', () => {
     it('should combine the Context.info from global and child contexts', async () => {
       // NUM 1 STR "a" IMPORT NUM 23 JUMP ---> NOOP
-      const ds = createRunner('0-1 0-0 0-2 1-1 6-6 0-0 4-5 0-1 1-0 3-2 4-3 . 6-6', {debug: true});
+      const ds = createRunner('0—1 0—0 0—2 1—1 6—6 0—0 4—5 0—1 1—0 3—2 4—3 . 6—6', {debug: true});
       // NUM 9 CALL --> STR "hello world" --> NOOP after return
-      ds.onImport(() => Promise.resolve('0-1 1-0 1-4 4-4 6-6 . 0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0'));
+      ds.onImport(() => Promise.resolve('0—1 1—0 1—4 4—4 6—6 . 0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0'));
       const ctx = await ds.run();
 
       const totalInfo = getTotalInfo(ctx.id);

@@ -23,9 +23,9 @@ describe('Board', () => {
 
   it('should populate the cells of a grid correctly', () => {
     const ds = createRunner(dedent(`\
-      1-2 . 3
+      1—2 . 3
             |
-      . 6-5 4`
+      . 6—5 4`
     ));
 
     const expectedCells: Cell[] = [
@@ -85,7 +85,7 @@ describe('Board', () => {
 
   it('should not throw any errors for valid connectors', () => {
     createRunner(dedent(`\
-      6—6 6-6 6=6 6═6
+      6-6 6—6 6=6 6═6
                      
       6 6 . . . . . .
       | ║            
@@ -153,12 +153,12 @@ describe('Board', () => {
   });
 
   it('should throw ConnectionToEmptyCellError when 1 end of a horizontal connector is empty', () => {
-    throws(() => createRunner('6-.'), DSConnectionToEmptyCellError);
-    throws(() => createRunner('.-6'), DSConnectionToEmptyCellError);
+    throws(() => createRunner('6—.'), DSConnectionToEmptyCellError);
+    throws(() => createRunner('.—6'), DSConnectionToEmptyCellError);
   });
 
   it('should throw ConnectionToEmptyCellError when both ends of a horizontal connector are empty', () => {
-    throws(() => createRunner('.-.'), DSConnectionToEmptyCellsError);
+    throws(() => createRunner('.—.'), DSConnectionToEmptyCellsError);
   });
 
   it('should throw ConnectionToEmptyCellError when either end of a vertical connector are empty', () => {
@@ -183,7 +183,7 @@ describe('Board', () => {
   });
 
   it('should throw SyntaxError when using anything but the allowed characters for values', () => {
-    throws(() => createRunner('. . 6-Z . .'), DSSyntaxError);
+    throws(() => createRunner('. . 6—Z . .'), DSSyntaxError);
   });
 
   it('should throw SyntaxError when using anything but the allowed characters for horizontal connectors', () => {
