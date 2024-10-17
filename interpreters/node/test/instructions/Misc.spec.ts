@@ -396,6 +396,12 @@ describe('Misc', () => {
         const ctx = await ds.run();
         strictEqual(ctx.stack.toString(), '[0]');
       });
+      it('should correctly pad the literal with as many zeros as necessary after the sign', async () => {
+        // NUM 2 NUM 14 GET
+        const ds = createRunner('0-1 0-2 0-1 1-0 2-0 6-0 . . 3-1 0-0 0-0 6-6 . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.toString(), '[-48]');
+      });
     });
 
     describe('type 3 - STRING - straight line in first cell connection direction', () => {
@@ -589,48 +595,25 @@ describe('Misc', () => {
     });
 
     describe('type 1 - UNSIGNED NUMBER - straight line in current ', () => {
-      it('should store the number 47 from left to right using 3 dominos while in default LIT 0', async () => {
-      // NUM 47 NUM 1 NUM 20 SET
-        const ds = createRunner('0-1 1-0 6-5 0-1 0-1 0-1 1-0 2-6 6-1 . . . . . . . . . . . . . .');
-        const ctx = await ds.run();
-        strictEqual(ctx.board.grid.cells[19].value, null, 'should remain empty');
-        strictEqual(ctx.board.grid.cells[20].value, 1, 'should indicate how many more dominos will follow when LIT is 0');
-        strictEqual(ctx.board.grid.cells[21].value, 0, 'should indicate an "unused" digit');
-        strictEqual(ctx.board.grid.cells[22].value, 6, 'should indicate the leftmost digit');
-        strictEqual(ctx.board.grid.cells[23].value, 5, 'should indicate the rightmost digit');
-        strictEqual(ctx.board.grid.cells[24].value, null, 'should remain empty');
+      it('should store the number 47 from left to right using 2 dominos while in default LIT 0', async () => {
+        // NUM 47 NUM 1 NUM 20 SET
+        const ctxPos = await createRunner('0-1 1-0 6-5 0-1 0-1 0-1 1-0 2-6 6-1 . . . . . .').run();
+        strictEqual(ctxPos.board.serialize(), '0—1 1—0 6—5 0—1 0—1 0—1 1—0 2—6 6—1 . . 1—0 6—5\n');
       });
       it('should store the number 47 from left to right on a single domino while in LIT 1', async () => {
         // NUM 47 NUM 1 NUM 26 NUM 1 LIT SET
-        const ds = createRunner('0-1 1-0 6-5 0-1 0-1 0-1 1-0 3-5 0-1 0-1 6-2 6-1 . . . . . . . . . . . . . .');
-        const ctx = await ds.run();
-        strictEqual(ctx.board.grid.cells[25].value, null, 'should remain empty');
-        strictEqual(ctx.board.grid.cells[26].value, 6, 'should indicate the leftmost digit');
-        strictEqual(ctx.board.grid.cells[27].value, 5, 'should indicate the rightmost digit');
-        strictEqual(ctx.board.grid.cells[28].value, null, 'should remain empty');
+        const ctx = await createRunner('0-1 1-0 6-5 0-1 0-1 0-1 1-0 3-5 0-1 0-1 6-2 6-1 . . . .').run();
+        strictEqual(ctx.board.serialize(), '0—1 1—0 6—5 0—1 0—1 0—1 1—0 3—5 0—1 0—1 6—2 6—1 . . 6—5\n');
       });
       it('should store the number 255 from left to right on a single domino while in LIT 1 and BASE 16', async () => {
         // NUM 255 NUM 1 NUM 32 NUM 1 LIT NUM 16 BASE SET
-        const ds = createRunner('0-1 1-5 1-3 0-1 0-1 0-1 1-0 4-4 0-1 0-1 6-2 0-1 2-2 6-3 2-b . . . . . . . . . . . . . .');
-        const ctx = await ds.run();
-        strictEqual(ctx.board.grid.cells[31].value, null, 'should remain empty');
-        strictEqual(ctx.board.grid.cells[32].value, 15, 'should indicate the leftmost digit');
-        strictEqual(ctx.board.grid.cells[33].value, 15, 'should indicate the rightmost digit');
-        strictEqual(ctx.board.grid.cells[34].value, null, 'should remain empty');
+        const ctx = await createRunner('0-1 1-5 1-3 0-1 0-1 0-1 1-0 4-4 0-1 0-1 6-2 0-1 2-2 6-3 2-b . . . . . .').run();
+        strictEqual(ctx.board.serialize(), '0—1 1—5 1—3 0—1 0—1 0—1 1—0 4—4 0—1 0—1 6—2 0—1 2—2 6—3 2—b . . f—f . .\n');
       });
       it('should be able to override existing dominos', async () => {
         // NUM 3267 NUM 1 NUM 21 SET
-        const ds = createRunner('0-1 2-1 2-3 4-5 0-1 0-1 0-1 1-0 3-0 6-1 f-f . f-f . f-f . . . .');
-        const ctx = await ds.run();
-        strictEqual(ctx.currentCell?.address, 19, 'IP should have stopped moving due to removed domino and having no way to go');
-        strictEqual(ctx.board.grid.cells[20].value, null, 'should have removed connection of replaced domino');
-        strictEqual(ctx.board.grid.cells[21].value, 2, 'should indicate how many more dominos will follow when LIT is 0');
-        strictEqual(ctx.board.grid.cells[22].value, 1, 'should have set the fifth digit');
-        strictEqual(ctx.board.grid.cells[23].value, 2, 'should have set the fourth digit');
-        strictEqual(ctx.board.grid.cells[24].value, 3, 'should have set the third digit');
-        strictEqual(ctx.board.grid.cells[25].value, 4, 'should have set the second digit');
-        strictEqual(ctx.board.grid.cells[26].value, 5, 'should have set the first digit');
-        strictEqual(ctx.board.grid.cells[27].value, null, 'should have removed connection of replaced domino');
+        const ctx = await createRunner('0-1 2-1 2-3 4-5 0-1 0-1 0-1 1-0 3-0 6-1 f-f . f-f . f-f . . . .').run();
+        strictEqual(ctx.board.serialize(), '0—1 2—1 2—3 4—5 0—1 0—1 0—1 1—0 3—0 6—1 . 2—1 2—3 4—5 . . . . .\n');
       });
       it('should execute code added at runtime by SET', async () => {
         // NUM 1 LIT NUM 16 BASE
@@ -684,9 +667,72 @@ describe('Misc', () => {
         // NUM 2400 NUM 1 NUM 20 SET
         await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-1 0-1 1-0 2-6 6-1').run(), DSAddressError);
       });
+    });
+
+    describe('type 2 - SIGNED NUMBER - straight line in current ', () => {
+      it('should store the number 47 and -47 from left to right using 2 dominos while in default LIT 0', async () => {
+      // NUM 47 NUM 2 NUM 20 SET
+        const ctxPos = await createRunner('0-1 1-0 6-5 0-1 0-2 0-1 1-0 2-6 6-1 . . . . . .').run();
+        strictEqual(ctxPos.board.serialize(), '0—1 1—0 6—5 0—1 0—2 0—1 1—0 2—6 6—1 . . 1—0 6—5\n');
+        // NUM 47 NEG NUM 2 NUM 22 SET
+        const ctxNeg = await createRunner('0-1 1-0 6-5 1-5 0-1 0-2 0-1 1-0 3-1 6-1 . . . . . .').run();
+        strictEqual(ctxNeg.board.serialize(), '0—1 1—0 6—5 1—5 0—1 0—2 0—1 1—0 3—1 6—1 . . 1—1 6—5\n');
+      });
+      it('should store the number 47 and -47 from left to right on 2 domino while in LIT 2', async () => {
+        // NUM 47 NUM 2 NUM 28 NUM 2 LIT SET
+        const ctxPos = await createRunner('0—1 1—0 6—5 6—6 0—1 0—2 0—1 1—0 4—0 0—1 0—2 6—2 6—1 . . . . . .').run();
+        strictEqual(ctxPos.board.serialize(), '0—1 1—0 6—5 6—6 0—1 0—2 0—1 1—0 4—0 0—1 0—2 6—2 6—1 . . 0—0 6—5\n');
+        // NUM 47 NEG NUM 2 NUM 26 NUM 2 LIT SET
+        const ctxNeg = await createRunner('0—1 1—0 6—5 1—5 0—1 0—2 0—1 1—0 4—0 0—1 0—2 6—2 6—1 . . . . . .').run();
+        strictEqual(ctxNeg.board.serialize(), '0—1 1—0 6—5 1—5 0—1 0—2 0—1 1—0 4—0 0—1 0—2 6—2 6—1 . . 1—0 6—5\n');
+      });
+      it('should store the number 255 and -255 from left to right on 2 dominos while in LIT 2 and BASE 16', async () => {
+        // NUM 255 NUM 2 NUM 34 NUM 2 LIT NUM 16 BASE SET
+        const ctxPos = await createRunner('0—1 1—5 1—3 0—1 0—2 0—1 1—0 4—6 0—1 0—2 6—2 0—1 0—0 2—2 6—3 2—b . . . . . .').run();
+        strictEqual(ctxPos.board.serialize(), '0—1 1—5 1—3 0—1 0—2 0—1 1—0 4—6 0—1 0—2 6—2 0—1 0—0 2—2 6—3 2—b . . 0—0 f—f\n');
+        // NUM 255 NEG NUM 2 NUM 36 NUM 2 LIT NUM 16 BASE SET
+        const ctxNeg = await createRunner('0—1 1—5 1—3 1-5 0—1 0—2 0—1 1—0 5—1 0—1 0—2 6—2 0—1 0—0 2—2 6—3 2—b . . . . . .').run();
+        strictEqual(ctxNeg.board.serialize(), '0—1 1—5 1—3 1—5 0—1 0—2 0—1 1—0 5—1 0—1 0—2 6—2 0—1 0—0 2—2 6—3 2—b . . 1—0 f—f\n');
+      });
+      it('should reserve the sign bit and use 2 dominos instead for values that normally would fit on a single domino when unsigned', async () => {
+        // NUM 5 NUM 2 NUM 20 SET
+        const ctxPos = await createRunner('0-1 0-5 6-6 0-1 0-2 0-1 1-0 2-6 6-1 . . . . . .').run();
+        strictEqual(ctxPos.board.serialize(), '0—1 0—5 6—6 0—1 0—2 0—1 1—0 2—6 6—1 . . 1—0 0—5\n');
+        // NUM 5 NEG NUM 2 NUM 20 SET
+        const ctxNeg = await createRunner('0-1 0-5 1-5 0-1 0-2 0-1 1-0 2-6 6-1 . . . . . .').run();
+        strictEqual(ctxNeg.board.serialize(), '0—1 0—5 1—5 0—1 0—2 0—1 1—0 2—6 6—1 . . 1—1 0—5\n');
+      });
+      it('should set it in the correct InstructionPointer direction', async () => {
+        // NUM 5 NUM 2 NUM 0 SET NUM 5 NEG NUM 2 NUM 92 SET
+        const ctx = await createRunner(dedent(`\
+          0—1 0—5 0—1 0—2 0—1 0—0 6 . . . . . . . . . . . . . . . . 1
+                                  |                                 |
+          . . . . . . . . . . . . 1 0—1 0—5 1—5 0—1 0—2 0—1 1—1 6—1 6
+                                                                     
+          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                                                                     
+          . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .`
+        )).run();
+
+        const expectedResult = dedent(`\
+          1 . 5 . 0—1 0—2 0—1 0—0 6 . . . . . . . . . . . . . . . . 1
+          |   |                   |                                 |
+          0 . 0 . . . . . . . . . 1 0—1 0—5 1—5 0—1 0—2 0—1 1—1 6—1 6
+                                                                     
+          0 . 1 . . . . . . . . . . . . . . . . . . . . . . . . . . .
+          |   |                                                      
+          5 . 1 . . . . . . . . . . . . . . . . . . . . . . . . . . .\n`
+        );
+
+        strictEqual(ctx.board.serialize(), expectedResult);
+      });
+      it('should throw an AddressError when it reaches the edge of the board without placing all the dominos', async () => {
+        // NUM 2400 NUM 2 NUM 20 SET
+        await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-2 0-1 1-0 2-6 6-1 . . .').run(), DSAddressError);
+      });
       it('should throw an AddressError when address argument is out of bounds', async () => {
-        // NUM 2400 NUM 1 NUM 20 SET
-        await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-1 0-1 1-0 2-6 6-1').run(), DSAddressError);
+        // NUM 2400 NUM 2 NUM 20 SET
+        await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-2 0-1 1-0 2-6 6-1').run(), DSAddressError);
       });
     });
   });

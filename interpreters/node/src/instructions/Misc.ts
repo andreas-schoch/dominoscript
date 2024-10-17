@@ -115,8 +115,8 @@ export function SET(ctx: Context): void {
     let cellFirst = cell;
     let cellSecond = ctx.board.getOrThrow(cell[cardinalDirection]);
     let startingIndex = 0;
-    let valueString = value.toString(ctx.base);
 
+    let valueString = value.toString(ctx.base);
     if (ctx.literalParseMode === 0) {
       startingIndex = -1;
       if (valueString.length % 2 === 0) valueString = '0' + valueString; // make it odd length because first half used for amount of dominos
@@ -150,7 +150,58 @@ export function SET(ctx: Context): void {
 
   case 2: {
     // SIGNED NUMBER LITERAL - Single Straight line in current IP direction
-    throw new Error('Not implemented');
+    // TODO try to deduplicate this with the unsigned number literal
+    const value = ctx.stack.pop();
+    const cardinalDirection = getCardinalDirection(ctx.lastCell);
+    let cellFirst = cell;
+    let cellSecond = ctx.board.getOrThrow(cell[cardinalDirection]);
+    let startingIndex = 0;
+
+    let valueString = value.toString(ctx.base);
+    if (value > 0) valueString = '+' + valueString;
+    if (ctx.literalParseMode === 0) {
+      startingIndex = -1;
+      // make it odd length because first half used for amount of dominos
+      if (valueString.length % 2 === 0) valueString = valueString.slice(0, 1) + '0' + valueString.slice(1);
+    } else {
+      // make it even length because all halfs are used for values
+      if (valueString.length % 2 !== 0) valueString = valueString.slice(0, 1) + '0' + valueString.slice(1);
+    }
+
+    for (let i = startingIndex; i < valueString.length; i += 2) {
+      let valueFirst: number;
+      let valueSecond: number;
+      if (i === -1) {
+        // Here the "sign bit" can only be on the second half of the first domino
+        let valueSecondRaw = valueString[i + 1];
+        if (valueSecondRaw === '+') valueSecondRaw = '0';
+        else if (valueSecondRaw === '-') valueSecondRaw = '1';
+
+        valueFirst = Math.floor(valueString.length / 2); // num of extra dominos
+        valueSecond = parseInt(valueSecondRaw, ctx.base);
+      } else {
+        // Here the "sign bit" can only be on the first half of the first domino
+        let valueFirstRaw = valueString[i];
+        /* c8 ignore next */
+        if (i > 0 && (valueFirstRaw === '+' || valueFirstRaw === '-')) throw new DSInterpreterError('Sign bit can only be placed on the first half of the first domino when LIT is static');
+        if (valueFirstRaw === '+') valueFirstRaw = '0';
+        else if (valueFirstRaw === '-') valueFirstRaw = '1';
+
+        valueFirst = parseInt(valueFirstRaw, ctx.base);
+        valueSecond = parseInt(valueString[i + 1], ctx.base);
+      }
+
+      /* c8 ignore next */
+      if (valueFirst < 0 || valueFirst >= ctx.base || valueSecond < 0 || valueSecond >= ctx.base) throw new DSInterpreterError('faulty parsing in SET');
+
+      ctx.board.set(cellFirst.address, valueFirst as CellValue, cellSecond.address, valueSecond as CellValue);
+
+      if (i === valueString.length - 2) break;
+      cellFirst = ctx.board.getOrThrow(cellSecond[cardinalDirection]);
+      cellSecond = ctx.board.getOrThrow(cellFirst[cardinalDirection]);
+    }
+
+    break;
   }
 
   case 3: {
