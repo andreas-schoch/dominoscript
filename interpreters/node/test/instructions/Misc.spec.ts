@@ -467,123 +467,227 @@ describe('Misc', () => {
   });
 
   describe('SET', () => {
-    it('should correctly set 2 non-empty cells to the desired domino', async () => {
-      // NUM 45 NUM 20 SET
-      const ds = createRunner('0-1 1-0 6-3 0-1 1-0 2-6 6-1 . . . . 0-2 1-2 2-0 . .');
-      const ctx = await ds.run();
-      strictEqual(ctx.board.grid.cells[19].value, 2, 'should not have been changed');
-      strictEqual(ctx.board.grid.cells[20].value, 6, 'should have been changed');
-      strictEqual(ctx.board.grid.cells[21].value, 3, 'should have been changed');
-      strictEqual(ctx.board.grid.cells[22].value, 2, 'should not have been changed');
-    });
-    it('should correctly set 2 empty cells to the desired domino', async () => {
-      // NUM 45 NUM 20 SET
-      const ds = createRunner('0-1 1-0 6-3 0-1 1-0 2-6 6-1 . . . . 0-2 . . 2-0 . .');
-      const ctx = await ds.run();
+    describe('type 0 - DOMINO', () => {
+      it('should correctly set 2 non-empty cells to the desired domino', async () => {
+      // NUM 45 NUM 0 NUM 24 SET
+        const ds = createRunner('0-1 1-0 6-3 0-1 0-0 0-1 1-0 3-3 6-1 . . . . 0-2 1-2 2-0 . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[23].value, 2, 'should not have been changed');
+        strictEqual(ctx.board.grid.cells[24].value, 6, 'should have been changed');
+        strictEqual(ctx.board.grid.cells[25].value, 3, 'should have been changed');
+        strictEqual(ctx.board.grid.cells[26].value, 2, 'should not have been changed');
+      });
+      it('should correctly set 2 empty cells to the desired domino', async () => {
+      // NUM 45 NUM 0 NUM 24 SET
+        const ds = createRunner('0-1 1-0 6-3 0-1 0-0 0-1 1-0 3-3 6-1 . . . . 0-2 . . 2-0 . .');
+        const ctx = await ds.run();
 
-      strictEqual(ctx.board.grid.cells[19].value, 2);
-      strictEqual(ctx.board.grid.cells[20].value, 6);
-      strictEqual(ctx.board.grid.cells[21].value, 3);
-      strictEqual(ctx.board.grid.cells[22].value, 2);
-    });
-    it('should empty an existing domino when value argument is -1', async () => {
-      // NUM -1 NUM 20 SET
-      const ds = createRunner('0-1 0-1 1-5 0-1 1-0 2-6 6-1 . . . . . . 6-3 . . . .');
-      const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[23].value, 2);
+        strictEqual(ctx.board.grid.cells[24].value, 6);
+        strictEqual(ctx.board.grid.cells[25].value, 3);
+        strictEqual(ctx.board.grid.cells[26].value, 2);
+      });
+      it('should empty an existing domino when value argument is -1', async () => {
+      // NUM 1 NEG NUM 0 NUM 24 SET
+        const ds = createRunner('0-1 0-1 1-5 0-1 0-0 0-1 1-0 3-3 6-1 . . . . . . 6-3 . . . .');
+        const ctx = await ds.run();
 
-      strictEqual(ctx.board.grid.cells[20].value, null);
-      strictEqual(ctx.board.grid.cells[21].value, null);
-    });
-    it('should empty an existing domino when value argument is -1 and addressing from the other side', async () => {
-      // NUM -1 NUM 21 SET
-      const ds = createRunner('0-1 0-1 1-5 0-1 1-0 3-0 6-1 . . . . . . 6-3 . . . .');
-      const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[24].value, null);
+        strictEqual(ctx.board.grid.cells[25].value, null);
+      });
+      it('should empty an existing domino when value argument is -1 and addressing from the other side', async () => {
+      // NUM 1 NEG NUM 0 NUM 25 SET
+        const ds = createRunner('0-1 0-1 1-5 0-1 0-0 0-1 1-0 3-4 6-1 . . . . . . 6-3 . . . .');
+        const ctx = await ds.run();
 
-      strictEqual(ctx.board.grid.cells[20].value, null);
-      strictEqual(ctx.board.grid.cells[21].value, null);
-    });
-    it('should correctly delete previous connection when setting 1 non-empty and 1 empty cell', async () => {
-      // NUM 48 NUM 21 SET 
-      const ds = createRunner(dedent(`\
-        0-1 1-0 6-3 0-1 1-0 3-0 6-1 . . . . . . . . 2 . . .
+        strictEqual(ctx.board.grid.cells[24].value, null);
+        strictEqual(ctx.board.grid.cells[25].value, null);
+      });
+      it('should correctly delete previous connection when setting 1 non-empty and 1 empty cell', async () => {
+      // NUM 48 NUM 0 NUM 21 SET 
+        const ds = createRunner(dedent(`\
+        0-1 1-0 6-3 0-1 0-0 0-1 1-0 3-0 6-1 . . . . 2 . . .
                                                     |      
         . . . . . . . . . . . . . . . . . . . . . . 0 . . .`
-      ));
-      const ctx = await ds.run();
+        ));
+        const ctx = await ds.run();
 
-      strictEqual(ctx.board.grid.cells[21].value, 6);
-      strictEqual(ctx.board.grid.cells[22].value, 3);
-      strictEqual(ctx.board.grid.cells[47].value, null, 'should have deleted previous connection');
-      strictEqual(ctx.board.grid.cells[48].value, null, 'should have deleted previous connection');
-      strictEqual(ctx.board.grid.cells[49].value, null, 'should have deleted previous connection');
-    });
-    it('should correctly set the second cell when moving south', async () => {
-      // NUM 48 NUM 21 SET
-      const ds = createRunner(dedent(`\
-        0-1 1-0 6-3 0-1 1-0 3-0 6 . . . . . 0-2 . . 2-0 . .
-                                |                          
-        . . . . . . . . . . . . 1 . . . . . . . . . . . . .`
-      ));
-      const ctx = await ds.run();
-      strictEqual(ctx.board.grid.cells[21].value, 6);
-      strictEqual(ctx.board.grid.cells[47].value, 3);
-    });
-    it('should correctly set the second cell when moving west', async () => {
-      // NUM 48 NUM 21 SET
-      const ds = createRunner(dedent(`\
-        0-1 1-0 6-3 0-1 1-0 3-0 . . . . . . 0-2 . . 2-0 . .
+        strictEqual(ctx.board.grid.cells[21].value, 6);
+        strictEqual(ctx.board.grid.cells[22].value, 3);
+        strictEqual(ctx.board.grid.cells[47].value, null, 'should have deleted previous connection');
+        strictEqual(ctx.board.grid.cells[48].value, null, 'should have deleted previous connection');
+        strictEqual(ctx.board.grid.cells[49].value, null, 'should have deleted previous connection');
+      });
+      it('should correctly set the second cell when moving south', async () => {
+      // NUM 48 NUM 0 NUM 21 SET
+        const ds = createRunner(dedent(`\
+        0-1 1-0 6-3 0-1 0-0 0-1 1-0 3-0 6 . 0-2 . . 2-0 . .
+                                        |                  
+        . . . . . . . . . . . . . . . . 1 . . . . . . . . .`
+        ));
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[21].value, 6);
+        strictEqual(ctx.board.grid.cells[47].value, 3);
+      });
+      it('should correctly set the second cell when moving west', async () => {
+      // NUM 48 NUM 0 NUM 21 SET
+        const ds = createRunner(dedent(`\
+        0-1 1-0 6-3 0-1 0-0 0-1 1-0 3-0 . . 0-2 . . 2-0 . .
                                                            
-        . . . . . . . . . . 1-6 . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . . 1-6 . . . . . . . . . .
                                                            
-        . . . . . . . . . 6-6 . . . . . . . . . . . . . . .`
-      ));
-      const ctx = await ds.run();
-      strictEqual(ctx.board.grid.cells[21].value, 6);
-      strictEqual(ctx.board.grid.cells[20].value, 3);
-    });
-    it('should correctly set the second cell when moving north', async () => {
-      // NUM 45 NUM 47 SET
-      const ds = createRunner(dedent(`\
-        0-1 1-0 6-3 0-1 1-0 . 1 . . . . . . 0-2 . . 2-0 . .
-                              |                            
-        . . . . . . . . . 6-5 6 . . . . . . . . . . . . . .
-                                                           
-        . . . . . . . . . . . . . . . . . . . . . . . . . .`
-      ));
-      const ctx = await ds.run();
-      strictEqual(ctx.board.grid.cells[21].value, 3);
-      strictEqual(ctx.board.grid.cells[47].value, 6);
-    });
-    it('should throw AddressError when second cell to set is out of bounds', async () => {
-      // NUM 48 NUM 21 SET
-      const ds = createRunner(dedent(`\
-        0-1 1-0 6-3 0-1 1-0 . 1 . . . . . . 0-2 . . 2-0 . .
-                              |                            
-        . . . . . . . . . 3-0 6 . . . . . . . . . . . . . .
+        . . . . . . . . . . . . . 6-6 . . . . . . . . . . .`
+        ));
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[21].value, 6);
+        strictEqual(ctx.board.grid.cells[20].value, 3);
+      });
+      it('should correctly set the second cell when moving north', async () => {
+      // NUM 45 NUM 0 NUM 47 SET
+        const ds = createRunner(dedent(`\
+        0-1 1-0 6-3 0-1 0-0 0-1 1-0 . 1 . . 0-2 . . 2-0 . .
+                                      |                    
+        . . . . . . . . . . . . . 6-5 6 . . . . . . . . . .
                                                            
         . . . . . . . . . . . . . . . . . . . . . . . . . .`
-      ));
-      await rejects(ds.run(), DSAddressError);
+        ));
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[21].value, 3);
+        strictEqual(ctx.board.grid.cells[47].value, 6);
+      });
+      it('should throw AddressError when second cell to set is out of bounds', async () => {
+      // NUM 48 NUM 0 NUM 21 SET
+        const ds = createRunner(dedent(`\
+        0-1 1-0 6-3 0-1 0-0 0-1 1-0 . 1 . . 0-2 . . 2-0 . .
+                                      |                    
+        . . . . . . . . . . . . . 3-0 6 . . . . . . . . . .
+                                                           
+        . . . . . . . . . . . . . . . . . . . . . . . . . .`
+        ));
+        await rejects(ds.run(), DSAddressError);
+      });
+      it('should throw an AddressError when trying to set out of bound address', async () => {
+      // NUM 5 NUM 0 NUM 342 SET
+        const ds = createRunner('0-1 0-5 0-1 0-0 0-1 1-6 6-6 6-1');
+        await rejects(ds.run(), DSAddressError);
+      });
+      it('should throw an InvalidValueError when value is below -1', async () => {
+      // NUM 2 NEG NUM 0 NUM 1 SET
+        const ds = createRunner('0-1 0-2 1-5 0-1 0-0 0-1 0-1 6-1');
+        await rejects(ds.run(), DSInvalidValueError);
+      });
+      it('should throw an InvalidValueError when value is ABOVE the default 0-48 range while in base7 mode', async () => {
+      // NUM 49 NUM 0 NUM 1 SET
+        const ds = createRunner('0-1 1-1 0-0 0-1 0-0 0-1 0-1 6-1');
+        await rejects(ds.run(), DSInvalidValueError);
+      });
+      it('should not throw an InvalidValueError when value is ABOVE the default 0-48 range while in base8 mode', async () => {
+      // NUM 49 NUM 0 NUM 1 NUM 8 BASE SET
+        const ds = createRunner('0-1 1-1 0-0 0-1 0-0 0-1 0-1 0-1 1-0 1-1 6-3 5-3');
+        await ds.run();
+      });
     });
-    it('should throw an AddressError when trying to set out of bound address', async () => {
-      // NUM 5 NUM 342 SET
-      const ds = createRunner('0-1 0-5 0-1 1-6 6-6 6-1');
-      await rejects(ds.run(), DSAddressError);
-    });
-    it('should throw an InvalidValueError when value is below -1', async () => {
-      // NUM 1 NEG NUM 1 SET
-      const ds = createRunner('0-1 0-2 1-5 0-1 0-1 6-1');
-      await rejects(ds.run(), DSInvalidValueError);
-    });
-    it('should throw an InvalidValueError when value is ABOVE the default 0-48 range while in base7 mode', async () => {
-      // NUM 49 NUM 1 SET
-      const ds = createRunner('0-1 1-1 0-0 0-1 0-1 6-1');
-      await rejects(ds.run(), DSInvalidValueError);
-    });
-    it('should not throw an InvalidValueError when value is ABOVE the default 0-48 range while in base8 mode', async () => {
-      // NUM 49 NUM 1 NUM 8 BASE SET
-      const ds = createRunner('0-1 1-1 0-0 0-1 0-1 0-1 1-0 1-1 6-3 5-3');
-      await ds.run();
+
+    describe('type 1 - UNSIGNED NUMBER - straight line in current ', () => {
+      it('should store the number 47 from left to right using 3 dominos while in default LIT 0', async () => {
+      // NUM 47 NUM 1 NUM 20 SET
+        const ds = createRunner('0-1 1-0 6-5 0-1 0-1 0-1 1-0 2-6 6-1 . . . . . . . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[19].value, null, 'should remain empty');
+        strictEqual(ctx.board.grid.cells[20].value, 1, 'should indicate how many more dominos will follow when LIT is 0');
+        strictEqual(ctx.board.grid.cells[21].value, 0, 'should indicate an "unused" digit');
+        strictEqual(ctx.board.grid.cells[22].value, 6, 'should indicate the leftmost digit');
+        strictEqual(ctx.board.grid.cells[23].value, 5, 'should indicate the rightmost digit');
+        strictEqual(ctx.board.grid.cells[24].value, null, 'should remain empty');
+      });
+      it('should store the number 47 from left to right on a single domino while in LIT 1', async () => {
+        // NUM 47 NUM 1 NUM 26 NUM 1 LIT SET
+        const ds = createRunner('0-1 1-0 6-5 0-1 0-1 0-1 1-0 3-5 0-1 0-1 6-2 6-1 . . . . . . . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[25].value, null, 'should remain empty');
+        strictEqual(ctx.board.grid.cells[26].value, 6, 'should indicate the leftmost digit');
+        strictEqual(ctx.board.grid.cells[27].value, 5, 'should indicate the rightmost digit');
+        strictEqual(ctx.board.grid.cells[28].value, null, 'should remain empty');
+      });
+      it('should store the number 255 from left to right on a single domino while in LIT 1 and BASE 16', async () => {
+        // NUM 255 NUM 1 NUM 32 NUM 1 LIT NUM 16 BASE SET
+        const ds = createRunner('0-1 1-5 1-3 0-1 0-1 0-1 1-0 4-4 0-1 0-1 6-2 0-1 2-2 6-3 2-b . . . . . . . . . . . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.board.grid.cells[31].value, null, 'should remain empty');
+        strictEqual(ctx.board.grid.cells[32].value, 15, 'should indicate the leftmost digit');
+        strictEqual(ctx.board.grid.cells[33].value, 15, 'should indicate the rightmost digit');
+        strictEqual(ctx.board.grid.cells[34].value, null, 'should remain empty');
+      });
+      it('should be able to override existing dominos', async () => {
+        // NUM 3267 NUM 1 NUM 21 SET
+        const ds = createRunner('0-1 2-1 2-3 4-5 0-1 0-1 0-1 1-0 3-0 6-1 f-f . f-f . f-f . . . .');
+        const ctx = await ds.run();
+        strictEqual(ctx.currentCell?.address, 19, 'IP should have stopped moving due to removed domino and having no way to go');
+        strictEqual(ctx.board.grid.cells[20].value, null, 'should have removed connection of replaced domino');
+        strictEqual(ctx.board.grid.cells[21].value, 2, 'should indicate how many more dominos will follow when LIT is 0');
+        strictEqual(ctx.board.grid.cells[22].value, 1, 'should have set the fifth digit');
+        strictEqual(ctx.board.grid.cells[23].value, 2, 'should have set the fourth digit');
+        strictEqual(ctx.board.grid.cells[24].value, 3, 'should have set the third digit');
+        strictEqual(ctx.board.grid.cells[25].value, 4, 'should have set the second digit');
+        strictEqual(ctx.board.grid.cells[26].value, 5, 'should have set the first digit');
+        strictEqual(ctx.board.grid.cells[27].value, null, 'should have removed connection of replaced domino');
+      });
+      it('should execute code added at runtime by SET', async () => {
+        // NUM 1 LIT NUM 16 BASE
+        // NUM  16 NUM 1 NUM <addr1=165> SET (1-0)  -  east   -  NUM 
+        // NUM 255 NUM 1 NUM <addr2=164> SET (f-f)  -  north  -  255 literal
+        // NUM   9 NUM 1 NUM <addr3=135> SET (0-9)  -  south  -  MULT
+        // NUM   3 NUM 1 NUM <addr4=137> SET (0-3)  -  west   -  DUPE
+        // NUM 255 DUP MULT  - (This code is NOT initially part of the source code. It is added by the SET instructions!)
+
+        const ds = createRunner(dedent(`\
+          0-1 0-1 6-2 0-1 2-2 6-3 0-1 1-0 0-1 0-1 0-1 a-5 2-b
+                                                             
+          . . . 2 7-8 1-0 1-0 1-0 9-0 1-0 . . . . . . . . . 0
+                |                                           |
+          . . . b . . . . . . . . . . . b . . . . . . . . . 1
+                                        |                    
+          . . . 0-1 0-3 0-1 0-1 0-1 8 . 2 4-a 1-0 1-0 1-0 f-f
+                                    |                        
+          . . . . . . . . . . 3 b-2 9 . . . . . . . . . . . .
+                              |                              
+          . . . . . . . . . . 0 . . . . . . . . . . . . . . .
+                                                             
+          . . . . . . . . . . . . . . . . . . . . . . . . . .`
+        ));
+
+        const expectedSourceAfter = dedent(`\
+          0—1 0—1 6—2 0—1 2—2 6—3 0—1 1—0 0—1 0—1 0—1 a—5 2—b
+                                                             
+          . . . 2 7—8 1—0 1—0 1—0 9—0 1—0 . . . . . . . . . 0
+                |                                           |
+          . . . b . . . . . . . . . . . b . . . . . . . . . 1
+                                        |                    
+          . . . 0—1 0—3 0—1 0—1 0—1 8 . 2 4—a 1—0 1—0 1—0 f—f
+                                    |                        
+          . . . . . . . . . . 3 b—2 9 . . . . . . . . . . . .
+                              |                              
+          . . . . . 0 3—0 f . 0 . . . . . . . . . . . . . . .
+                    |     |                                  
+          . . . . . 9 . . f 1—0 . . . . . . . . . . . . . . .\n`
+        );
+
+        const ctx = await ds.run();
+        strictEqual(ctx.board.serialize(), expectedSourceAfter, 'The board should have been modified');
+        strictEqual(ctx.stack.toString(), '[65025]', 'The dominos we added should have resulted in `NUM 255 DUP MULT` being executed');
+      });
+      it('should throw an AddressError when it reaches the edge of the board without placing all the dominos', async () => {
+        // NUM 2400 NUM 1 NUM 20 SET
+        await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-1 0-1 1-0 2-6 6-1 . . .').run(), DSAddressError);
+      });
+      it('should throw an AddressError when address argument is out of bounds', async () => {
+        // NUM 2400 NUM 1 NUM 20 SET
+        await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-1 0-1 1-0 2-6 6-1').run(), DSAddressError);
+      });
+      it('should throw an AddressError when address argument is out of bounds', async () => {
+        // NUM 2400 NUM 1 NUM 20 SET
+        await rejects(createRunner('0-1 2-0 6-6 6-6 0-1 0-1 0-1 1-0 2-6 6-1').run(), DSAddressError);
+      });
     });
   });
 
@@ -698,9 +802,9 @@ describe('Misc', () => {
       const expectedCellValueTupples = [[6,1], [5,3], [4,7], [4,3], [3,0xa], [3,7], [3,4], [3,1], [2,0xd], [2,0xb]]; // 43 in base 7 to 16
       const setInstructionsByBase = ['6-1', '5-3', '4-7', '4-3', '3-a', '3-7', '3-4', '3-1', '2-d', '2-b']; // domino representing 43 in base 7 to 16
       for (const [i, literal] of base.entries()) {
-        // NUM 43 NUM <literal> BASE NUM 0 SET
+        // NUM 43 NUM 0 NUM <literal> BASE NUM 0 SET
         const setInstruction = setInstructionsByBase[i];
-        const ds = createRunner(`. 0-1 1-0 6-1 0-1 ${literal} 6-3 0-1 0-0 ${setInstruction}`);
+        const ds = createRunner(`. 0-1 1-0 6-1 0-1 0-0 0-1 ${literal} 6-3 0-1 0-0 ${setInstruction}`);
         const ctx = await ds.run();
 
         const [val0, val1] = expectedCellValueTupples[i];

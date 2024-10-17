@@ -10,7 +10,6 @@ const out: ParseOutput = {value: 0, endCell: null, dir: 'east'};
 export function GET(ctx: Context): void {
   const address = ctx.stack.pop();
   const type = ctx.stack.pop();
-
   const cell = ctx.board.getOrThrow(address);
 
   switch (type) {
@@ -62,52 +61,117 @@ export function GET(ctx: Context): void {
 
     for (let i = totalChars - 1; i >= 0; i--) ctx.stack.push(ctx.numberBuffer[i]);
     break;
-  }
-
-  case 4: {
-    // UNSIGNED NUMBER LITERAL - Raw Increment
-    throw new Error('Not implemented');
-  }
-
-  case 5: {
-    // SIGNED NUMBER LITERAL - Raw Increment
-    throw new Error('Not implemented');
-  }
-
-  case 6: {
-    // STRING LITERAL - Raw Increment
-    throw new Error('Not implemented');
   }}
+
+  // case 4: {
+  //   // UNSIGNED NUMBER LITERAL - Raw Increment
+  //   throw new Error('Not implemented');
+  // }
+
+  // case 5: {
+  //   // SIGNED NUMBER LITERAL - Raw Increment
+  //   throw new Error('Not implemented');
+  // }
+
+  // case 6: {
+  //   // STRING LITERAL - Raw Increment
+  //   throw new Error('Not implemented');
+  // }}
 }
 
 export function SET(ctx: Context): void {
   /* c8 ignore next */
-  if (!ctx.currentCell || !ctx.lastCell) throw new DSInterpreterError('Not possible to call SET without the IP having moved before');
+  if (!ctx.currentCell || !ctx.lastCell) throw new DSInterpreterError('Not possible to execute SET without the IP having moved before');
 
   const address = ctx.stack.pop();
-  const value = ctx.stack.pop();
+  const type = ctx.stack.pop();
   const cell = ctx.board.getOrThrow(address);
 
-  const max = ctx.base * ctx.base - 1;
-  if (value < -1 || value > max) throw new DSInvalidValueError(value);
+  switch (type) {
+  case 0: {
+    // SINGLE DOMINO
+    const value = ctx.stack.pop();
+    const max = ctx.base * ctx.base - 1;
+    if (value < -1 || value > max) throw new DSInvalidValueError(value);
 
-  let otherCell: Cell;
-  // Here we check the last cardinal direction of the IP to determine where to put the second half of the set domino
-  const {connection, north, east, south, west} = ctx.currentCell;
-  if (connection === west) otherCell = ctx.board.getOrThrow(cell.east);
-  else if (connection === east) otherCell = ctx.board.getOrThrow(cell.west);
-  else if (connection === north) otherCell = ctx.board.getOrThrow(cell.south);
-  else if (connection === south) otherCell = ctx.board.getOrThrow(cell.north);
-  /* c8 ignore next */
-  else throw new DSInterpreterError('Failed to find the cardinal direction of the current cell');
+    // // Here we check the last cardinal direction of the IP to determine where to put the second half of the set domino
+    const cardinalDirection = getCardinalDirection(ctx.lastCell);
+    const otherCell = ctx.board.getOrThrow(cell[cardinalDirection]);
 
-  if (value === -1) {
-    ctx.board.set(address, null, otherCell.address, null);
-  } else {
-    const cellValue = Math.floor(value / ctx.base) as CellValue;
-    const otherCellValue = value % ctx.base as CellValue;
-    ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
+    if (value === -1) {
+      ctx.board.set(address, null, otherCell.address, null);
+    } else {
+      const cellValue = Math.floor(value / ctx.base) as CellValue;
+      const otherCellValue = value % ctx.base as CellValue;
+      ctx.board.set(address, cellValue, otherCell.address, otherCellValue);
+    }
+    break;
   }
+
+  case 1: {
+    // UNSIGNED NUMBER LITERAL - Single Straight line in current IP direction
+    const value = ctx.stack.pop();
+    const cardinalDirection = getCardinalDirection(ctx.lastCell);
+    let cellFirst = cell;
+    let cellSecond = ctx.board.getOrThrow(cell[cardinalDirection]);
+    let startingIndex = 0;
+    let valueString = value.toString(ctx.base);
+
+    if (ctx.literalParseMode === 0) {
+      startingIndex = -1;
+      if (valueString.length % 2 === 0) valueString = '0' + valueString; // make it odd length because first half used for amount of dominos
+    } else {
+      if (valueString.length % 2 !== 0) valueString = '0' + valueString; // make it even length because all halfs are used for values
+    }
+
+    for (let i = startingIndex; i < valueString.length; i += 2) {
+      let valueFirst: number;
+      let valueSecond: number;
+      if (i === -1) {
+        valueFirst = Math.floor(valueString.length / 2); // num of extra dominos
+        valueSecond = parseInt(valueString[i + 1], ctx.base);
+      } else {
+        valueFirst = parseInt(valueString[i], ctx.base);
+        valueSecond = parseInt(valueString[i + 1], ctx.base);
+      }
+
+      /* c8 ignore next */
+      if (valueFirst < 0 || valueFirst >= ctx.base || valueSecond < 0 || valueSecond >= ctx.base) throw new DSInterpreterError('faulty parsing in SET');
+
+      ctx.board.set(cellFirst.address, valueFirst as CellValue, cellSecond.address, valueSecond as CellValue);
+
+      if (i === valueString.length - 2) break;
+      cellFirst = ctx.board.getOrThrow(cellSecond[cardinalDirection]);
+      cellSecond = ctx.board.getOrThrow(cellFirst[cardinalDirection]);
+    }
+
+    break;
+  }
+
+  case 2: {
+    // SIGNED NUMBER LITERAL - Single Straight line in current IP direction
+    throw new Error('Not implemented');
+  }
+
+  case 3: {
+    // STRING LITERAL - Single Straight line in current IP direction
+    throw new Error('Not implemented');
+  }}
+
+  // case 4: {
+  //   // UNSIGNED NUMBER LITERAL - Raw Increment
+  //   throw new Error('Not implemented');
+  // }
+
+  // case 5: {
+  //   // SIGNED NUMBER LITERAL - Raw Increment
+  //   throw new Error('Not implemented');
+  // }
+
+  // case 6: {
+  //   // STRING LITERAL - Raw Increment
+  //   throw new Error('Not implemented');
+  // }}
 }
 
 export function LIT(ctx: Context): void {
@@ -133,6 +197,7 @@ export function TIME(ctx: Context): void {
 
 export function NOOP(_ctx: Context): void {
   // Do nothing
+  console.log('noop');
 }
 
 //////////////////////////////////////

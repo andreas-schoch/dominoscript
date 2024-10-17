@@ -1803,15 +1803,19 @@ Below you see the escape sequences for special keyboard characters. You can use 
 | Enter      | 13        | `1—0 1—6`   |
 
 ### Error Types
-The spec doesn't define a way to "catch" errors in a graceful way yet. For now, whenever an error occurs, the program will terminate and the interpreter will throw an error to stderr.
+The spec doesn't define a way to recover from errors gracefully yet. For now, whenever an error occurs, the program will terminate immediately and the interpreter will print the error message to the console in an attempt to help you understand what went wrong.
 
+> Tip: When the error message isn't helpful to you, try using the `--debug` flag when using the reference interpreter. This will print out every instruction, address and the state of the stack at any point in time.
+
+Here is a list of errors that can occur:
+
+- **InterpreterError**: Something wrong with the Interpreter: {message}
 - **SyntaxError**: Unexpected token '{token}' at line {line}, column {column}
 - **InvalidGridError**: Invalid grid. All lines containing code must be the same length (for now)
 - **MultiConnectionError**: {type} connection at line {line}, column {column} is trying to connect a cell that is already connected
 - **MissingConnectionError**: Non-empty cell at line {line}, column {column} does not have a connection
 - **ConnectionToEmptyCellError**: Connection to an empty cell at line {line}, column {column}
 - **ConnectionToEmptyCellsError**: There are connectors that are not connected to anything (Cannot give you the exact location of the error atm)
-- **InterpreterError**: Something wrong with the Interpreter: {message}
 - **UnexpectedEndOfInputError**: Unexpected end of input at line {line}, column {column}
 - **AddressError**: Address '{address}' out of bounds
 - **InvalidLabelError**: Label {name} is not a valid label
