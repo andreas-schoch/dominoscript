@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.2.0`**
+**Current version `0.4.0`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -1290,18 +1290,18 @@ Read data from the board and pushes it to the stack. Takes 2 arguments from the 
 - The type Index to parse it as. It indicates the type and the direction of the data.
 - The address of the first domino half
 
-<ins>There are essentially 4 types you can parse it as</ins>:
+<ins>**There are essentially 4 types you can parse it as**</ins>:
 - **Domino**: The value of the cell at the address and its connection. Essentially a single domino
-- **Unsigned Number**: Up to 6 dominos used to represent a positive number.
-- **Signed Number**:  Up to 6 dominos used to represent a number. 1 half of a domino is used to indicate the sign.
+- **Unsigned Number**: A number between 0 to 2147483647 *(Hold on! Why not 4294967295? Because the data stack uses int32 and 2147483647 is the max value you can have in the stack. "Unsigned" here doesn't mean uint32, just that we don't "waste" half a domino to represent the sign)*.
+- **Signed Number**:  A number between -2147483648 to 2147483647 (int32 range).
 - **String**: A string is a sequence of null terminated unicode characters
 
-<ins>And the following directions</ins>:
+<ins>**And the following directions**</ins>:
 - **RawIncrement**: Reads domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
-- **SingleStraightLine**: The IP moves in a straight line towards the connection direction of the cell at the address. No wrap around like in "Raw" mode. If you have a 5x10 grid you can get at most 4 dominos in horizontal direction or 10 dominos in vertical direction.
+- **SingleStraightLine**: The IP moves in a straight line towards the <ins>connection direction of the cell at the address</ins>. No wrap around like in "Raw" mode. If you have a 5x10 grid you can get at most 4 dominos in horizontal direction or 10 dominos in vertical direction.
 - **NavMode** (to be implemented): In this mode the [NavigationMode](#how-navigation-modes-work) used for regular InstructionPointer movement is used to determine the direction. 
 
-<ins>Here a table of supported type mappings:</ins>
+<ins>**Here a table of supported type mappings:**</ins>
 
 | Type Index | Type              | Direction                |
 |------------|-------------------|--------------------------|
@@ -1315,7 +1315,7 @@ Read data from the board and pushes it to the stack. Takes 2 arguments from the 
 
 **Errors:**
 - If the address is out of bounds, an `InvalidAddressError` is thrown.
-- If the address references an empty cell the number -1 will be pushed to the stack. No error.
+- If the address references an empty cell there is no error. For "domino" type it pushes -1 and for all other types 0.
 - If the data ends abruptly, an `UnexpectedEndOfNumberError` is thrown.
 - If the data is too big to fit in the stack, a `FullStackError` is thrown.
 - If during parsing for "straigh line" directions the direction changes, an `UnexpectedChangeInDirectionError` is thrown.
@@ -1323,66 +1323,31 @@ Read data from the board and pushes it to the stack. Takes 2 arguments from the 
 #### `SET`
 <img src="assets/horizontal/6-1.png" alt="Domino" width="128">
 
-Sets the value of 2 cells (a whole domino) on the grid. This one is similar to the `p` instruction in befunge used to modify the grid.
-
-It requires 2 arguments from the stack:
-- The address of the first cell (just like `GET`)
-- and then the value to set the domino to. 0-48 range is allowed for D6 mode. If
-
-<br>
-
-For example here we have a 10x3 grid:
-
-<table>
-<tr>
-<th>Before SET</th>
-<th>After SET</th>
-</tr>
-<tr>
-<td>
-  
-```
-0—1 1—0 6—0 0—1 1—0
-                  
-. . . . . . 1—6 0—1
-
-. . . . . . . . . .
-```
-  
-</td>
-<td>
-
-```
-0—1 1—0 6—0 0—1 1—0
-                  
-. . 0—6 . . 1—6 0—1
-
-. . . . . . . . . .
-```
-
-</td>
-</tr>
-</table>
-
-**What has happened?:**
-- `0—1 1—0 6—0` We push the number 42 to the stack
-- `0—1 1—0 1—0` We push the number 13 to the stack *(last domino wraps around on second line)*
-- `6—1` We execute the `SET` instruction
-  - it pops 13 for the address
-  - it pops 42 for the value
-
- The decimal number 42 is `60` in base7. The cell at address 13 is set to the value `6`, the cell at the address 12 is set to the value `0`:
+Writes data to the board. Takes <ins>at least</ins> 2 arguments from the stack:
+- The type Index to parse it as. It indicates the type and the direction of the data
+- The address of the first domino half
+- The data to write to the board. This can either be a single item from the stack or multiple if we write a string
 
 
-<ins>But why is the set domino "backwards"?</ins> Because the IP was moving to the west when `SET` was executed. Remember that the IP can move in all 4 cardinal directions, so there is no "backwards" or "forwards" in the traditional sense. The address argument indicates the first cell only. The other one depends on the direction the IP is moving.
+<ins>**There are essentially 4 types you can write it as**</ins>
 
-<br>
+(See list under [GET](#get)):
+
+<ins>**And the following directions**</ins>:
+- **RawIncrement**: Writes domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
+- **SingleStraightLine**: The IP moves in a straight line towards the <ins>last Instruction Pointer direction</ins>. No wrap around like in "Raw" mode. If you have a 5x10 grid you can get at most 4 dominos in horizontal direction or 10 dominos in vertical direction.
+- **NavMode** (to be implemented): In this mode the [NavigationMode](#how-navigation-modes-work) used for regular InstructionPointer movement is used to determine the direction. 
+
+<ins>**Here a table of supported type mappings:**</ins>
+
+(See table under [GET](#get)):
 
 **Errors:**
 
 - If the address argument is out of bounds, an `InvalidAddressError` is thrown.
 - If the value argument is not within 0-48, an `InvalidDominoValueError` is thrown.
-- If the address of the other domino half is out of bounds, an `AddressError` is thrown.
+- If the address of other domino halfs is out of bounds, an `AddressError` is thrown.
+- If you try to write a value which cannot fit on the amount of dominos dictated by the current [LIT](#lit) mode a `ValueTooLargeError` is thrown. E.g. LIT is 2 and the value requires more than 2 dominos to be written.
 
 #### `LIT`
 <img src="assets/horizontal/6-2.png" alt="Domino" width="128">
@@ -1824,8 +1789,8 @@ Here is a list of errors that can occur:
 - **JumpToExternalLabelError**: Jumping to an external label from {name} at address {address} is forbidden. External labels can only be used by CALL instruction
 - **CallToItselfError**:Calling to itself at address {address} is forbidden as it results in an infinite loop
 - **UnexpectedEndOfNumberError**: Unexpected end of number at address {address}
+- **ValueTooLargeError**: The value {value} is too large. Currently LIT {literalParseMode} is set. Meaning each number must fit on {literalParseMode} domino(s). Try increasing the LIT or use a higher BASE`.
 - **UnexpectedChangeInDirectionError**: Unexpected change in direction at address {address}. When using GET or SET the direction is dictated by the first domino and cannot change
-
 - **EmptyStackError**: Cannot pop from an empty stack
 - **FullStackError**: Cannot push to a full stack
 - **InvalidInstructionError**: Invalid instruction opcode {opcode}
@@ -1862,5 +1827,6 @@ A list of examples to help you understand the language better.
 19. [Input Controls](./examples/019_input_controls.md)
 20. [Check String Equality](./examples/020_check_string_equality.md)
 21. [Reduce domino amount](./examples/021_reduce_domino_amount.md)
+22. [Modify Code using SET](./examples/022_modify_code_using_set.md)
 
 *If you want your example to be added to this list, please create a PR.*

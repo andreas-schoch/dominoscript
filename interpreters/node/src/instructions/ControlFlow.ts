@@ -26,6 +26,7 @@ export function LABEL(ctx: Context): void {
   if (ctx.parent) {
     // Direct parent has access to the label but under a potentially different id if it has multiple imports
     const parentCtx = contexts[ctx.parent];
+    /* c8 ignore next */
     if (!parentCtx) throw new DSInterpreterError(`Parent context ${ctx.parent} not found`);
     const existingParentIds = Object.keys(parentCtx.labels).map(id => parseInt(id));
     const nextParentId = existingParentIds.length ? Math.min(...existingParentIds) - 1 : -1;

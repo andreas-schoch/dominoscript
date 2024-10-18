@@ -42,6 +42,8 @@ export class DSConnectionToEmptyCellsError extends Error {
 }
 
 // Should not really be possible to occur under normal circumstances unless there is a bug in the interpreter
+// I'd rather have the interpreter crash than continue just to crash later on with a more cryptic error
+// Which is why it is ignored in the coverage report. It is just a safety net for things which should not be possible.
 /* c8 ignore start */
 export class DSInterpreterError extends Error {
   constructor(message: string) {
@@ -104,6 +106,13 @@ export class DSUnexpectedEndOfNumberError extends Error {
   constructor(address: number) {
     super(`Unexpected end of number at address ${address}`);
     this.name = 'UnexpectedEndOfNumberError';
+  }
+}
+
+export class DSValueTooLargeError extends Error {
+  constructor(value: number, literalParseMode: number) {
+    super(`The value ${value} is too large. Currently LIT ${literalParseMode} is set. Meaning each number must fit on ${literalParseMode} domino(s). Try increasing the LIT or use a higher BASE`);
+    this.name = 'ValueTooLargeError';
   }
 }
 

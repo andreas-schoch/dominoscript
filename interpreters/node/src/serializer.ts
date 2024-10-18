@@ -21,7 +21,9 @@ export function gridToSource(grid: Grid): string {
   }
 
   for (const cell of grid.cells) {
+    /* c8 ignore next */
     if (cell.value === null && cell.connection !== null) throw new DSInterpreterError('cell.connection cannot be null if cell.value is not null');
+    /* c8 ignore next */
     if (cell.connection === null && cell.value !== null) throw new DSInterpreterError('cell.value cannot be null if cell.connection is not null');
     if (cell.value === null || cell.connection === null) continue;
 

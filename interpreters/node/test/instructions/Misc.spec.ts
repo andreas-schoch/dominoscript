@@ -1,4 +1,4 @@
-import {DSAddressError, DSFullStackError, DSInvalidBaseError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidLiteralParseModeError, DSInvalidSignError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
+import {DSAddressError, DSFullStackError, DSInvalidBaseError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidLiteralParseModeError, DSInvalidSignError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError, DSValueTooLargeError} from '../../src/errors.js';
 import {rejects, strictEqual} from 'assert';
 import {createRunner} from '../../src/Runner.js';
 import {dedent} from '../../src/helpers.js';
@@ -29,6 +29,15 @@ describe('Misc', () => {
         const ds = createRunner('0—1 0—0 0—1 1—0 2—0 6—0 . . . . . . . . . . . . . . . . . .');
         const ctx = await ds.run();
         strictEqual(ctx.stack.toString(), '[-1]');
+      });
+      it('should be able to get a domino by label', async () => {
+        // NUM 5 LABEL NUM 0 NUM 1 NEG GET (2—4)
+        const ctx = await createRunner('0—1 0—5 4—2 0—1 0—0 0—1 0—1 1—5 6—0').run();
+        strictEqual(ctx.stack.toString(), '[18]');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 5 LABEL NUM 0 NUM 2 NEG GET (2—4)
+        await rejects(createRunner('0—1 0—5 4—2 0—1 0—0 0—1 0—2 1—5 6—0').run(), DSInvalidLabelError);
       });
       it('should throw an AddressError when trying to get out of bound single domino', async () => {
       // NUM 0 NUM 342 GET
@@ -207,6 +216,15 @@ describe('Misc', () => {
         // NUM 1 NUM 14 GET
         const ctx = await createRunner('0—1 0—1 0—1 1—0 2—0 6—0 . . . . . . . . . . . . . . . . . .').run();
         strictEqual(ctx.stack.toString(), '[0]');
+      });
+      it('should be able to get an unsigned number by label', async () => {
+        // NUM 7 LABEL NUM 1 NUM 1 NEG GET (2—4 0—1 0—1)
+        const ctx = await createRunner('0—1 1—0 1—0 4—2 0—1 0—1 0—1 0—1 1—5 6—0').run();
+        strictEqual(ctx.stack.toString(), '[9654]');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 7 LABEL NUM 1 NUM 2 NEG GET
+        await rejects(createRunner('0—1 1—0 1—0 4—2 0—1 0—1 0—1 0—2 1—5 6—0').run(), DSInvalidLabelError);
       });
     });
 
@@ -457,6 +475,18 @@ describe('Misc', () => {
         ));
         await rejects(ds.run(), DSUnexpectedChangeInDirectionError);
       });
+      it('should be able to get an signed number by label', async () => {
+        // NUM 21 LABEL NUM 2 NUM 1 NEG GET (2—1 6—5 4—3)
+        const ctxPos = await createRunner('0—1 1—0 3—0 4—2 0—1 0—2 0—1 0—1 1—5 6—0 . 2—1 6—5 4—3').run();
+        strictEqual(ctxPos.stack.toString(), '[-2334]');
+        // NUM 21 LABEL NUM 2 NUM 1 NEG GET (2—0 6—5 4—3)
+        const ctxNeg = await createRunner('0—1 1—0 3—0 4—2 0—1 0—2 0—1 0—1 1—5 6—0 . 2—0 6—5 4—3').run();
+        strictEqual(ctxNeg.stack.toString(), '[2334]');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 21 LABEL NUM 2 NUM 2 NEG GET
+        await rejects(createRunner('0—1 1—0 3—0 4—2 0—1 0—2 0—1 0—2 1—5 6—0 . 2—1 6—5 4—3').run(), DSInvalidLabelError);
+      });
     });
   });
 
@@ -590,9 +620,18 @@ describe('Misc', () => {
         const ds = createRunner('0—1 1—1 0—0 0—1 0—0 0—1 0—1 0—1 1—0 1—1 6—3 5—3');
         await ds.run();
       });
+      it('should be able to set a domino by label', async () => {
+        // NUM 0 LABEL NUM 41 NUM 0 NUM 1 NEG SET
+        const ctx = await createRunner('0—1 0—0 4—2 0—1 1—0 5—6 0—1 0—0 0—1 0—1 1—5 6—1').run();
+        strictEqual(ctx.board.serialize(), '5—6 0—0 4—2 0—1 1—0 5—6 0—1 0—0 0—1 0—1 1—5 6—1\n');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 0 LABEL NUM 41 NUM 0 NUM 2 NEG SET
+        await rejects(createRunner('0—1 0—0 4—2 0—1 1—0 5—6 0—1 0—0 0—1 0—2 1—5 6—1').run(), DSInvalidLabelError);
+      });
     });
 
-    describe('type 1- UNSIGNED NUMBER- straight line in current ', () => {
+    describe('type 1- UNSIGNED NUMBER- straight line in current IP direction', () => {
       it('should store the number 47 from left to right using 2 dominos while in default LIT 0', async () => {
         // NUM 47 NUM 1 NUM 20 SET
         const ctxPos = await createRunner('0—1 1—0 6—5 0—1 0—1 0—1 1—0 2—6 6—1 . . . . . .').run();
@@ -665,9 +704,26 @@ describe('Misc', () => {
         // NUM 2400 NUM 1 NUM 20 SET
         await rejects(createRunner('0—1 2—0 6—6 6—6 0—1 0—1 0—1 1—0 2—6 6—1').run(), DSAddressError);
       });
+      it('should throw an InvalidValueError if we pass a negative number as an argument', async () => {
+        // NUM 5 NEG NUM 1 NUM 0 SET
+        await rejects(createRunner('0—1 0-5 1-5 0-1 0-1 0-1 0-0 6-1').run(), DSInvalidValueError);
+      });
+      it('should throw an ValueToLargeError when we are in LIT 1 mode but require more than 1 domino to encode the number', async () => {
+        // NUM 100 NUM 1 LIT NUM 2 NUM 0 SET
+        await rejects(createRunner('0—1 1—2 0—2 0—1 0—1 6—2 0—1 0—1 0—1 0—0 6—1').run(), DSValueTooLargeError);
+      });
+      it('should be able to set an unsigned number by label', async () => {
+        // NUM 0 LABEL NUM 41 NUM 1 NUM 1 NEG SET
+        const ctx = await createRunner('0—1 0—0 4—2 0—1 1—0 5—6 0—1 0—1 0—1 0—1 1—5 6—1').run();
+        strictEqual(ctx.board.serialize(), '1—0 5—6 4—2 0—1 1—0 5—6 0—1 0—1 0—1 0—1 1—5 6—1\n');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 0 LABEL NUM 41 NUM 1 NUM 2 NEG SET
+        await rejects(createRunner('0—1 0—0 4—2 0—1 1—0 5—6 0—1 0—1 0—1 0—2 1—5 6—1').run(), DSInvalidLabelError);
+      });
     });
 
-    describe('type 2- SIGNED NUMBER- straight line in current ', () => {
+    describe('type 2- SIGNED NUMBER- straight line in current IP direction', () => {
       it('should store the number 47 and-47 from left to right using 2 dominos while in default LIT 0', async () => {
       // NUM 47 NUM 2 NUM 20 SET
         const ctxPos = await createRunner('0—1 1—0 6—5 0—1 0—2 0—1 1—0 2—6 6—1 . . . . . .').run();
@@ -732,6 +788,89 @@ describe('Misc', () => {
         // NUM 2400 NUM 2 NUM 20 SET
         await rejects(createRunner('0—1 2—0 6—6 6—6 0—1 0—2 0—1 1—0 2—6 6—1').run(), DSAddressError);
       });
+      it('should throw an ValueToLargeError when we are in LIT 1 mode but require more than 1 domino to encode the number', async () => {
+        // NUM 100 NUM 1 LIT NUM 2 NUM 0 SET
+        await rejects(createRunner('0—1 1—2 0—2 0—1 0—1 6—2 0—1 0—2 0—1 0—0 6—1').run(), DSValueTooLargeError);
+      });
+      it('should be able to set a signed number by label', async () => {
+        // NUM 0 LABEL NUM 49 NUM 2 NUM 1 NEG SET
+        const ctx = await createRunner('0—1 0—0 4—2 0—1 1—1 0—0 0—1 0—2 0—1 0—1 1—5 6—1').run();
+        strictEqual(ctx.board.serialize(), '2—0 0—1 0—0 0—1 1—1 0—0 0—1 0—2 0—1 0—1 1—5 6—1\n');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 0 LABEL NUM 49 NUM 2 NUM 2 NEG SET
+        await rejects(createRunner('0—1 0—0 4—2 0—1 1—1 0—0 0—1 0—2 0—1 0—2 1—5 6—1').run(), DSInvalidLabelError);
+      });
+    });
+
+    describe('type 3- STRING - straight line in current IP direction', () => {
+      it('should store the string "hi!" on the board', async () => {
+        // STR "hi!" NUM 3 NUM 29 SET
+        const ctxPos = await createRunner('0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—3 0—1 1—0 4—1 6—1 . . . . . . . . . . . . . . .').run();
+        strictEqual(ctxPos.board.serialize(), '0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—3 0—1 1—0 4—1 6—1 . 1—2 0—6 1—2 1—0 1—0 4—5 0—0\n');
+      });
+      it('should store the string "hi!" on the board using base 10 and LIT 2', async () => {
+        // STR "hi!" NUM 2 LIT NUM 10 BASE NUM 3 NUM 1 SET
+        const ctxPos = await createRunner('0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—2 6—2 0—1 0—0 1—3 6—3 0—1 0—0 0—3 0—1 0—0 0—1 4—3').run();
+        strictEqual(ctxPos.board.serialize(), '. 0—1 0—4 0—1 0—5 3—3 0—0 . 0—0 0—1 0—2 6—2 0—1 0—0 1—3 6—3 0—1 0—0 0—3 0—1 0—0 0—1 4—3\n');
+      });
+      it('should store the string "hi!" on the board using base 16 and LIT 1', async () => {
+        // STR "hi!" NUM 1 LIT NUM 16 BASE NUM 3 NUM 1 SET
+        const ctxPos = await createRunner('0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—1 6—2 0—1 2—2 6—3 0—1 0—3 0—1 0—1 2—b').run();
+        strictEqual(ctxPos.board.serialize(), '. 6—8 6—9 2—1 0—0 . 1—0 4—5 0—0 0—1 0—1 6—2 0—1 2—2 6—3 0—1 0—3 0—1 0—1 2—b\n');
+      });
+      it('should throw AddressError when it cannot fit the whole string on the given cardinal direction', async () => {
+        // STR "hi!" NUM 3 NUM 29 SET
+        await rejects(createRunner('0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—3 0—1 1—0 4—1 6—1').run(), DSAddressError);
+      });
+      it('should throw an ValueToLargeError when we are in LIT 1 but require 2 dominos to encode characters', async () => {
+        // STR "hi!" NUM 1 LIT NUM 10 BASE NUM 3 NUM 1 SET
+        await rejects(createRunner('0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—1 6—2 0—1 1—3 6—3 0—1 0—3 0—1 0—1 4—3').run(), DSValueTooLargeError);
+      });
+
+      it('should set it in the correct InstructionPointer direction', async () => {
+        // STR "h" NUM 3 NUM 6 SET (west)
+        // STR "h" NUM 3 NUM 0 SET (south)
+        const ctx = await createRunner(dedent(`\
+          . 0—2 1—2 0—6 0—0 0—1 0—3 0—1 1—2 0—2 6—6 6 . . . .
+                                                    |        
+          . 4—3 0—1 1—0 3—0 1—0 0—0 6—0 2—1 2—0 1—6 6 . . . .
+                                                             
+          . 6 . . . . . . . . . . . . . . . . . . . . . . . .
+            |                                                
+          . 1 . . . . . . . . . . . . . . . . . . . . . . . .
+                                                             
+          . . . . . . . . . . . . . . . . . . . . . . . . . .
+                                                             
+          . . . . . . . . . . . . . . . . . . . . . . . . . .`
+        )).run();
+
+        const expectedResult = dedent(`\
+          . 0—2 1—2 0—6 0—0 0—1 0—3 0—1 1—2 0—2 6—6 6 . . . 1
+                                                    |       |
+          . 4—3 0—1 1—0 3—0 1—0 0—0 6—0 2—1 2—0 1—6 6 . . . 2
+                                                             
+          . 6 . . . . . . . . . . . . . . . . . . . . . . . 0
+            |                                               |
+          . 1 . . . . . . . . . . . . . . . 0—0 6—0 2—1 . . 6
+                                                             
+          . . . . . . . . . . . . . . . . . . . . . . . . . 0
+                                                            |
+          . . . . . . . . . . . . . . . . . . . . . . . . . 0\n`
+        );
+
+        strictEqual(ctx.board.serialize(), expectedResult);
+      });
+      it('should be able to set a string by label', async () => {
+        // NUM 0 LABEL STR "hi!" NUM 3 NUM 1 NEG SET
+        const ctx = await createRunner('0—1 0—0 4—2 0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—3 0—1 0—1 1—5 6—1').run();
+        strictEqual(ctx.board.serialize(), '1—2 0—6 1—2 1—0 1—0 4—5 0—0 1—0 1—0 4—5 0—0 0—1 0—3 0—1 0—1 1—5 6—1\n');
+      });
+      it('should throw an InvalidLabelError when trying to get data by invalid label', async () => {
+        // NUM 0 LABEL STR "hi!" NUM 3 NUM 2 NEG SET
+        await rejects(createRunner('0—1 0—0 4—2 0—2 1—2 0—6 1—2 1—0 1—0 4—5 0—0 0—1 0—3 0—1 0—2 1—5 6—1').run(), DSInvalidLabelError);
+      });
+
     });
   });
 

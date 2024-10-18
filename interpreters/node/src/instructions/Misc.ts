@@ -1,5 +1,5 @@
 import {Cell, CellValue} from '../Board.js';
-import {DSFullStackError, DSInterpreterError, DSInvalidBaseError, DSInvalidLiteralParseModeError, DSInvalidSignError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError} from '../errors.js';
+import {DSFullStackError, DSInterpreterError, DSInvalidBaseError, DSInvalidLabelError, DSInvalidLiteralParseModeError, DSInvalidSignError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError, DSValueTooLargeError} from '../errors.js';
 import {CardinalDirection} from '../navModes.js';
 import {Context} from '../Context.js';
 
@@ -8,7 +8,13 @@ interface ParseOutput {value: number, endCell: Cell | null, dir: CardinalDirecti
 const out: ParseOutput = {value: 0, endCell: null, dir: 'east'};
 
 export function GET(ctx: Context): void {
-  const address = ctx.stack.pop();
+  let address = ctx.stack.pop();
+  if (address < 0) {
+    const label = ctx.labels[address];
+    if (!label) throw new DSInvalidLabelError(address);
+    address = label.address;
+  }
+
   const type = ctx.stack.pop();
   const cell = ctx.board.getOrThrow(address);
 
@@ -27,7 +33,7 @@ export function GET(ctx: Context): void {
   case 1: {
     // UNSIGNED NUMBER LITERAL - Single Straight line
     if (cell.value === null) return ctx.stack.push(0);
-    parseNumberInCardinalDirection(ctx, cell, out, false);
+    getNumberInCardinalDirection(ctx, cell, out, false);
     ctx.stack.push(out.value);
     break;
   }
@@ -35,7 +41,7 @@ export function GET(ctx: Context): void {
   case 2: {
     // SIGNED NUMBER LITERAL - Single Straight line
     if (cell.value === null) return ctx.stack.push(0);
-    parseNumberInCardinalDirection(ctx, cell, out, true);
+    getNumberInCardinalDirection(ctx, cell, out, true);
     ctx.stack.push(out.value);
     break;
   }
@@ -50,7 +56,7 @@ export function GET(ctx: Context): void {
 
     out.value = -1;
     while (out.value !== 0) {
-      parseNumberInCardinalDirection(ctx, nextCell, out, false);
+      getNumberInCardinalDirection(ctx, nextCell, out, false);
       ctx.numberBuffer[totalChars++] = out.value;
       if (out.dir !== initialCardinalDirection) throw new DSUnexpectedChangeInDirectionError(nextCell.address);
       if (totalChars >= available) throw new DSFullStackError();
@@ -83,7 +89,13 @@ export function SET(ctx: Context): void {
   /* c8 ignore next */
   if (!ctx.currentCell || !ctx.lastCell) throw new DSInterpreterError('Not possible to execute SET without the IP having moved before');
 
-  const address = ctx.stack.pop();
+  let address = ctx.stack.pop();
+  if (address < 0) {
+    const label = ctx.labels[address];
+    if (!label) throw new DSInvalidLabelError(address);
+    address = label.address;
+  }
+
   const type = ctx.stack.pop();
   const cell = ctx.board.getOrThrow(address);
 
@@ -110,103 +122,27 @@ export function SET(ctx: Context): void {
 
   case 1: {
     // UNSIGNED NUMBER LITERAL - Single Straight line in current IP direction
-    const value = ctx.stack.pop();
-    const cardinalDirection = getCardinalDirection(ctx.lastCell);
-    let cellFirst = cell;
-    let cellSecond = ctx.board.getOrThrow(cell[cardinalDirection]);
-    let startingIndex = 0;
-
-    let valueString = value.toString(ctx.base);
-    if (ctx.literalParseMode === 0) {
-      startingIndex = -1;
-      if (valueString.length % 2 === 0) valueString = '0' + valueString; // make it odd length because first half used for amount of dominos
-    } else {
-      if (valueString.length % 2 !== 0) valueString = '0' + valueString; // make it even length because all halfs are used for values
-    }
-
-    for (let i = startingIndex; i < valueString.length; i += 2) {
-      let valueFirst: number;
-      let valueSecond: number;
-      if (i === -1) {
-        valueFirst = Math.floor(valueString.length / 2); // num of extra dominos
-        valueSecond = parseInt(valueString[i + 1], ctx.base);
-      } else {
-        valueFirst = parseInt(valueString[i], ctx.base);
-        valueSecond = parseInt(valueString[i + 1], ctx.base);
-      }
-
-      /* c8 ignore next */
-      if (valueFirst < 0 || valueFirst >= ctx.base || valueSecond < 0 || valueSecond >= ctx.base) throw new DSInterpreterError('faulty parsing in SET');
-
-      ctx.board.set(cellFirst.address, valueFirst as CellValue, cellSecond.address, valueSecond as CellValue);
-
-      if (i === valueString.length - 2) break;
-      cellFirst = ctx.board.getOrThrow(cellSecond[cardinalDirection]);
-      cellSecond = ctx.board.getOrThrow(cellFirst[cardinalDirection]);
-    }
-
+    setNumberInCardinalDirection(ctx, cell, ctx.stack.pop(), getCardinalDirection(ctx.lastCell), false);
     break;
   }
 
   case 2: {
     // SIGNED NUMBER LITERAL - Single Straight line in current IP direction
-    // TODO try to deduplicate this with the unsigned number literal
-    const value = ctx.stack.pop();
-    const cardinalDirection = getCardinalDirection(ctx.lastCell);
-    let cellFirst = cell;
-    let cellSecond = ctx.board.getOrThrow(cell[cardinalDirection]);
-    let startingIndex = 0;
-
-    let valueString = value.toString(ctx.base);
-    if (value > 0) valueString = '+' + valueString;
-    if (ctx.literalParseMode === 0) {
-      startingIndex = -1;
-      // make it odd length because first half used for amount of dominos
-      if (valueString.length % 2 === 0) valueString = valueString.slice(0, 1) + '0' + valueString.slice(1);
-    } else {
-      // make it even length because all halfs are used for values
-      if (valueString.length % 2 !== 0) valueString = valueString.slice(0, 1) + '0' + valueString.slice(1);
-    }
-
-    for (let i = startingIndex; i < valueString.length; i += 2) {
-      let valueFirst: number;
-      let valueSecond: number;
-      if (i === -1) {
-        // Here the "sign bit" can only be on the second half of the first domino
-        let valueSecondRaw = valueString[i + 1];
-        if (valueSecondRaw === '+') valueSecondRaw = '0';
-        else if (valueSecondRaw === '-') valueSecondRaw = '1';
-
-        valueFirst = Math.floor(valueString.length / 2); // num of extra dominos
-        valueSecond = parseInt(valueSecondRaw, ctx.base);
-      } else {
-        // Here the "sign bit" can only be on the first half of the first domino
-        let valueFirstRaw = valueString[i];
-        /* c8 ignore next */
-        if (i > 0 && (valueFirstRaw === '+' || valueFirstRaw === '-')) throw new DSInterpreterError('Sign bit can only be placed on the first half of the first domino when LIT is static');
-        if (valueFirstRaw === '+') valueFirstRaw = '0';
-        else if (valueFirstRaw === '-') valueFirstRaw = '1';
-
-        valueFirst = parseInt(valueFirstRaw, ctx.base);
-        valueSecond = parseInt(valueString[i + 1], ctx.base);
-      }
-
-      /* c8 ignore next */
-      if (valueFirst < 0 || valueFirst >= ctx.base || valueSecond < 0 || valueSecond >= ctx.base) throw new DSInterpreterError('faulty parsing in SET');
-
-      ctx.board.set(cellFirst.address, valueFirst as CellValue, cellSecond.address, valueSecond as CellValue);
-
-      if (i === valueString.length - 2) break;
-      cellFirst = ctx.board.getOrThrow(cellSecond[cardinalDirection]);
-      cellSecond = ctx.board.getOrThrow(cellFirst[cardinalDirection]);
-    }
-
+    setNumberInCardinalDirection(ctx, cell, ctx.stack.pop(), getCardinalDirection(ctx.lastCell), true);
     break;
   }
 
   case 3: {
     // STRING LITERAL - Single Straight line in current IP direction
-    throw new Error('Not implemented');
+    const cardinalDirection = getCardinalDirection(ctx.lastCell);
+    let nextCell = cell;
+    let nextValue = ctx.stack.pop();
+    while(true) {
+      const lastSetCell = setNumberInCardinalDirection(ctx, nextCell, nextValue, cardinalDirection, false);
+      if (nextValue === 0) break;
+      nextCell = ctx.board.getOrThrow(lastSetCell[cardinalDirection]);
+      nextValue = ctx.stack.pop();
+    }
   }}
 
   // case 4: {
@@ -282,7 +218,64 @@ function isNegativeSign(cell: Cell): boolean {
   return cell.value === 1;
 }
 
-function parseNumberInCardinalDirection(ctx: Context, cell: Cell, out: ParseOutput, isSigned: boolean): void {
+function setNumberInCardinalDirection(ctx: Context, cell: Cell, value: number, cardinalDirection: CardinalDirection, isSigned: boolean): Cell {
+  if (!isSigned && value < 0) throw new DSInvalidValueError(value);
+
+  // const cardinalDirection = getCardinalDirection(cell);
+  let cellFirst = cell;
+  let cellSecond = ctx.board.getOrThrow(cell[cardinalDirection]);
+  let startingIndex = 0;
+
+  let valueString = value.toString(ctx.base);
+  if (isSigned && value > 0) valueString = '+' + valueString;
+  if (ctx.literalParseMode === 0) {
+    startingIndex = -1;
+    // make it odd length because first half used for amount of dominos
+    if (isSigned && valueString.length % 2 === 0) valueString = valueString.slice(0, 1) + '0' + valueString.slice(1);
+    else if (!isSigned && valueString.length % 2 === 0) valueString = '0' + valueString;
+  } else {
+    // make it even length because all halfs are used for values
+    if (isSigned && valueString.length % 2 !== 0) valueString = valueString.slice(0, 1) + '0' + valueString.slice(1);
+    else if (!isSigned && valueString.length % 2 !== 0) valueString = '0' + valueString;
+  }
+
+  if (ctx.literalParseMode !== 0 && valueString.length > ctx.literalParseMode * 2) throw new DSValueTooLargeError(value, ctx.literalParseMode);
+
+  for (let i = startingIndex; i < valueString.length; i += 2) {
+    let valueFirst: number;
+    let valueSecond: number;
+    if (i === -1) {
+      let valueSecondRaw = valueString[i + 1];
+      if (valueSecondRaw === '+') valueSecondRaw = '0';
+      else if (valueSecondRaw === '-') valueSecondRaw = '1';
+
+      valueFirst = Math.floor(valueString.length / 2); // num of extra dominos
+      valueSecond = parseInt(valueSecondRaw, ctx.base);
+    } else {
+      let valueFirstRaw = valueString[i];
+      /* c8 ignore next */
+      if (i > 0 && (valueFirstRaw === '+' || valueFirstRaw === '-')) throw new DSInterpreterError('Sign bit can only be placed on the first half of the first domino when LIT is static');
+      if (valueFirstRaw === '+') valueFirstRaw = '0';
+      else if (valueFirstRaw === '-') valueFirstRaw = '1';
+
+      valueFirst = parseInt(valueFirstRaw, ctx.base);
+      valueSecond = parseInt(valueString[i + 1], ctx.base);
+    }
+
+    /* c8 ignore next */
+    if (valueFirst < 0 || valueFirst >= ctx.base || valueSecond < 0 || valueSecond >= ctx.base) throw new DSInterpreterError('faulty parsing in SET');
+
+    ctx.board.set(cellFirst.address, valueFirst as CellValue, cellSecond.address, valueSecond as CellValue);
+
+    if (i === valueString.length - 2) break;
+    cellFirst = ctx.board.getOrThrow(cellSecond[cardinalDirection]);
+    cellSecond = ctx.board.getOrThrow(cellFirst[cardinalDirection]);
+  }
+
+  return cellSecond;
+}
+
+function getNumberInCardinalDirection(ctx: Context, cell: Cell, out: ParseOutput, isSigned: boolean): void {
   // "out" is a mutable object that we reuse in an attempt to minimize GC by not creating throwaway objects every time.
   // Since we also have it referenced outside, there is not need to return it. Not the most elegant solution but works for now.
   const initialCardinalDirection = getCardinalDirection(cell);
