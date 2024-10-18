@@ -48,22 +48,22 @@ FUNCTION MAIN: // address: 136
 It is more or less the equivalent of the following JavaScript code:
 
 ```js
-let frame = 0;
-let time = Date.now();
+  let frame = 0;
+  let time = Date.now();
 
-while(true) {
-  const diff = Date.now() - time;
-  if (diff > 99) {
-    time = Date.now();
-    frame++;
-    main();
+  while(true) {
+    const diff = Date.now() - time;
+    if (diff > 99) {
+      time = Date.now();
+      frame++;
+      main();
+    }
   }
-}
 
-function main() {
-  stdout.write('\033[2J\033[H'); // <--- ANSI sequence to clear screen and move cursor to top left
-  console.log('Frame:', frame);
-}
+  function main() {
+    stdout.write('\033[2J\033[H'); // <--- ANSI sequence to clear screen and move cursor to top left
+    console.log('Frame:', frame);
+  }
 ```
 
 ## DominoScript:

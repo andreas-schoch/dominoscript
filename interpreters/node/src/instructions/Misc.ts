@@ -248,7 +248,6 @@ export function TIME(ctx: Context): void {
 
 export function NOOP(_ctx: Context): void {
   // Do nothing
-  console.log('noop');
 }
 
 //////////////////////////////////////
