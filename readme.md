@@ -11,9 +11,7 @@ Well, now you can! Introducing DominoScript!
 
 This repository contains the reference implementation written in TypeScript as well as all the documentation and examples for the language.
 
-**It's still very much a work-in-progress. Not everything is fully fleshed out yet.**
-
-*Feel free to open issues for clarification requests, feature suggestions, bugs etc. I am grateful for any interest and help in eliminating bugs, edgecases and improve the documentation. I'd love for people to make their own Interpreters or Compilers and will link to all of them. Just be warned about potential breaking changes this early on!*
+**It's still very much a work-in-progress. Not everything is fully fleshed out yet.** Do you want to [contribute](#contributing)?
 
 <p align="center">
   <img style="aspect-ratio: 1;" src="docs/dominoscript-logo.png" alt="Domino" width="450">
@@ -31,7 +29,7 @@ This repository contains the reference implementation written in TypeScript as w
   - [How to represent floating point numbers](#how-to-represent-floating-point-numbers)
   - [How the Instruction Pointer Moves](#how-the-instruction-pointer-moves)
   - [How Navigation Modes work](#how-navigation-modes-work)
-  - [How to read DominoScript manually](#how-to-read-dominoscript-manually)
+  - [How to read DominoScript](#how-to-read-dominoscript)
 
 - **[Instructions](#instructions)**
   - [Stack Management](#stack-management)
@@ -55,7 +53,12 @@ This repository contains the reference implementation written in TypeScript as w
   - [Unicode To Domino](#unicode-to-domino-lookup-table)
   - [Error Types](#error-types)
   - [Domino Modes](#domino-modes)
-  - [Examples](#examples)
+
+- **[Contributing](#contributing)**
+
+- **[Roadmap](#roadmap)**
+
+- **[Examples](#examples)**
 
 <br>
 
@@ -671,33 +674,34 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 Again, these are only the very basic navigation modes. See the [reference](#navigation-modes-reference) for all the different modes and how they work.
 
-## How to read DominoScript manually
+## How to read DominoScript
 
-DS isn't meant to be human readable but there are deterministic patterns that will make it much easier to follow along once you know them.
+DS isn't meant to be easily human readable but there are patterns that, once you recognize them, will make it much easier to understand what is going on.
 
 All of these patterns revolve around how the `NUM` and `STR` instructions behave differently than any other instruction.
 
 Once you understand their differences, reading the rest of DominoScript is mostly a matter of keeping track of how the other instructions affect:
 - the Stack (most of them do)
-- the Instruction Pointer (JUMP, CALL, NAVM).
+- the Instruction Pointer ([JUMP](#jump), [CALL](#call), [NAVM](#navm)).
+- The way Domino pieces are parsed ([LIT](#lit), [BASE](#base), [EXT](#ext))
 
 <br>
 
-Here are the pattern and some examples:
+The following patterns and examples assume that the default [LIT](#lit) mode was not changed:
 
 > <ins>**PATTERN 1**<ins>:
 >
 > Look out for `0—1` and `0—2` dominos.
 >
-> These are the opcodes for the `NUM` and `STR` instructions respectively. They are used to push numbers or strings to the stack so you will see them a lot.
+> These are the opcodes for the `NUM` and `STR` instructions and indicate the start of a <ins>number literal</ins> or a <ins>string literal</ins> *(unless they themselves are part of a literal)*.
 >
-> They are the <ins>ONLY 2 instructions</ins> that don't get their arguments from the stack but from the board.
+> They are the <ins>only 2 instructions</ins> that don't get their arguments from the stack but from the board.
 
 > <ins>**PATTERN 2**<ins>:
 >
 > Look out for the first half of a domino right after a `NUM` instruction.
 >
-> It will decide how many more dominos will be part of the argument before the next instruction is executed. 
+> It will decide how many more dominos will be part of the number literal before the next instruction is executed. 
 
 **The below code results in the number 6 being pushed and popped of the stack:**
 ```
@@ -705,7 +709,7 @@ Here are the pattern and some examples:
 ```
 
 - `0—1` is the `NUM` instruction (**PATTERN 1**)
-- `0—6` is the argument for NUM
+- `0—6` is the number literal
   - first half is 0 which means no more dominos will follow and only second half is parsed as number (see **PATTERN 2**)
   - Second half is 6 in both base7 and decimal so the number 6 is pushed to the stack
 - `0—0` is the next instruction. We know that because the first half of previous domino told us that no more dominos will be part of the argument. (see **PATTERN 2**)
@@ -727,13 +731,13 @@ Here are the pattern and some examples:
 >
 > Look out for the first half of a domino right after a `STR` instruction.
 >
-> For the same reason as after a `NUM` instruction. It will decide how many more dominos will be part of the <ins> character</ins> before the next character is parsed.
+> For the same reason as after a `NUM` instruction. It will decide how many more dominos will be part of the <ins> character</ins> before the next character of the string literal is parsed.
 
 > <ins>**PATTERN 4**<ins>:
 >
 > Look out for the NULL terminator `0—0` during a `STR` instruction.
 >
-> It indicates the the string is complete and will be pushed to the stack and that next domino will be a new instruction.
+> It indicates that the string literal is complete and that the next domino will be parsed as an instruction.
 
 **The below code results in the string "abc" being pushed to the stack.**
 ```
@@ -748,18 +752,9 @@ Here are the pattern and some examples:
 
 <br>
 
-All these patterns are deterministic but it doesn't mean that every `0—0`, `0—1`, `0—2` you see is a NULL terminator, a `NUM` instruction or a `STR` instruction respectively *(as you can see in the examples above!)*
-
-**It all depends on the context and how the IP moves:**
-- A `0—0` can be part of a number, the NULL terminator or the `POP` instruction
-- A `0—1` can be part of a number, the `NUM` instruction or the `ADD` instruction if the IP moves in a different direction
-- A `0—2` can be part of a number, the `STR` instruction or the `NOT` instruction if the IP moves in a different direction
-
-<br>
-
 The patterns are universal for all cardinal directions the Instruction Pointer can move in.
 
-I only showed examples where the IP moves from left to right but you have to understand that the same domino can either mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
+I only showed examples where the IP moves from left to right but you have to understand that the same domino can mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
 
 ```
 0—1 . 1—0 . 1 . 0 . . .
@@ -773,7 +768,7 @@ I only showed examples where the IP moves from left to right but you have to und
 
 The base instruction set is designed to fit on a single "double-six" domino. It consists of up to 49 instructions and is shown below on a 7x7 matrix.
 
-> Keep in mind that if you change into a higher "base", you will need to use a different domino to represent the same opcode than shown in the images you see alongside each instruction. E.g. a NOOP in base7 is `6—6` but in base16 it would be `3—0`.
+> Keep in mind that if you change into a higher [BASE](#base), you will need to use a different domino to represent the same opcode than shown in the images you see alongside each instruction. E.g. a NOOP in base7 is `6—6` but in base16 it would be `3—0`.
 
 |     |  0                | 1               | 2                | 3                | 4            | 5                | 6                | CATEGORY                                      |
 |-----|-------------------|-----------------|------------------|------------------|--------------|------------------|------------------|-----------------------------------------------|
@@ -795,10 +790,6 @@ The base instruction set is designed to fit on a single "double-six" domino. It 
 
 Discards the top of the stack.
 
-**Errors**:
-
-- If the stack is empty, a `StackUnderflowError` is thrown.
-
 #### `NUM`
 <img src="assets/horizontal/0-1.png" alt="Domino" width="128">
 
@@ -808,7 +799,7 @@ With 7 dominos, 13 out of 14 halfs are used for the number. You can theoreticall
 
 You might think that since internally numbers are int32s, that we parse from base7 to two's complement. That is not the case. We simple push the decimal version of the positive base7 number to the stack
 
-**For example:**
+**<ins>For example:</ins>**
 - `0—0` represents the number `0` in both decimal and base7
 - `0—6` represents the number `6` in both decimal and base7
 - `1—6 6—6` represents the number `342` in decimal and `666` in base7
@@ -817,12 +808,12 @@ You might think that since internally numbers are int32s, that we parse from bas
 - `6—0 1—0 4—1 3—4 2—1 1—1 6—1` represents the number `2,147,483,647` in decimal and `104,134,211,161` in base7 (exactly the max int32 value)
 - `6—6 6—6 6—6 6—6 6—6 6—6 6—6` represents the number -1,895,237,402. **WHY?**: The actual decimal number the dominos represent is `96,889,010,406` which is ~45x larger than the max int32 value. It wraps around about that many times before it reaches the final value.
 
-**What if numbers are read from the other direction?**
+**<ins>What if numbers are read from the other direction?<ins>**
 - `1—1 1—1`, `2—2 2—2 2—2` for example will be exactly the same numbers (216 in decimal) eastwards and westwards.
 - `1—2 3—1` when parsed backwards is `1—3 2—1` and can therefore represent different numbers if the IP moves to the east or to the west.
 - `1—6 6—6` represents 666 in base7 (342 in decimal) but when parsed backwards the interpreter will raise an `UnexpectedEndOfNumberError`. Remember that the first half of the first domino indicates how many more will follow. In this case it expects to read 6 more dominos but the number ends prematurely after 1 domino.
 
-**To push the number 10 and 5 to the stack you would use the following dominos:**
+**<ins>To push the number 10 and 5 to the stack you would use the following dominos:<ins>**
 - In pseudo code: `NUM 10 NUM 5`
 - In DominoScript: `0—1 1—0 1—3 0—1 0—5`
   - `0—1` is NUM
@@ -830,7 +821,7 @@ You might think that since internally numbers are int32s, that we parse from bas
   - `0—1` is NUM again
   - `0—5` is the number 5 in both base7 and decimal
 
-**To push the number -10 and -5 to the stack you would use the following dominos:**
+**<ins>To push the number -10 and -5 to the stack you would use the following dominos:<ins>**
 - In pseudo code: `NUM 10 NEG NUM 5 NEG`
 - In DominoScript: `0—1 1—0 1—3 1—5 0—1 0—5 1—5` 
   - `0—1` is NUM
@@ -840,15 +831,9 @@ You might think that since internally numbers are int32s, that we parse from bas
   - `0—5` is 5 in both base7 and decimal
   - `1—5` is NEG
 
-**What if I want to use a fixed amount of dominos for each number?**  
+**<ins>What if I want to use a fixed amount of dominos for each number?<ins>**  
 
 Use the [LIT](#lit) instruction to permanently change how literals are parsed. For example with parse mode `2` it will use 2 dominos for each number. While `6—6 6—6` in default parse mode 0 results in `UnexpectedEndOfNumberError` (because it expects 6 more dominos to follow but only got 1 more), in parse mode `2` it represents the decimal number `2400`.
-
-<br>
-
-**Errors**:
-- `UnexpectedEndOfNumberError` is thrown when the IP cannot step as many times as indicated by the first half of the first domino.
-- 
 
 #### `STR`
 
@@ -985,7 +970,7 @@ Pops 2 numbers. The result of the division of numberA by numberB is pushed to th
 
 Keep in mind that DominoScript is integer based and any remainder is discarded.
 
-**Pseudocode:**
+**<ins>Pseudocode:<ins>**
 - `NUM 5 NUM 3 DIV` is `5 / 3` and equals `1`
 - `NUM 5 NEG NUM 3 DIV` is `-5 / 3` and equals `-1`
 
@@ -996,7 +981,7 @@ Pops 2 numbers. The remainder of division of `numberA / numberB` is pushed to th
 
 > When numberA is positive modulo behaves identical in most languages (afaik). However, there are some differences across programming languages when numberA is negative. In DominoScript modulo behaves like in JavaScript, Java, C++ and Go and <ins>NOT</ins> like in Python or Ruby!
 
-**Pseudocode:**
+**<ins>Pseudocode:<ins>**
 - `NUM 5 NUM 3 MOD` is `5 % 3` and equals `2`
 - `NUM 5 NEG NUM 3 MOD` is `-5 % 3` and equals `-2` *(in python, ruby and calculators it would equal `1`)*
 
@@ -1043,10 +1028,10 @@ Pops the top 2 items off the stack, compares them and pushes the result back ont
 
 Assumes that 2 strings are on the stack. It pops them, compares them and pushes `1` to the stack if equal, otherwise `0`.
 
-**For example:**  
+**<ins>For example:<ins>**  
 You push the strings `"AC"` then `"DC"`. They are represented on the stack as `[NULL, C, A, NULL, C, D]` (In reality it is `[0, 67, 65, 0, 67, 68]`). Since the strings are not equal, it will push `0` to the stack. It is now `[0]`.
 
-**Another example:**  
+**<ins>Another example:<ins>**  
 Imagine you want to check if the user pressed arrow left. You execute the `KEY` instruction after which the stack looks like `[<existing>, 0, 68, 91, 27]` then you push the <ins>escape sequence</ins> which represents the left arrow key. The stack is now `[<existing>, 0, 68, 91, 27, 0, 68, 91, 27]`. You then execute the `EQLSTR` instruction which will pop the top 2 strings and since the strings are equal, it will push `1` to the stack. It is now `[<existing>, 1]` *(See the [KEY](#key) instruction for more info about escape sequences)*.
 
 #### `RESERVED_2_6`
@@ -1145,7 +1130,7 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
 
 A label is like a bookmark or an alternative identifier of a specific Cell address. You can also think of it as a pointer. It can be used by the `JUMP`, `CALL`, `GET` and `SET` instructions.
 
-Labels are probably not what you expect them to be. 
+**<ins>Labels are probably not what you expect them to be.</ins>** 
 - They are <ins>not</ins> strings, but negative numbers.
 - They are auto generated and self decrementing: `-1`, `-2`, `-3`, etc. ...
 
@@ -1165,7 +1150,7 @@ For clarity, I'd generally recommend adding comments like the following to your 
 
 It is not mandatory to use labels. The 4 mentioned instructions that can use them also work with addresses directly!
 
-**Labels are mandatory only in  the following cases:**
+**<ins>Labels are mandatory only in  the following cases:</ins>**
 - Calling JS functions: The "official" js interpreter exposes an API where you can define functions in JS and call them from DominoScript via a label (Not implemented yet!)
 - Calling imported functions: DominoScript will have an `IMPORT` instruction that allows source files to be imported into others. The imported functions can only be called via labels, so in that regard a label also acts like an export. (Not implemented yet!)
 
@@ -1252,13 +1237,14 @@ Pops numbers (representing Unicode char codes) from the stack until it encounter
 
 Check if the user pressed a specific key since the last reset with `KEYRES`. If the key was pressed, it pushes `1` to the stack, otherwise `0`.
 
-It pops a "string sequence" of the stack to represent the key you want to check for.
+It pops a <ins>string sequence</ins> of the stack to represent the key you want to check for.
 
-**What string sequence?:**
+**<ins>What string sequence?:</ins>**
 - If a key is a printable character, the sequence is the Unicode value of the key. For example, to check if the user pressed the `a` key, you would push the string `a`.
 - If a key is a special key like arrow left, right etc, the sequence is an escape sequence. For example, to check if the user pressed the left arrow key, you would push the escape sequence `\u001b[D` to the stack.
 
-**What is an escape sequence?:**  
+**<ins>What is an escape sequence?:</ins>**  
+
 Escape sequences are sequences of characters that are used to represent special keys like arrow keys *(but can also be used to control terminal behavior, such as cursor movement and text formatting)*. They usually start with the escape character `\u001b` (unicode: 27). For example, the escape sequence for the left arrow key is `\u001b[D`. Check out the [Escape Sequence reference](#Special-keyboard-Characters) instruction to see how to reset the state of all keys.
 
 Unlike `NUMIN` and `STRIN` it doesn't block the program, so you can use it in a loop to check for user input.
@@ -1313,13 +1299,6 @@ Read data from the board and pushes it to the stack. Takes 2 arguments from the 
 | 5 (TODO)   | Signed Number     | RawIncrement             |
 | 6 (TODO)   | String            | RawIncrement             |
 
-**Errors:**
-- If the address is out of bounds, an `InvalidAddressError` is thrown.
-- If the address references an empty cell there is no error. For "domino" type it pushes -1 and for all other types 0.
-- If the data ends abruptly, an `UnexpectedEndOfNumberError` is thrown.
-- If the data is too big to fit in the stack, a `FullStackError` is thrown.
-- If during parsing for "straigh line" directions the direction changes, an `UnexpectedChangeInDirectionError` is thrown.
-
 #### `SET`
 <img src="assets/horizontal/6-1.png" alt="Domino" width="128">
 
@@ -1342,19 +1321,12 @@ Writes data to the board. Takes <ins>at least</ins> 2 arguments from the stack:
 
 (See table under [GET](#get)):
 
-**Errors:**
-
-- If the address argument is out of bounds, an `InvalidAddressError` is thrown.
-- If the value argument is not within 0-48, an `InvalidDominoValueError` is thrown.
-- If the address of other domino halfs is out of bounds, an `AddressError` is thrown.
-- If you try to write a value which cannot fit on the amount of dominos dictated by the current [LIT](#lit) mode a `ValueTooLargeError` is thrown. E.g. LIT is 2 and the value requires more than 2 dominos to be written.
-
 #### `LIT`
 <img src="assets/horizontal/6-2.png" alt="Domino" width="128">
 
 Changes how number and string literals are parsed. It pops a number from the stack to use as the "literal parse mode". The popped number must be between 0 to 6. If the number is out of bounds, an `DSInvalidLiteralParseModeError` is thrown. 
 
-If the popped argument is:
+**<ins>If the popped argument is:<ins>**
 - `0`: Dynamic parse mode. Used by default. The first domino half of every number literal indicates how many more dominos should be parsed as part of the number. For string literals it is exactly the same but for each character.
 - `1` - `6`: Static parse modes. Uses 1 to 6 dominos for each number literal or each character of a string literal.
 
@@ -1802,8 +1774,40 @@ Here is a list of errors that can occur:
 - **InvalidInputError**: Invalid input {reason}
 - **MissingListenerError**: NUMIN, NUMOUT, STRIN or STROUT instructions were called and the DominoScript "runtime" did not provide a way on how to handle input or output
 
-### Examples
+<br>
 
+## Contributing
+
+Do you have any feature suggestions? Do you have any questions? Have you written any code in DominoScript and would like to share it? - Feel free to open issues and start discussions in this repo!
+
+I am grateful for any interest and help in finding and eliminating bugs and improve the documentation. If you create any programs or use DominoScript in any way, please let me know. I would love to see what you come up with!
+
+This silly language is still in its early stages but most of the "core" features have already been implemented. I am very hesitant to introduce breaking changes but until the release of `v1.0.0` there might still be some.
+
+See the [roadmap](#roadmap) for ideas.
+
+If you are curious, see my [Notes](./docs/notes.md) to learn the thought process that went into making DominoScript.
+
+<br>
+
+## Roadmap
+
+Not sure if the term "roadmap" is appropriate. This is more of a list of things that I would like to see implemented:
+
+- <ins>More instructions</ins> for fixed point arithmetic, string manipulations, networking, syscalls etc. could be useful *(in theory DS can support up to 1000 opcodes. Only ~46 are used at the moment)*
+- <ins>More Navigation Modes</ins> The nav mode decides where the Instruction Pointer will move to next. We already have quite a lot of [nav modes](#navigation-modes). Most of which are just variations of each other. Currently the IP can only move in cardinal directons to direct neighbours. New nav modes might introduce diagonal movement, or allow the IP to move to non-direct neighbours etc.
+- <ins>Better Documentation</ins> that is more concise and better structured. A short tutorial would be useful to familiarize new users with the language. Maybe on its own website with interactive snippets.
+- <ins>More Interpreters</ins> Once I am happy with the core functionality, I want to create at least 1-2 more reference interpreters in different languages. Probably in C and/or Go.
+- <ins>A Simple CLI Game</ins> like Snake or Breakout. When I started designing the language my goal was to eventually create a pong-like game with it.
+- <ins>A brainf"ck interpreter</ins> written in DominoScript.
+- <ins>Interactive online playground</ins> where you can write and run DominoScript code in the browser. Maybe allow users to share their code and let others rate it.
+- <ins>A minimal game engine</ins> written in a sane language that uses DominoScript as its primary scripting language.
+- <ins>A Compiler</ins>. Probably not an easy task given the self-modifying 2D nature of the language and its [NavModes](#navigation-modes). Maybe some form of JIT compilation for frequently used paths or special instructions indicating "compile-safe-mode".
+- <ins>A Scanner</ins> that can read DominoScript from images of real Domino pieces like a QR code scanner *(minus the redundancy and error correction)*. It could probably work fairly reliably with a good enough camera and a limited grid size.
+
+<br>
+
+## Examples
 A list of examples to help you understand the language better.
 
 1. [Hello World minimal](./examples/001_hello_world_minimal.ds)

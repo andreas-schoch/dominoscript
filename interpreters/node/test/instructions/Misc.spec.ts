@@ -706,7 +706,7 @@ describe('Misc', () => {
       });
       it('should throw an InvalidValueError if we pass a negative number as an argument', async () => {
         // NUM 5 NEG NUM 1 NUM 0 SET
-        await rejects(createRunner('0—1 0-5 1-5 0-1 0-1 0-1 0-0 6-1').run(), DSInvalidValueError);
+        await rejects(createRunner('0—1 0—5 1—5 0—1 0—1 0—1 0—0 6—1').run(), DSInvalidValueError);
       });
       it('should throw an ValueToLargeError when we are in LIT 1 mode but require more than 1 domino to encode the number', async () => {
         // NUM 100 NUM 1 LIT NUM 2 NUM 0 SET

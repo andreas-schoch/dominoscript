@@ -72,6 +72,7 @@ export async function run(ctx: Context): Promise<Context> {
   ctx.info.timeEndMs = Date.now();
   ctx.info.executionTimeSeconds = (performance.now() - start) / 1000;
   ctx.afterRun?.(ctx);
+  console.log('seconds:', ctx.info.executionTimeSeconds, ctx.info.totalInstructions);
   return ctx;
 }
 
