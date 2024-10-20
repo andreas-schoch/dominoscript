@@ -60,4 +60,25 @@ describe('Arithmetic', () => {
       strictEqual(ctx.stack.toString(), '[-5]', '5 NEG should be -5');
     });
   });
+
+  describe('CLAMP', () => {
+    it('should clamp the number to the max value', async () => {
+      // NUM 342 NUM 0 NUM 6 CLAMP
+      const ds = createRunner('0—1 1—1 1—1 0—1 0—0 0—1 0—6 1—6');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[6]');
+    });
+    it('should clamp the number to the min value', async () => {
+      // NUM 342 NEG NUM 0 NUM 6 CLAMP
+      const ds = createRunner('0—1 1—1 1—1 1—5 0—1 0—0 0—1 0—6 1—6');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[0]');
+    });
+    it('should return the number if within range', async () => {
+      // NUM 48 NUM 0 NUM 6 CLAMP
+      const ds = createRunner('0—1 0—3 0—1 0—0 0—1 0—6 1—6');
+      const ctx = await ds.run();
+      strictEqual(ctx.stack.toString(), '[3]');
+    });
+  });
 });

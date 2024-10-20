@@ -77,6 +77,18 @@ describe('InputOutput', () => {
       });
       ds.run();
     });
+    it('should stringify the number after an UnitSeparator (ascii 31) instead of treating it as a Unicode char code', (done) => {
+      const ds = createRunner('0—2 1—2 0—6 1—0 4—3 1—0 4—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—0 4—3 1—0 0—1 1—2 0—2 0—0 5—3');
+      ds.onStdout((ctx, o) => {
+        try {
+          strictEqual(o, 'h31lo wor1d');
+          done();
+        } catch (error) {
+          done(error);
+        }
+      });
+      ds.run();
+    });
   });
 
   describe('KEY', () => {

@@ -773,7 +773,7 @@ The base instruction set is designed to fit on a single "double-six" domino. It 
 |     |  0                | 1               | 2                | 3                | 4            | 5                | 6                | CATEGORY                                      |
 |-----|-------------------|-----------------|------------------|------------------|--------------|------------------|------------------|-----------------------------------------------|
 |**0**|[POP](#pop)       |[NUM](#num)       |[STR](#str)       |[DUPE](#dupe)     |[ROLL](#roll) |[LEN](#len)       |[CLR](#clr)       |[Stack Management](#stack-management)          |
-|**1**|[ADD](#add)       |[SUB](#sub)       |[MULT](#mult)     |[DIV](#div)       |[MOD](#mod)   |[NEG](#neg)       |[_](#reserved_1_6)|[Arithmetic](#arithmetic)                      |
+|**1**|[ADD](#add)       |[SUB](#sub)       |[MULT](#mult)     |[DIV](#div)       |[MOD](#mod)   |[NEG](#neg)       |[CLAMP](#clamp)   |[Arithmetic](#arithmetic)                      |
 |**2**|[NOT](#not)       |[AND](#and)       |[OR](#or)         |[EQL](#eql)       |[GTR](#gtr)   |[EQLSTR](#eqlstr) |[_](#reserved_2_6)|[Comparison & Logical](#comparison-and-logical)|
 |**3**|[BNOT](#bnot)     |[BAND](#band)     |[BOR](#bor)       |[BXOR](#bxor)     |[LSL](#lsl)   |[LSR](#lsr)       |[ASR](#asr)       |[Bitwise](#bitwise)                            |
 |**4**|[NAVM](#navm)     |[BRANCH](#branch) |[LABEL](#label)   |[JUMP](#jump)     |[CALL](#call) |[IMPORT](#import) |[WAIT](#wait)     |[Control Flow](#control-flow)                  |
@@ -991,10 +991,16 @@ Pops 2 numbers. The remainder of division of `numberA / numberB` is pushed to th
 Pops the top item off the stack. Negates it. Then pushes the negated version back onto the stack. Essentially a `num  * -1` operation.
 
 
-#### `RESERVED_1_6`
+#### `CLAMP`
 <img src="assets/horizontal/1-6.png" alt="Domino" width="128">
 
-Unmapped opcode. Will throw `InvalidInstructionError` if executed.
+Pops 3 numbers from the stack: 
+
+```
+[..., value, min, max]
+```
+
+And pushes back the clamped value onto the stack.
 
 <h3 id="comparison-and-logical">Comparison & Logical</h3>
 
@@ -1230,7 +1236,9 @@ For convenience you might often see the stack represented  But remember that in 
 #### `STROUT`
 <img src="assets/horizontal/5-3.png" alt="Domino" width="128">
 
-Pops numbers (representing Unicode char codes) from the stack until it encounters a null terminator (number 0). It will then output the string to stdout.  
+Pops numbers (representing Unicode char codes) from the stack until it encounters a null terminator (number 0). It will then output the string to stdout.
+
+<ins>**There is one special case:**</ins> If the parser encounters the `Unit Separator` (ascii 31), it stringifies the <ins>next</ins> number instead of treating it as a unicode char code. This is very useful to generate ANSI escape sequences like `\x1b[15;20H[-]` which tells the terminal to draw `[-]` at row 15 and column 20. Without the `Unit Separator` you would have to push the char code for 1, 5 and 2, 0 individually. This is a pain if you are dealing with dynamic numbers. The [example_023](./examples/023_input_controls_advanced.md) uses this to construct such an escape sequence.
 
 #### `KEY`
 <img src="assets/horizontal/5-4.png" alt="Domino" width="128">
@@ -1832,5 +1840,6 @@ A list of examples to help you understand the language better.
 20. [Check String Equality](./examples/020_check_string_equality.md)
 21. [Reduce domino amount](./examples/021_reduce_domino_amount.md)
 22. [Modify Code using SET](./examples/022_modify_code_using_set.md)
+23. [WASD Controls](./examples/023_wasd_controls.md)
 
 *If you want your example to be added to this list, please create a PR.*

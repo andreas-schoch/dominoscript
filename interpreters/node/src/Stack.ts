@@ -21,12 +21,19 @@ export class Stack {
   }
 
   popString(): string {
+    let stringifyNext = false;
     let str = '';
     while (true) {
       const value = this.pop();
       if (value === 0) break;
-      str += String.fromCharCode(value);
+      if (stringifyNext) {
+        str += String(value); // Using Unit Separator (US) to indicate that the next number should be stringified instead of being treated as a character
+        stringifyNext = false;
+      } else if (value === 0x1F) {
+        stringifyNext = true;
+      } else str += String.fromCharCode(value);
     }
+
     return str;
   }
 

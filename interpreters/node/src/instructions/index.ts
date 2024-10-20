@@ -1,4 +1,4 @@
-import {ADD, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
+import {ADD, CLAMP, DIV, MOD, MUL, NEG, SUB} from './Arithmetic.js';
 import {AND, EQL, EQLSTR, GTR, NOT, OR} from './ComparisonAndLogical.js';
 import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
 import {BASE, EXT, GET, LIT, NOOP, SET, TIME} from './Misc.js';
@@ -28,7 +28,7 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   DIV,
   MOD,
   NEG,
-  undefined,
+  CLAMP,
 
   // Comparison & Logical
   NOT,

@@ -1075,8 +1075,9 @@ describe('Misc', () => {
   });
 
   describe('INVALID', () => {
-    it('should throw an error when an invalid instruction is encountered (within 0—48 range)', async () => {
-      const ds = createRunner('1—6');
+    it('should throw an error when an invalid instruction is encountered', async () => {
+      // NUM 16 BASE <INVALID_OPCODE_255>
+      const ds = createRunner('0—1 1—0 2—2 6—3 f—f');
       await rejects(ds.run(), DSInvalidInstructionError);
     });
   });

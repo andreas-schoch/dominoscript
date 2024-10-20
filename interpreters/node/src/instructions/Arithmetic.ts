@@ -29,3 +29,10 @@ export function MOD(ctx: Context): void {
 export function NEG(ctx: Context): void {
   ctx.stack.push(-ctx.stack.pop());
 }
+
+export function CLAMP(ctx: Context): void {
+  const max = ctx.stack.pop();
+  const min = ctx.stack.pop();
+  const value = ctx.stack.pop();
+  ctx.stack.push(Math.min(max, Math.max(min, value)));
+}
