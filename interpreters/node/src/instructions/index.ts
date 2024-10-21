@@ -75,3 +75,10 @@ export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[
   TIME,
   NOOP
 ];
+
+export const asyncOpcodes = new Set<number>([
+  instructionsByOpcode.indexOf(NUMIN),
+  instructionsByOpcode.indexOf(STRIN),
+  instructionsByOpcode.indexOf(IMPORT),
+  instructionsByOpcode.indexOf(WAIT)
+]);

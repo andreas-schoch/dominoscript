@@ -1,0 +1,14 @@
+@import '../node_modules/@xterm/xterm/css/xterm.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.xterm {
+  padding: 1rem !important;
+}
+
+.xterm-viewport {
+  overflow: auto !important;
+}

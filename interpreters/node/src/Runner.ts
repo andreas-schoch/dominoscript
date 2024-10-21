@@ -1,4 +1,4 @@
-import {AsyncInstruction, Instruction, instructionsByOpcode} from './instructions/index.js';
+import {AsyncInstruction, Instruction, asyncOpcodes, instructionsByOpcode} from './instructions/index.js';
 import {Context, createContext} from './Context.js';
 import {DSInterpreterError, DSInvalidInstructionError, DSUnexpectedEndOfNumberError} from './errors.js';
 import {CALL} from './instructions/ControlFlow.js';
@@ -63,7 +63,7 @@ export async function run(ctx: Context): Promise<Context> {
     ctx.lastInstruction = ctx.currentInstruction;
     ctx.currentInstruction = instruction.name;
 
-    if (instruction.name === 'NUMIN' || instruction.name === 'STRIN' || instruction.name === 'IMPORT' || instruction.name === 'WAIT') await instruction(ctx);
+    if (asyncOpcodes.has(opcode)) await instruction(ctx);
     else instruction(ctx);
 
     ctx.afterInstruction?.(ctx, instruction.name);
