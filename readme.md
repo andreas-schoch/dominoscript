@@ -1,15 +1,18 @@
 DominoScript
 ================================================================================
 
-**Current version `0.4.0`**
+**Current version `0.4.2`**
 
 Have you ever wanted to write code using domino pieces? No?
 
 Well, now you can! Introducing DominoScript!
 
+> [!NOTE]  
 > A recreational stack-oriented concatenative two-dimensional non-linear self-modifying int32-based esoteric programming language that uses the dots on domino pieces to represent code.
 
 This repository contains the reference implementation written in TypeScript as well as all the documentation and examples for the language.
+
+Try it in the [**Online Playground**](https://dominoscript.com/).
 
 **It's still very much a work-in-progress. Not everything is fully fleshed out yet.** Do you want to [contribute](#contributing)?
 
@@ -79,11 +82,14 @@ This repository contains the reference implementation written in TypeScript as w
 
 ## How to run DominoScript
 
-> Be warned that the interpreter is still in its early stages and might not always work as expected.
+> [!WARNING]  
+> Despite being well tested, the reference interpreter might not always work as expected. See the [Source code](./interpreters/node/readme.md).
 
-The reference interpreter is here in this repo. See the [here](./interpreters/node/readme.md) for details.
 
-If you want to use dominoscript via the command line, you can install it globally like this:
+The easiest way to run DominoScript is the [**Online Playground**](https://dominoscript.com/) *(early prototype, might be more buggy than running it via the command line...)*.
+
+
+However, if you want to use dominoscript via the command line, you can install it globally like this:
 ```
 npm install -g dominoscript
 ```
@@ -99,28 +105,28 @@ Or you can use npx to run it without installing it:
 npx dominoscript path/to/your/file.ds
 ```
 
-Eventually there will be an online editor where you can write and run it directly in the browser.
-
-Maybe even a repository of user submitted DominoScript programs.
-
 <br>
 
 ## How does it work
 
 DominoScript by default uses Double-Six (aka `D6`) dominos to represent code. Double-six here means that each domino has 2 sides with up to 6 dots on each side.
 
+
+
 Everything is either:
 - an instruction
 - a number literal
 - or a string literal
 
-By default, everything will be parsed using base7. This behaviour can be changed using the [BASE](#Base) instruction. This means that with a higher base you can use dominos with more dots to represent larger numbers with fewer dominos.
+Using Double-Six dominos, we are essentially working with base7 numbers. This can be changed using the [BASE](#Base) instruction.
+
+With a higher base you can use dominos with more dots to represent larger numbers with fewer pieces.
 
 ### The Grid
 
 - The grid is a rectangle of cells which can contain domino pieces.
 - The grid can contain up to 65408 cells (soft limit)
-- One domino takes up 2 cells and can placed horizontally or vertically.
+- One domino takes up 2 cells and can be placed horizontally or vertically.
 - The top-left cell is address 0. The bottom-right cell is address `width * height - 1`.
 - When playing domino game variants you can usually place pieces "outside" the grid when both sides have the same number of dots: 🁈🁳🁀 - this is not allowed in DominoScript *(Maybe in future versions but for now not worth the extra complexity)*
 
@@ -130,6 +136,7 @@ Each cell needs to be indexable using an `int32` popped from the stack, so in th
 
 A text based format is used to represent domino pieces.
 
+> [!NOTE]  
 > This format is used as source code. At the beginning it will be the only way to write DominoScript until a visual editor is created that shows actual dominos. Eventually I want to be able to convert images of real dominos on a (reasonably sized) grid into the text format.
 
 - The digits `0` to `f` represent the dots on half of a domino. To indicate an empty cell, use a dot `.`
@@ -349,18 +356,21 @@ DominoScript is a language where you cannot really tell what is going on just by
 
 When the IP encounters a [STR](#str) instruction, it will parse the next dominos as characters of a string. How that works exactly is explained in more detail in the description of the instruction.
 
+> [!IMPORTANT]  
 > It is important to understand that <ins>internally</ins> everything in DominoScript is represented as signed 32-bit integers and <ins>externally</ins> everything is represented by the dots on the domino pieces.
-<br><br>Internally strings are just <ins>null-terminated sequences of integers representing Unicode characters</ins>. It is your job as the developer to keep track of what items on the stack are numbers and what are characters of a string.
+<br><br>Internally strings are just <ins>null-terminated sequences of integers representing Unicode char codes</ins>. It is your job as the developer to keep track of which items on the stack are numbers and which ones are characters of a string.
 
-You can use any instruction on characters of a "string" but most of them will not distinguish between what is a number and a character. There are only 3 instructions which are specifically for handling strings: [STR](#str), [STRIN](#strin), [STROUT](#strout).
+You can use any instruction on characters of a "string" but most of them will not distinguish between what is a number and a character.
 
-For convenience and clarity in examples I will often represent Unicode characters like this:
+So far, there are only 7 instructions which are meant for the handling of strings: [STR](#str), [EQLSTR](#eqlstr), [STRIN](#strin), [STROUT](#strout) as well as [GET](#get) and [SET](#set) when used with a specific "type" argument.
+
+In examples, you might see stack items that are meant to be char codes, represented in the following way:"
 
 ```
 [..., 'NUL', 's', 'e', 'y']
 ```
 
-But in reality the stack will store them as integers and look like this:
+But in reality, the stack will store them as integers and look like this:
 
 ```
 [..., 0, 115, 101, 121]
@@ -370,33 +380,34 @@ But in reality the stack will store them as integers and look like this:
 
 Floats don't exist in DominoScript. I'd suggest to scale up numbers by a factor of 10, 100, 1000 or whatever precision you need.
 
-*(I know that pico-8 uses 32-bits for numbers but treats them as 16.16 fixed point numbers. I am not quite sure if that is just a convention or if pico8's API actually treats them as fixed point numbers. I would like to eventually add some trigonometry instructions to DominoScripts "D9-mode" but unsure what the best way would be)*
+*(I know that pico-8 uses 32-bits for numbers but treats them as 16.16 fixed point numbers. I am not quite sure if that is just a convention or if pico8's API actually treats them as fixed point numbers. I would like to eventually add some trigonometry instructions to DominoScript but am unsure what the most practical way would be)*
 
 ### How the Instruction Pointer Moves
 
 The instruction pointer (`IP`) keeps track of the current cell address that will be used for the next instruction. Since DominoScript is 2D and non-linear, it isn't obvious where the IP will move to without understanding the fundamental rules and the Navigation Modes.
 
-**Before the program starts:** 
-- the interpreter will scan the grid from top-left to top-right, move down and repeat until it finds the first domino.
+<ins>**Before the program starts:** </ins>
+- the interpreter will scan the grid from <ins>top-left to top-right</ins>, move down and repeat until it finds the first domino.
 - Upon reaching the first domino, the IP is placed at the address of the first found domino half.
 - If no domino could be found, the program is considered finished.
 
-**During the program execution:** The IP will adhere to the following rules:
+<ins>**During the program execution:**</ins> The IP will adhere to the following rules:
 
-- <span id="rule_01">**`Rule_01`**:</span> The IP moves in all cardinal directions, never diagonally. How dominos are parsed is all relative to that. For example the horizontal domino `3—5` can be interpreted as the base7 number `35` (IP moves eastwards) or `53` (IP moves westwards). Same thing for vertical dominos.
+- <span id="rule_01">**`Rule_01`**:</span> The IP moves in all cardinal directions, never diagonally. How dominos are parsed, is all relative to that. For example, the horizontal domino `3—5` can be interpreted as the base7 number `35` (IP moves eastwards) or `53` (IP moves westwards). Same thing for vertical dominos.
 
 - <span id="rule_02">**`Rule_02`**:</span> The IP will always move from one half (entry) of the same domino to the other half (exit) of the same domino.
 
-- <span id="rule_03">**`Rule_03`**:</span>  If the IP cannot move to a new domino, the program is considered finished. If a `JUMP` happens to move to an empty cell, a `JumpToEmptyCellError` is thrown and the program exits with a non-zero code
+- <span id="rule_03">**`Rule_03`**:</span>  If the IP cannot move to a new domino, the program is considered finished. If a `JUMP` happens to move to an empty cell, a `JumpToEmptyCellError` is thrown and the program terminates with a non-zero exit code.
 
-- <span id="rule_04">**`Rule_04`**:</span> At the exit half of a domino, the IP will never move back to the entry half. It will always try to move to a new domino. That means there are 0 to 3 potential options for the IP to move.
+- <span id="rule_04">**`Rule_04`**:</span> At the exit half of a domino, the IP will never move back to the entry half. It will always try to move to a new domino. That means, there are at most <ins>0 to 3 potential options for the IP to move</ins>.
 
 - <span id="rule_05">**`Rule_05`**:</span>  When the IP needs to move to a new domino, it is possible that there are no valid moves despite there being dominos around. The [Navigation Mode](#how-navigation-modes-work) decides where the IP can and cannot move next.
 
 ### How Navigation Modes work
 
-In a nutshell Navigation Modes are predefined "behaviours" that follow a specific deterministic pattern. There are a lot of different nav modes. Some of them simple and logical, and others a bit more complex and chaotic.
+In a nutshell: Navigation Modes are predefined "behaviours" that follow a specific priority or pattern.
 
+> [!TIP]  
 > Change navigation modes using the [NAVM](#navm) instruction.
 
 First I'm gonna bombard you with some jargon:
@@ -408,7 +419,7 @@ The Cardinal directions don't matter much. It is all about the <ins>**direction 
 
 When the IP moves to a new domino, the half it enters to is called the "**entry**" while the other half is called the "**exit**". Now from the perspective of the exit half, the IP can potentially move in 3 directions: Forward, Left, Right. These are the **Relative Directions (RDs)**.
 
-Which direction it chooses depends on the current "**Navigation Mode**". Here are some of the most basic Nav Mode mappings:
+Which direction it chooses, depends on the current "**Navigation Mode**". Here are some of the most basic Nav Mode mappings:
 
 | index |`Primary` |`Secondary`|`Tertiary`|
 |-------|----------|-----------|----------|
@@ -420,7 +431,7 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 | 5     | Right    | Left      | Forward  |
 | ...   | ...      | ...       | ...      |
 
-*The "index" here is the argument for the `NAVM`instruction but also refers to the current Navigation Mode*
+*The "index" here is the argument for the `NAVM`instruction.*
 
 <br>
 
@@ -499,12 +510,12 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 
 *All 4 snippets are exactly the same code with the difference that they are all flipped differently. This is what I mean by the cardinal direction not mattering much in DominoScript.*
 
-- `index 0` the IP will move to `1—1` (Primary, Forward)
-- `index 1` the IP will move to `1—1` (Primary, Forward)
-- `index 2` the IP will move to `2—2` (Primary, Left)
-- `index 3` the IP will move to `2—2` (Primary, Left)
-- `index 4` the IP will move to `3—3` (Primary, Right)
-- `index 5` the IP will move to `3—3` (Primary, Right)
+- When `index 0`, the IP will move to `1—1` (Primary, Forward)
+- When `index 1`, the IP will move to `1—1` (Primary, Forward)
+- When `index 2`, the IP will move to `2—2` (Primary, Left)
+- When `index 3`, the IP will move to `2—2` (Primary, Left)
+- When `index 4`, the IP will move to `3—3` (Primary, Right)
+- When `index 5`, the IP will move to `3—3` (Primary, Right)
 
 <br>
 
@@ -581,12 +592,12 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 </tr>
 </table>
 
-- `index 0` the IP will move to `2—2` (Secondary, Left)
-- `index 1` the IP will move to `3—3` (Secondary, Right)
-- `index 2` the IP will move to `2—2` (Primary, Left)
-- `index 3` the IP will move to `2—2` (Primary, Left)
-- `index 4` the IP will move to `3—3` (Primary, Right)
-- `index 5` the IP will move to `3—3` (Primary, Right)
+- When `index 0`, the IP will move to `2—2` (Secondary, Left)
+- When `index 1`, the IP will move to `3—3` (Secondary, Right)
+- When `index 2`, the IP will move to `2—2` (Primary, Left)
+- When `index 3`, the IP will move to `2—2` (Primary, Left)
+- When `index 4`, the IP will move to `3—3` (Primary, Right)
+- When `index 5`, the IP will move to `3—3` (Primary, Right)
 
 <br>
 
@@ -663,16 +674,16 @@ Which direction it chooses depends on the current "**Navigation Mode**". Here ar
 </tr>
 </table>
 
-- `index 0` the IP will move to `3—3` (Tertiary, Right)
-- `index 1` the IP will move to `3—3` (Secondary, Right)
-- `index 2` the IP will move to `3—3` (Tertiary, Right)
-- `index 3` the IP will move to `3—3` (Secondary, Right)
-- `index 4` the IP will move to `3—3` (Primary, Right)
-- `index 5` the IP will move to `3—3` (Primary, Right)
+- When `index 0`, the IP will move to `3—3` (Tertiary, Right)
+- When `index 1`, the IP will move to `3—3` (Secondary, Right)
+- When `index 2`, the IP will move to `3—3` (Tertiary, Right)
+- When `index 3`, the IP will move to `3—3` (Secondary, Right)
+- When `index 4`, the IP will move to `3—3` (Primary, Right)
+- When `index 5`, the IP will move to `3—3` (Primary, Right)
 
 <br>
 
-Again, these are only the very basic navigation modes. See the [reference](#navigation-modes-reference) for all the different modes and how they work.
+These are only variations of the "Basic-Three-Way" kind of NavModes. See the [Reference](#navigation-modes) for a full list of available modes.
 
 ## How to read DominoScript
 
@@ -680,59 +691,62 @@ DS isn't meant to be easily human readable but there are patterns that, once you
 
 All of these patterns revolve around how the `NUM` and `STR` instructions behave differently than any other instruction.
 
-Once you understand their differences, reading the rest of DominoScript is mostly a matter of keeping track of how the other instructions affect:
+Once you understand how they are different, reading the rest of DominoScript is mostly a matter of keeping track of how the other instructions affect:
 - the Stack (most of them do)
-- the Instruction Pointer ([JUMP](#jump), [CALL](#call), [NAVM](#navm)).
-- The way Domino pieces are parsed ([LIT](#lit), [BASE](#base), [EXT](#ext))
+- the Instruction Pointer (e.g. [JUMP](#jump), [CALL](#call), [NAVM](#navm)).
+- The way Domino pieces are parsed (e.g. [LIT](#lit), [BASE](#base), [EXT](#ext))
 
 <br>
 
 The following patterns and examples assume that the default [LIT](#lit) mode was not changed:
 
+> [!TIP]  
 > <ins>**PATTERN 1**<ins>:
 >
 > Look out for `0—1` and `0—2` dominos.
 >
-> These are the opcodes for the `NUM` and `STR` instructions and indicate the start of a <ins>number literal</ins> or a <ins>string literal</ins> *(unless they themselves are part of a literal)*.
->
-> They are the <ins>only 2 instructions</ins> that don't get their arguments from the stack but from the board.
+> These are often opcodes for the `NUM` and `STR` instructions and indicate the start of a <ins>number literal</ins> or a <ins>string literal</ins> *(unless they themselves are part of a literal)*.
 
+
+> [!TIP]  
 > <ins>**PATTERN 2**<ins>:
 >
 > Look out for the first half of a domino right after a `NUM` instruction.
 >
-> It will decide how many more dominos will be part of the number literal before the next instruction is executed. 
+> If the default [LIT](#lit) mode was not changed, they will decide how many more dominos will be part of the number literal before the next instruction is executed.
 
 **The below code results in the number 6 being pushed and popped of the stack:**
 ```
 0—1 0—6 0—0
 ```
 
-- `0—1` is the `NUM` instruction (**PATTERN 1**)
+- `0—1` is a `NUM` instruction (**PATTERN 1**)
 - `0—6` is the number literal
-  - first half is 0 which means no more dominos will follow and only second half is parsed as number (see **PATTERN 2**)
-  - Second half is 6 in both base7 and decimal so the number 6 is pushed to the stack
-- `0—0` is the next instruction. We know that because the first half of previous domino told us that no more dominos will be part of the argument. (see **PATTERN 2**)
+  - first half is 0 which, in default LIT mode, means no more dominos will follow and only the second half is parsed as a literal value (see **PATTERN 2**)
+  - Second half is 6 in both base7 and decimal so the decimal number 6 is pushed to the stack
+- `0—0` is the next instruction. We know that because the first half of previous domino told us that no more dominos will be part of the literal. (see **PATTERN 2**)
 
 **The below code results in the number 1000 being pushed and popped off the stack:**
 ```
 0—1 2—0 2—6 2—6 0—0
 ```
 
-- `0—1` is the `NUM` instruction (see **PATTERN 1**)
-- `2—0 2—6 2—6` is the argument for NUM representing 1000 in base7
-  - the first half is 2 which means 2 more dominos will be part of the argument (see **PATTERN 2**)
+- `0—1` is a `NUM` instruction (see **PATTERN 1**)
+- `2—0 2—6 2—6` is parsed as a literal value.
+  - the first half is 2, which means 2 more dominos will be parsed as a literal value (see **PATTERN 2**)
   - the remaining 2.5 dominos are parsed as 2626 in base7 which is 1000 in decimal.
-  - `0—0` is the next instruction. We know that because the first half of the domino after `NUM` told us that 2 more dominos will be parsed as part of the number so 3rd one after will be an instruction(see **PATTERN 2**).
+  - `0—0` is the next instruction. We know that because the first half of the domino after `NUM` told us that 2 more dominos will be parsed as part of the number literal, so 3rd one after will be an instruction (see **PATTERN 2**).
 
 <br>
 
+> [!TIP]  
 > <ins>**PATTERN 3**<ins>:
 >
-> Look out for the first half of a domino right after a `STR` instruction.
+> While in default [LIT](#lit) mode, look out for the first half of a domino right after a `STR` instruction.
 >
 > For the same reason as after a `NUM` instruction. It will decide how many more dominos will be part of the <ins> character</ins> before the next character of the string literal is parsed.
 
+> [!TIP]  
 > <ins>**PATTERN 4**<ins>:
 >
 > Look out for the NULL terminator `0—0` during a `STR` instruction.
@@ -743,18 +757,18 @@ The following patterns and examples assume that the default [LIT](#lit) mode was
 ```
 0—2 1—1 6—6 1—2 0—0 1—2 0—1 0—0 0—1 0—6 0—0
 ```
-- `0—2` is the `STR` instruction
+- `0—2` is a `STR` instruction
 - `1—1 6—6` is the Unicode value for "a"
 - `1—2 0—0` is the Unicode value for "b"
 - `1—2 0—1` is the Unicode value for "c"
--  `0—0` is the null terminator and not the `POP` instruction as in the previous 2 examples. We know that because `STR` only ends once it encounters a `0—0` (see **PATTERN 4**)
-- `0—1 0—6 0—0` is the code from the first example above. It will push the number 6 to the stack and then pop it off again.
+-  `0—0` is the null terminator. We know that because `STR` only ends once it encounters a `0—0` (see **PATTERN 4**)
+- `0—1 0—6 0—0` is the code from the first example above. It will push the number 6 to the stack and then pop it off again *(notice how the same amount of dots can mean different things depending on the context!)*
 
 <br>
 
-The patterns are universal for all cardinal directions the Instruction Pointer can move in.
+The patterns are valid for all cardinal directions the Instruction Pointer can move in.
 
-I only showed examples where the IP moves from left to right but you have to understand that the same domino can mean the same thing or something completely different depending on the direction the Instruction Pointer moves in and what instructions precede it:
+You have to understand, that the same domino can represent something completely different depending on the direction it is read from and what instruction preceded it.
 
 ```
 0—1 . 1—0 . 1 . 0 . . .
@@ -762,13 +776,24 @@ I only showed examples where the IP moves from left to right but you have to und
 . . . . . . 0 . 1 . . .
 ```
 
+The above domino can be interpreted as either a 10 or a 1. A 10 can mean different values depending on the current [BASE](#base) (e.g. in base7 a 10 is 7 in decimal, in base16 a 10 is 16 in decimal). If a NUM or a STR instruction directly preceeded it, they are interpreted as literal values. If not, they are interpreted as opcodes.
+
 <br>
 
 ## Instructions
 
-The base instruction set is designed to fit on a single "double-six" domino. It consists of up to 49 instructions and is shown below on a 7x7 matrix.
+The "core" instruction set consists of 49 opcodes and is meant to fit within the value range a single "double-six" domino can represent (0 to 48).
 
-> Keep in mind that if you change into a higher [BASE](#base), you will need to use a different domino to represent the same opcode than shown in the images you see alongside each instruction. E.g. a NOOP in base7 is `6—6` but in base16 it would be `3—0`.
+In the below overview, you can see the instructions on a 7x7 matrix representing the "opcode-to-instruction" mapping while in the default base7 mode *(Base7 means "double-six" dominos are used which can have 0 to 6 dots on each half)*.
+
+> [!IMPORTANT]  
+> Keep in mind that if you change into a higher [BASE](#base), you will need to use different dominos to represent the same opcode!
+>
+> The images of dominos shown alongside each instruction, are only valid while in base7 mode. 
+>
+> For example: The opcode for [NOOP](#noop) is 48 in decimal. To represent it in base7, a `6—6` domino is used. To represent it in base16, a `3—0` domino is used.
+>
+> If that is too confusing, I recommend to simply switch to base10 mode where the decimal number 48 *(aka the opcode for NOOP)* is represented by a `4—8` domino.
 
 |     |  0                | 1               | 2                | 3                | 4            | 5                | 6                | CATEGORY                                      |
 |-----|-------------------|-----------------|------------------|------------------|--------------|------------------|------------------|-----------------------------------------------|
@@ -780,7 +805,7 @@ The base instruction set is designed to fit on a single "double-six" domino. It 
 |**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[KEY](#key)   |[KEYRES](#keyres) |[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
 |**6**|[GET](#get)       |[SET](#set)       |[LIT](#lit)       |[BASE](#base)     |[EXT](#ext)   |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
 
-*(DominoScript isn't limited to these 49 instructions though. The way the language is designed, it can theoretically be extended to up to 1000 instructions)*
+*(DominoScript isn't limited to these 49 instructions. The way the language is designed, it can theoretically be extended to up to 1000 instructions)*
 
 <br>
 <h3 id="stack-management">Stack Management</h3>
@@ -979,6 +1004,7 @@ Keep in mind that DominoScript is integer based and any remainder is discarded.
 
 Pops 2 numbers. The remainder of division of `numberA / numberB` is pushed to the stack.
 
+> [!IMPORTANT]  
 > When numberA is positive modulo behaves identical in most languages (afaik). However, there are some differences across programming languages when numberA is negative. In DominoScript modulo behaves like in JavaScript, Java, C++ and Go and <ins>NOT</ins> like in Python or Ruby!
 
 **<ins>Pseudocode:<ins>**
@@ -1001,6 +1027,8 @@ Pops 3 numbers from the stack:
 ```
 
 And pushes back the clamped value onto the stack.
+
+<br>
 
 <h3 id="comparison-and-logical">Comparison & Logical</h3>
 
@@ -1095,15 +1123,9 @@ See [Navigation Modes](#navigation-modes) to see all possible nav modes and thei
 #### `BRANCH`
 <img src="assets/horizontal/4-1.png" alt="Domino" width="128">
 
-Like an IF-ELSE statement. It pops the top of the stack as a condition:
-- When `true`: The IP will move **LEFT**
-- When `false`: The IP will move **RIGHT**
+Like an IF-ELSE statement.
 
-> It ignores the current Navigation Mode, so you can be assured that it will always either go left or right.
->
-> Keep in mind that: <ins>all non-zero numbers are considered true</ins>. Only `0` is false! `-1`, `-2` etc. is true
-
-**Here we push 1 to the stack which will cause the IP to move <ins>LEFT</ins>:**
+It pops the top of the stack as a condition and then:
 
 ```
 . . . . . 6 . .
@@ -1112,24 +1134,20 @@ Like an IF-ELSE statement. It pops the top of the stack as a condition:
 
 0—1 0—1 4—1 . .
           
-. . . . . X . .
+. . . . . 5 . .
           |
-. . . . . X . .
+. . . . . 5 . .
 ```
 
-**Here we push 0 to the stack which will cause the IP to move <ins>RIGHT</ins>:**
+- When popped value is `true`: The IP will move to the relative **LEFT** (the `6-6`domino)
+- When popped value is `false`: The IP will move to the relative **RIGHT** (the `5-5`domino)
 
-```
-. . . . . X . .
-          |
-. . . . . X . .
 
-0—1 0—0 4—1 . .
-          
-. . . . . 6 . .
-          |
-. . . . . 6 . .
-```
+
+> [!IMPORTANT]  
+> It ignores the current Navigation Mode. You can always be assured that the IP will either move to the relative left or right.
+>
+> Keep in mind that: <ins>all non-zero numbers are considered true</ins>. Only `0` is false! `-1`, `-2` etc. ares all true *(This fact might be obvious, but I felt like mentioning it as, when using `==,` `<` or `>` for most conditions, it might be easy to forget)*.
 
 #### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
@@ -1139,6 +1157,7 @@ A label is like a bookmark or an alternative identifier of a specific Cell addre
 **<ins>Labels are probably not what you expect them to be.</ins>** 
 - They are <ins>not</ins> strings, but negative numbers.
 - They are auto generated and self decrementing: `-1`, `-2`, `-3`, etc. ...
+- You can kind of imagine them as a pointer to a specific cell address.
 
 Executing the LABEL instruction pops the address of the cell you want to label from the stack and assigns it to the next available negative number label.
 
@@ -1163,7 +1182,9 @@ It is not mandatory to use labels. The 4 mentioned instructions that can use the
 #### `JUMP`
 <img src="assets/horizontal/4-3.png" alt="Domino" width="128">
 
-Moves the IP to a labeled address on the grid. If the IP cannot move anymore, the program will terminate.
+Moves the IP to an address on the grid. You can either use a label or an address as an argument.
+
+If the IP cannot move anymore, the interpreter will throw a `StepToEmptyCellError`.
 
 If label is unknown it will throw an `UnknownLabelError`.
 
@@ -1174,7 +1195,10 @@ Like the name suggests, it is similar to a function call.
 
 Exactly like JUMP with one crucial difference: When it cannot move anymore, the IP will return to where it was called from instead of terminating the program.
 
-Internally there is another stack that keeps track of the return addresses.
+Internally there is a return stack that keeps track of the return addresses.
+
+> [!IMPORTANT]  
+> You can perform recursive calls (See [factorial example](./examples/009_recursive_factorial.md)) but be aware that the depth is limited by the size of the return stack. By default its size is 512.
 
 #### `IMPORT`
 <img src="assets/horizontal/4-5.png" alt="Domino" width="128">
@@ -1183,17 +1207,18 @@ Pop a "string" from the stack to indicate the file name of the source file to im
 
 On import the interpreter will load the file and start running it until its Instruction Pointer cannot move anymore.
 
-Labels defined in the imported file are accessible from the importing file. That means you can call functions from the imported file via the `CALL` instruction.
+Labels defined in the imported file are accessible from the file which imports it. That means you can call functions from the imported file via the `CALL` instruction.
 
-If the importer file defined label before the import, the labels from the imported will have different identifiers. For example:
+If the importing file defined a label before the import, the labels from the imported file will have different identifiers. For example:
 - `FileChild.ds` defines a label `-1`.
-- `FileAParent.ds` defines labels `-1`, `-2`, then imports FileB.ds, then defines another label `-6`.
+- `FileAParent.ds` defines labels `-1`, `-2`, then imports FileChilds.ds.s
 
-The label `-1` in `FileChild.ds` will be `-3` in `FileAParent.ds` because labels are always auto decrementing. Why? Because it is the simplest way to avoid conflicts and be able to use labels internally and externally.
+The <ins>internal</ins> label `-1` in `FileChild.ds` will be `-3` <ins>externally</ins> in `FileAParent.ds` because labels are always auto decrementing. <ins>**Why?**</ins> Because it is the simplest way to avoid conflicts and be able to use labels internally and externally.
 
-The data stack is shared between parent and all imported files. Apart from that they parent and child imports run in their own contexts. Imported files can have imports themselves but you should avoid circular dependencies.
+> [!IMPORTANT]  
+> The data stack is shared between parent and all imported files. Apart from that, the parent and child imports run in their own contexts. Imported files can have imports themselves but you should avoid circular dependencies.
 
-If you import the same file into more than one other file, it will result in multiple instances of the imported file. This is not a problem as long as you are aware of it.
+If you import the same file into more than one other file, it will result in multiple instances of the imported file. This is probably not a problem as long as you are aware of it.
 
 #### `WAIT`
 <img src="assets/horizontal/4-6.png" alt="Domino" width="128">
@@ -1229,7 +1254,7 @@ So if the user inputs `"yes"`, the stack will look like this:
 For convenience you might often see the stack represented  But remember that in reality it just stores int32s.
 
 ```
-[..., 'NUL' 's', 'e', 'y']
+[..., NUL 's', 'e', 'y']
 ```
 
 
@@ -1238,7 +1263,7 @@ For convenience you might often see the stack represented  But remember that in 
 
 Pops numbers (representing Unicode char codes) from the stack until it encounters a null terminator (number 0). It will then output the string to stdout.
 
-<ins>**There is one special case:**</ins> If the parser encounters the `Unit Separator` (ascii 31), it stringifies the <ins>next</ins> number instead of treating it as a unicode char code. This is very useful to generate ANSI escape sequences like `\x1b[15;20H[-]` which tells the terminal to draw `[-]` at row 15 and column 20. Without the `Unit Separator` you would have to push the char code for 1, 5 and 2, 0 individually. This is a pain if you are dealing with dynamic numbers. The [example_023](./examples/023_input_controls_advanced.md) uses this to construct such an escape sequence.
+<ins>**There is one special case:**</ins> If the parser encounters the `Unit Separator` (ascii 31), it stringifies the <ins>next</ins> number instead of treating it as a unicode char code. This is very useful to generate ANSI escape sequences like `\x1b[15;20H[-]` which tells the terminal to draw `[-]` at row 15 and column 20. Without the `Unit Separator` you would have to push the char code for 1, 5 and 2, 0 individually. This is a pain if you are dealing with dynamic numbers. The [example_023](./examples/023_input_controls_advanced.md) uses this to  create an escape sequence.
 
 #### `KEY`
 <img src="assets/horizontal/5-4.png" alt="Domino" width="128">
@@ -1247,19 +1272,15 @@ Check if the user pressed a specific key since the last reset with `KEYRES`. If 
 
 It pops a <ins>string sequence</ins> of the stack to represent the key you want to check for.
 
+Unlike `NUMIN` and `STRIN` it doesn't block the program, so you can use it in a loop to check for user input.
+
 **<ins>What string sequence?:</ins>**
 - If a key is a printable character, the sequence is the Unicode value of the key. For example, to check if the user pressed the `a` key, you would push the string `a`.
 - If a key is a special key like arrow left, right etc, the sequence is an escape sequence. For example, to check if the user pressed the left arrow key, you would push the escape sequence `\u001b[D` to the stack.
 
 **<ins>What is an escape sequence?:</ins>**  
 
-Escape sequences are sequences of characters that are used to represent special keys like arrow keys *(but can also be used to control terminal behavior, such as cursor movement and text formatting)*. They usually start with the escape character `\u001b` (unicode: 27). For example, the escape sequence for the left arrow key is `\u001b[D`. Check out the [Escape Sequence reference](#Special-keyboard-Characters) instruction to see how to reset the state of all keys.
-
-Unlike `NUMIN` and `STRIN` it doesn't block the program, so you can use it in a loop to check for user input.
-
-Here are some common escape sequences for keys on a keyboard:
-
-These sequences are commonly used in terminal applications to detect key presses and control terminal behavior.
+Escape sequences are sequences of characters that are used to represent special non-printable keyboard keys like arrow keys but can also be used to control terminal behavior, such as cursor position, text color and more. Check out the [Escape Sequence reference](#Special-keyboard-Characters) instruction to see how to reset the state of all keys.
 
 #### `KEYRES`
 <img src="assets/horizontal/5-5.png" alt="Domino" width="128">
@@ -1273,6 +1294,8 @@ Imagine you have a game running at 20fps. Every 50ms you check if the user press
 
 Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 
+*(Might be used as opcode for a `MOUSE` instruction which pushes the clickX and clickY position of the mouse since the last KEYRES reset)*
+
 <br>
 
 <h3 id="misc">Misc</h3>
@@ -1280,7 +1303,7 @@ Unmapped opcode. Will throw `InvalidInstructionError` if executed.
 #### `GET`
 <img src="assets/horizontal/6-0.png" alt="Domino" width="128">
 
-Read data from the board and pushes it to the stack. Takes 2 arguments from the stack:
+Reads data from the board and pushes it to the stack. Takes 2 arguments from the stack:
 - The type Index to parse it as. It indicates the type and the direction of the data.
 - The address of the first domino half
 
@@ -1288,11 +1311,14 @@ Read data from the board and pushes it to the stack. Takes 2 arguments from the 
 - **Domino**: The value of the cell at the address and its connection. Essentially a single domino
 - **Unsigned Number**: A number between 0 to 2147483647 *(Hold on! Why not 4294967295? Because the data stack uses int32 and 2147483647 is the max value you can have in the stack. "Unsigned" here doesn't mean uint32, just that we don't "waste" half a domino to represent the sign)*.
 - **Signed Number**:  A number between -2147483648 to 2147483647 (int32 range).
-- **String**: A string is a sequence of null terminated unicode characters
+- **String**: A string is a sequence of null terminated unicode char codes.
 
 <ins>**And the following directions**</ins>:
-- **RawIncrement**: Reads domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
-- **SingleStraightLine**: The IP moves in a straight line towards the <ins>connection direction of the cell at the address</ins>. No wrap around like in "Raw" mode. If you have a 5x10 grid you can get at most 4 dominos in horizontal direction or 10 dominos in vertical direction.
+
+- **SingleStraightLine**: The IP moves in a straight line towards the <ins>connection direction of the cell at the address</ins>. No wrap around like in "RawIncrement" mode. If you have a 10x20 grid you can get at most 5 dominos in horizontal direction or 10 dominos in vertical direction.
+
+- **RawIncrement** (to be implemented): Reads domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
+
 - **NavMode** (to be implemented): In this mode the [NavigationMode](#how-navigation-modes-work) used for regular InstructionPointer movement is used to determine the direction. 
 
 <ins>**Here a table of supported type mappings:**</ins>
@@ -1321,8 +1347,11 @@ Writes data to the board. Takes <ins>at least</ins> 2 arguments from the stack:
 (See list under [GET](#get)):
 
 <ins>**And the following directions**</ins>:
-- **RawIncrement**: Writes domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
-- **SingleStraightLine**: The IP moves in a straight line towards the <ins>last Instruction Pointer direction</ins>. No wrap around like in "Raw" mode. If you have a 5x10 grid you can get at most 4 dominos in horizontal direction or 10 dominos in vertical direction.
+
+- **SingleStraightLine**: The IP moves in a straight line towards the <ins>last Instruction Pointer direction</ins>. No wrap around like in "RawIncrement" mode. If you have a 10x20 grid you can set at most 5 dominos in horizontal direction or 10 dominos in vertical direction.
+
+- **RawIncrement** (to be implemented): Writes domino halfs using incrementing addresses. It disregards the grids bounds and wraps around from right edge left edge on the next line *(Remember that addresses are essentially the indices to a 1D array of Cells which represent the Grid. Address 0 is at the top left of the grid. In a 10x10 grid, the largest address is 99 in the bottom right)*
+
 - **NavMode** (to be implemented): In this mode the [NavigationMode](#how-navigation-modes-work) used for regular InstructionPointer movement is used to determine the direction. 
 
 <ins>**Here a table of supported type mappings:**</ins>
@@ -1336,7 +1365,7 @@ Changes how number and string literals are parsed. It pops a number from the sta
 
 **<ins>If the popped argument is:<ins>**
 - `0`: Dynamic parse mode. Used by default. The first domino half of every number literal indicates how many more dominos should be parsed as part of the number. For string literals it is exactly the same but for each character.
-- `1` - `6`: Static parse modes. Uses 1 to 6 dominos for each number literal or each character of a string literal.
+- `1` to `6`: Static parse modes. Uses 1 to 6 dominos for each number literal or each character in a string literal.
 
 In the following 3 examples `"Hello world"` is encoded in 3 different ways:
 
@@ -1355,7 +1384,7 @@ In Base 16 with Literal Parse Mode 0:
 In Base 16 with Literal Parse Mode 1:
 ```
 // Every character requires 1 domino to be encoded.
-// Notice how now it is pretty much just hexadecimal (ignore first and last domino) with a "—" in between.
+// Notice how now it is pretty much just hexadecimal
 0—2 6—8 6—5 6—c 6—c 6—f 2—0 7—7 6—f 7—2 6—c 6—4 0—0
 ```
 
@@ -1370,7 +1399,10 @@ By default, DominoScript uses double six (D6) dominos to represent everything, s
 
 The max cell value of half of a domino is always 1 less than the Base. So in base 7, the max value is 6. In base 10, the max value is 9. In base 16, the max value is 15 (aka `f`).
 
-> If the number of dots on a domino half exceeds the base, it is clamped.
+> [!IMPORTANT]  
+> If the number of dots on a domino half exceeds the max amount of possible dots for the current base, it is clamped!  
+>
+> For example: when you are in Base 7 and the interpreter encounters a `f—f` domino, it will be parsed as `6—6`. If you are in base 10, it will be parsed as `9—9` etc.
 
 In below table you can see how the same domino sequence results in different decimal numbers depending on the base:
 
@@ -1433,9 +1465,9 @@ Useful for things like a gameloop, animations, cooldowns etc.
 #### `NOOP`
 <img src="assets/horizontal/6-6.png" alt="Domino" width="128">
 
-No operation. The IP will move to the next domino without executing any instruction.
+No operation. The IP will move to the next domino without doing anything.
 
-*(If you have 10 NOOPs in a row it will do 10 steps without doing anything. Over time, the interpreter **may** optimize this and do an implicit jump to the end of the NOOP chain when it things you are within a loop and the navigation mode doesn't change)*
+Useful to move the IP to a specific address (e.g. start of loop body) or to "reserve" space in case you think that you might need to add more instructions later on and don't want to move dominos around.
 
 <br>
 
@@ -1460,15 +1492,15 @@ There are `49` total navigation modes in DominoScript. This section is a referen
 
 Out of three directions, the IP will prioritize moving to the one with the highest priority.
 
-| Index | Priorities               | Domino ->  |
-|-------|--------------------------|------------|
-| 0     | `Forward` `Left` `Right` | `0—0`      |
-| 1     | `Forward` `Right` `Left` | `0—1`      |
-| 2     | `Left` `Forward` `Right` | `0—2`      |
-| 3     | `Left` `Right` `Forward` | `0—3`      |
-| 4     | `Right` `Forward` `Left` | `0—4`      |
-| 5     | `Right` `Left` `Forward` | `0—5`      |
-| 6     | `RANDOM`                 | `0—6`      |
+| Index       | Priorities               | Domino -> |
+|-------------|--------------------------|-----------|
+| 0 (Default) | `Forward` `Left` `Right` | `0—0`     |
+| 1           | `Forward` `Right` `Left` | `0—1`     |
+| 2           | `Left` `Forward` `Right` | `0—2`     |
+| 3           | `Left` `Right` `Forward` | `0—3`     |
+| 4           | `Right` `Forward` `Left` | `0—4`     |
+| 5           | `Right` `Left` `Forward` | `0—5`     |
+| 6           | `RANDOM`                 | `0—6`     |
 
 ### Basic Two Way
 
@@ -1750,7 +1782,8 @@ Below you see the escape sequences for special keyboard characters. You can use 
 ### Error Types
 The spec doesn't define a way to recover from errors gracefully yet. For now, whenever an error occurs, the program will terminate immediately and the interpreter will print the error message to the console in an attempt to help you understand what went wrong.
 
-> Tip: When the error message isn't helpful to you, try using the `--debug` flag when using the reference interpreter. This will print out every instruction, address and the state of the stack at any point in time.
+> [!TIP]  
+> If the error message isn't helpful to you, try using the `--debug` flag when using the reference interpreter. This will print out every instruction, address and the state of the stack at any point in time.
 
 Here is a list of errors that can occur:
 
@@ -1788,13 +1821,13 @@ Here is a list of errors that can occur:
 
 Do you have any feature suggestions? Do you have any questions? Have you written any code in DominoScript and would like to share it? - Feel free to open issues and start discussions in this repo!
 
-I am grateful for any interest and help in finding and eliminating bugs and improve the documentation. If you create any programs or use DominoScript in any way, please let me know. I would love to see what you come up with!
+I am grateful for any interest and help in finding bugs, fixing spelling errors and improving the documentation. If you create any programs or use DominoScript in any way, please let me know. I would love to see what you come up with!
 
 This silly language is still in its early stages but most of the "core" features have already been implemented. I am very hesitant to introduce breaking changes but until the release of `v1.0.0` there might still be some.
 
 See the [roadmap](#roadmap) for ideas.
 
-If you are curious, see my [Notes](./docs/notes.md) to learn the thought process that went into making DominoScript.
+If you are curious, see my [Notes](./docs/notes.md) to learn about the thought process that went into making DominoScript.
 
 <br>
 
@@ -1802,7 +1835,7 @@ If you are curious, see my [Notes](./docs/notes.md) to learn the thought process
 
 Not sure if the term "roadmap" is appropriate. This is more of a list of things that I would like to see implemented:
 
-- <ins>More instructions</ins> for fixed point arithmetic, string manipulations, networking, syscalls etc. could be useful *(in theory DS can support up to 1000 opcodes. Only ~46 are used at the moment)*
+- <ins>More instructions</ins> for fixed point arithmetic, string manipulations, networking, syscalls etc. could be useful *(in theory DS can support up to 1000 opcodes. Only ~47 are used at the moment)*
 - <ins>More Navigation Modes</ins> The nav mode decides where the Instruction Pointer will move to next. We already have quite a lot of [nav modes](#navigation-modes). Most of which are just variations of each other. Currently the IP can only move in cardinal directons to direct neighbours. New nav modes might introduce diagonal movement, or allow the IP to move to non-direct neighbours etc.
 - <ins>Better Documentation</ins> that is more concise and better structured. A short tutorial would be useful to familiarize new users with the language. Maybe on its own website with interactive snippets.
 - <ins>More Interpreters</ins> Once I am happy with the core functionality, I want to create at least 1-2 more reference interpreters in different languages. Probably in C and/or Go.
