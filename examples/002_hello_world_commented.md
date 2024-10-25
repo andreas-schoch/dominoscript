@@ -7,7 +7,7 @@ This is the most simple hello world example you can make in DominoScript as it i
 > 
 > How? Because it will simply discard everything above and below the actual code.  There are only 2 rules to be aware of:
 > 1. You cannot start a non-code line with a dot `.`
-> 2. You cannot start a non-code line with a number `0 to 6`
+> 2. You cannot start a non-code line with a number `0` to `f`
 > 
 > And of course, the lines containing code must follow the text format rules specified in the [README](../readme.md#text-format)
 

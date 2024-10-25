@@ -135,6 +135,7 @@ export function createContext(source: string, parent: Context | null = null, opt
 
   const dataStackSize = options.dataStackSize || 512;
   const returnStackSize = options.returnStackSize || 512;
+  const instructionDelay = options.instructionDelay || 0;
 
   const ctx: Context = {
     id: Math.random().toString(36).slice(2),
@@ -187,6 +188,7 @@ export function createContext(source: string, parent: Context | null = null, opt
       debug: options.debug || false,
       dataStackSize,
       returnStackSize,
+      instructionDelay: instructionDelay,
     },
   };
 

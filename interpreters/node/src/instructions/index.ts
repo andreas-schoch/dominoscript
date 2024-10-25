@@ -7,78 +7,81 @@ import {CLR, DUP, LEN, NUM, POP, ROLL, STR} from './StackManipulations.js';
 import {KEY, KEYRES, NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
 
-export type Instruction = (ctx: Context) => void;
-export type AsyncInstruction = (ctx: Context) => Promise<void>;
+export interface Instruction {
+  fn: ((ctx: Context) => void) | ((ctx: Context) => Promise<void>) | undefined;
+  name: string; // The bundler minifies the function names, so we cannot rely on them in production builds
+}
 
-// TODO benchmark performance of this approach vs a single large switch statement where instructions are inlined without function calls
-export const instructionsByOpcode: (Instruction | AsyncInstruction | undefined)[] = [
-  // Stack Management
-  POP,
-  NUM,
-  STR,
-  DUP,
-  ROLL,
-  LEN,
-  CLR,
+export const CALL_INSTRUCTION: Instruction = {fn: CALL, name: 'CALL'};
+
+export const instructionsByOpcode: (Instruction | undefined)[] = [
+// Stack Management
+  {fn: POP, name: 'POP'},
+  {fn: NUM, name: 'NUM'},
+  {fn: STR, name: 'STR'},
+  {fn: DUP, name: 'DUP'},
+  {fn: ROLL, name: 'ROLL'},
+  {fn: LEN, name: 'LEN'},
+  {fn: CLR, name: 'CLR'},
 
   // Arithmetic
-  ADD,
-  SUB,
-  MUL,
-  DIV,
-  MOD,
-  NEG,
-  CLAMP,
+  {fn: ADD, name: 'ADD'},
+  {fn: SUB, name: 'SUB'},
+  {fn: MUL, name: 'MUL'},
+  {fn: DIV, name: 'DIV'},
+  {fn: MOD, name: 'MOD'},
+  {fn: NEG, name: 'NEG'},
+  {fn: CLAMP, name: 'CLAMP'},
 
   // Comparison & Logical
-  NOT,
-  AND,
-  OR,
-  EQL,
-  GTR,
-  EQLSTR,
+  {fn: NOT, name: 'NOT'},
+  {fn: AND, name: 'AND'},
+  {fn: OR, name: 'OR'},
+  {fn: EQL, name: 'EQL'},
+  {fn: GTR, name: 'GTR'},
+  {fn: EQLSTR, name: 'EQLSTR'},
   undefined,
 
   // Bitwise
-  BNOT,
-  BAND,
-  BOR,
-  BXOR,
-  LSL, // Logical Shift Left <<
-  LSR, // Logical Shift Right >>> (unsigned)
-  ASR, // Arithmetic Shift Right >>
+  {fn: BNOT, name: 'BNOT'},
+  {fn: BAND, name: 'BAND'},
+  {fn: BOR, name: 'BOR'},
+  {fn: BXOR, name: 'BXOR'},
+  {fn: LSL, name: 'LSL'}, // Logical Shift Left <,
+  {fn: LSR, name: 'LSR'}, // Logical Shift Right >>> (unsigned,
+  {fn: ASR, name: 'ASR'}, // Arithmetic Shift Right >,
 
   // Control Flow
-  NAVM,
-  BRANCH,
-  LABEL,
-  JUMP,
-  CALL,
-  IMPORT,
-  WAIT,
+  {fn: NAVM, name: 'NAVM'},
+  {fn: BRANCH, name: 'BRANCH'},
+  {fn: LABEL, name: 'LABEL'},
+  {fn: JUMP, name: 'JUMP'},
+  CALL_INSTRUCTION,
+  {fn: IMPORT, name: 'IMPORT'},
+  {fn: WAIT, name: 'WAIT'},
 
   // Input & Output
-  NUMIN,
-  NUMOUT,
-  STRIN,
-  STROUT,
-  KEY,
-  KEYRES,
-  undefined, // TODO consider adding MOUSE btn which pushes last clicked col and row to the stack or -1 twice if not clicked. Use KEYRES to also reset the mouse state 
+  {fn: NUMIN, name: 'NUMIN'},
+  {fn: NUMOUT, name: 'NUMOUT'},
+  {fn: STRIN, name: 'STRIN'},
+  {fn: STROUT, name: 'STROUT'},
+  {fn: KEY, name: 'KEY'},
+  {fn: KEYRES, name: 'KEYRES'},
+  undefined,
 
   // Reflection & Meta
-  GET,
-  SET,
-  LIT,
-  BASE,
-  EXT, // Toggle extended mode
-  TIME,
-  NOOP
+  {fn: GET, name: 'GET'},
+  {fn: SET, name: 'SET'},
+  {fn: LIT, name: 'LIT'},
+  {fn: BASE, name: 'BASE'},
+  {fn: EXT, name: 'EXT'}, // Toggle extended mod,
+  {fn: TIME, name: 'TIME'},
+  {fn: NOOP, name: 'NOOP'},
 ];
 
 export const asyncOpcodes = new Set<number>([
-  instructionsByOpcode.indexOf(NUMIN),
-  instructionsByOpcode.indexOf(STRIN),
-  instructionsByOpcode.indexOf(IMPORT),
-  instructionsByOpcode.indexOf(WAIT)
+  instructionsByOpcode.findIndex(ins => ins?.name === 'NUMIN'),
+  instructionsByOpcode.findIndex(ins => ins?.name === 'STRIN'),
+  instructionsByOpcode.findIndex(ins => ins?.name === 'IMPORT'),
+  instructionsByOpcode.findIndex(ins => ins?.name === 'WAIT'),
 ]);

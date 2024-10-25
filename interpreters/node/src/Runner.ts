@@ -1,7 +1,6 @@
-import {AsyncInstruction, Instruction, asyncOpcodes, instructionsByOpcode} from './instructions/index.js';
+import {CALL_INSTRUCTION, Instruction, asyncOpcodes, instructionsByOpcode} from './instructions/index.js';
 import {Context, createContext} from './Context.js';
 import {DSInterpreterError, DSInvalidInstructionError, DSUnexpectedEndOfNumberError} from './errors.js';
-import {CALL} from './instructions/ControlFlow.js';
 import {parseDominoValue} from './instructions/Misc.js';
 import {step} from './step.js';
 
@@ -18,10 +17,16 @@ export interface DominoScriptRunner {
 }
 
 export interface DSConfig {
+  /** In DS, the main file and each file it imports are separate "Contexts". For imports the filename is automatically set. Use this if you want to name the main context. */
   filename: string;
+  /** Whether debug information should be printed */
   debug: boolean;
+  /** Determines how many items can be stored on the stack at once */
   dataStackSize: number;
+  /** Determines how deeply you can recurse into CALL instructions */
   returnStackSize: number;
+  /** Slow down the execution of the script (in ms). Useful for debugging and visualizing the execution */
+  instructionDelay: number;
 }
 
 export function createRunner(source: string, options: Partial<DSConfig> = {}): DominoScriptRunner {
@@ -45,7 +50,9 @@ export async function run(ctx: Context): Promise<Context> {
   ctx.beforeRun?.(ctx);
 
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
-    let instruction: Instruction | AsyncInstruction | undefined;
+    let instruction: Instruction | undefined;
+
+    if (ctx.config.instructionDelay > 0) await new Promise(resolve => setTimeout(resolve, ctx.config.instructionDelay));
 
     if (opcode <= 1000) {
       // Opcode range 0-1000 are reserved for inbuilt instructions
@@ -53,7 +60,7 @@ export async function run(ctx: Context): Promise<Context> {
       if (!instruction) throw new DSInvalidInstructionError(opcode);
     } else {
       // Opcodes 1001-2400 are "Syntactic Sugar" for CALL with labels. Opcode 1001 is a CALL with label -1
-      instruction = CALL;
+      instruction = CALL_INSTRUCTION;
       const label = -opcode + 1000;
       ctx.stack.push(label);
     }
@@ -63,8 +70,10 @@ export async function run(ctx: Context): Promise<Context> {
     ctx.lastInstruction = ctx.currentInstruction;
     ctx.currentInstruction = instruction.name;
 
-    if (asyncOpcodes.has(opcode)) await instruction(ctx);
-    else instruction(ctx);
+    /* c8 ignore next */
+    if (instruction.fn === undefined) throw new DSInterpreterError('Instruction function is undefined which should not happen at this point');
+    if (asyncOpcodes.has(opcode)) await instruction.fn(ctx);
+    else instruction.fn(ctx);
 
     ctx.afterInstruction?.(ctx, instruction.name);
   }

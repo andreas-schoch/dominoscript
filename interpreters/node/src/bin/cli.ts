@@ -101,27 +101,14 @@ function handleStrIn(_ctx: Context): Promise<string> {
 
 function initKeyListener(runner: DominoScriptRunner): void {
   process.stdin.setRawMode(true);
-  // process.stdin.pause();
-  // process.stdin.resume();
   process.stdout.write('\x1B[?25l'); // Hide the cursor
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', (key: string) => {
-    // console.log('Key:', key);
-
-    // const keycode = key.charCodeAt(0);
-    // console.log('Keycode:', keycode);
-    // if (key === '\u001b[D') {
-    //   console.log('Left arrow key pressed');
-    // } else if (key === '\u001b[C') {
-    //   console.log('Right arrow key pressed');
-    // }
-
     if (inputBlocked) return;
 
     // While input is not-blocked (meaning NUMIN and STRIN are not active), the cli will not automatically exit on ctrl+c
     if (key === '\u0003') process.exit(); // ctrl+c
     runner.registerKeyDown(key);
-    // process.stdin.resume();
   });
 }
 

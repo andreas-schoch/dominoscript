@@ -21,7 +21,7 @@ STR 'hello world'
 
 LOOP:
   NUM 0 NUM 1 ROLL STROUT // push null terminator, swap it behind current char, print the char
-  NUM 1000 TIME WAIT // Wait 500ms
+  NUM 500 TIME WAIT // Wait 500ms
 
   DUPE NUM 0 EQ NOT // Check if we reached the null terminator
   IF: // IP moves left
