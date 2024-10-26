@@ -19,14 +19,16 @@ export interface DominoScriptRunner {
 export interface DSConfig {
   /** In DS, the main file and each file it imports are separate "Contexts". For imports the filename is automatically set. Use this if you want to name the main context. */
   filename: string;
-  /** Whether debug information should be printed */
+  /** Whether debug information should be printed. Default: false */
   debug: boolean;
-  /** Determines how many items can be stored on the stack at once */
+  /** Determines how many items can be stored on the stack at once. Default: 512 */
   dataStackSize: number;
-  /** Determines how deeply you can recurse into CALL instructions */
+  /** Determines how deeply you can recurse into CALL instructions. Default: 512 */
   returnStackSize: number;
-  /** Slow down the execution of the script (in ms). Useful for debugging and visualizing the execution */
+  /** Slow down the execution of the script (in ms). Useful for debugging and visualizing the execution. If zero, execution isn't unnecessarily awaited unless forceAwait is true. Default: 0 */
   instructionDelay: number;
+  /** Instruct interpreter to always await even if instructionDelay is zero. This makes the exection noticably slower but might prevent infinite loops when speed doesn't matter too much. Default: false */
+  forceAwait: boolean;
 }
 
 export function createRunner(source: string, options: Partial<DSConfig> = {}): DominoScriptRunner {
@@ -52,7 +54,8 @@ export async function run(ctx: Context): Promise<Context> {
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
     let instruction: Instruction | undefined;
 
-    if (ctx.config.instructionDelay > 0) await new Promise(resolve => setTimeout(resolve, ctx.config.instructionDelay));
+    // Since it makes the execution slower, we only await if instructionDelay is greater than 0 or forceAwait is true
+    if (ctx.config.instructionDelay > 0 || ctx.config.forceAwait) await new Promise(resolve => setTimeout(resolve, ctx.config.instructionDelay));
 
     if (opcode <= 1000) {
       // Opcode range 0-1000 are reserved for inbuilt instructions
