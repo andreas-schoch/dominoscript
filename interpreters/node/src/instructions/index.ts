@@ -13,6 +13,7 @@ export interface Instruction {
 }
 
 export const CALL_INSTRUCTION: Instruction = {fn: CALL, name: 'CALL'};
+export const NOOP_INSTRUCTION: Instruction = {fn: NOOP, name: 'NOOP'};
 
 export const instructionsByOpcode: (Instruction | undefined)[] = [
 // Stack Management
@@ -76,7 +77,8 @@ export const instructionsByOpcode: (Instruction | undefined)[] = [
   {fn: BASE, name: 'BASE'},
   {fn: EXT, name: 'EXT'}, // Toggle extended mod,
   {fn: TIME, name: 'TIME'},
-  {fn: NOOP, name: 'NOOP'},
+  NOOP_INSTRUCTION
+  // {fn: NOOP, name: 'NOOP'},
 ];
 
 export const asyncOpcodes = new Set<number>([

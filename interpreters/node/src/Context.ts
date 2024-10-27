@@ -189,7 +189,7 @@ export function createContext(source: string, parent: Context | null = null, opt
       dataStackSize,
       returnStackSize,
       instructionDelay: instructionDelay,
-      forceAwait: options.forceAwait || false,
+      forceInterrupt: options.forceInterrupt || 0,
     },
   };
 

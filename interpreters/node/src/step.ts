@@ -1,8 +1,7 @@
-import {Context, contexts, createContext} from './Context.js';
 import {DSCallToItselfError, DSInterpreterError, DSInvalidNavigationModeError, DSJumpToItselfError, DSStepToEmptyCellError} from './errors.js';
 import {FORWARD, LEFT, RIGHT, navModes} from './navModes.js';
 import {Cell} from './Board.js';
-import {run} from './Runner.js';
+import {Context} from './Context.js';
 
 export function step(ctx: Context): Cell | null {
 
@@ -26,7 +25,7 @@ export function step(ctx: Context): Cell | null {
     return ctx.currentCell;
   }
 
-  // perform call
+  // perform local call
   if (ctx.nextCallAddress !== null) {
     if (typeof ctx.nextCallAddress === 'number' || ctx.nextCallAddress.origin === ctx.id) {
       // calling local function
@@ -40,29 +39,7 @@ export function step(ctx: Context): Cell | null {
       ctx.nextCallAddress = null;
       ctx.info.totalCalls++;
       return ctx.currentCell;
-    } else {
-      const label = ctx.nextCallAddress;
-      const childCtx = contexts[label.origin];
-      /* c8 ignore next */
-      if (!childCtx) throw new DSInterpreterError(`Context ${label.origin} not found`);
-      const localLabel = childCtx.labels[label.localId];
-      childCtx.nextCallAddress = localLabel;
-      childCtx.isFinished = false;
-      run(childCtx); // This essentially hands over control to the child context until its IP cannot move anymore.
-      ctx.nextCallAddress = null;
-      ctx.info.totalCalls++;
-      ctx.info.totalReturns++;
-      // Not returning here because we want to trigger the move to the next domino
     }
-  }
-
-  // perform import
-  if (ctx.nextImport !== null) {
-    const childCtx = createContext(ctx.nextImport.script, ctx, {...ctx.config, filename: ctx.nextImport.filename});
-    run(childCtx);
-    ctx.nextImport = null;
-    ctx.info.totalImports++;
-    // Not returning here because we want to trigger the move to the next domino
   }
 
   /* c8 ignore next */

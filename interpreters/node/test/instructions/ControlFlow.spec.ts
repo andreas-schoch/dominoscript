@@ -178,9 +178,9 @@ describe('ControlFlow', () => {
         '-2': {id: -2, localId: -2, address: 4, origin: childCtx.id},
       });
     });
-    it('should be able to call imported functions the regular and the "Syntactic sugar" way', async () => {
-      // STR "f" IMPORT NUM 12 NUM 1 NEG CALL NUM 12 EXT OPCODE_1001
-      const ds = createRunner('0—2 1—2 0—4 0—0 4—5 0—1 1—0 1—5 0—1 0—1 1—5 4—4 0—1 1—0 1—5 6—4 2—6 3—0');
+    it('should be able to call imported functions', async () => {
+      // STR "f" IMPORT NUM 12 NUM 1 NEG CALL NUM 12 NUM 1 NEG CALL NUM 12
+      const ds = createRunner('0—2 1—2 0—4 0—0 4—5 0—1 1—0 1—5 0—1 0—1 1—5 4—4 0—1 1—0 1—5 0—1 0—1 1—5 4—4');
       // NUM 42 LABEL - then factorial function at address 42 (same as in example 015)
       ds.onImport(() => Promise.resolve(dedent(`\
         0 . . . . . . 1—0 1—0 0 . . . 2—1 4—4 0

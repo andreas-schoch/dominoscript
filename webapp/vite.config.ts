@@ -1,5 +1,7 @@
-import {defineConfig} from 'vite';
+import {defineConfig, normalizePath} from 'vite';
+import {resolve} from 'path';
 import solidPlugin from 'vite-plugin-solid';
+import {viteStaticCopy} from 'vite-plugin-static-copy';
 
 export default defineConfig({
   base: './',
@@ -10,6 +12,15 @@ export default defineConfig({
     */
     // devtools(),
     solidPlugin(),
+    viteStaticCopy({
+      targets: [
+        {
+          // makes the examples from outside available to the webapp
+          src: normalizePath(resolve(__dirname, '../examples/*{.ds,.md}')),
+          dest: 'examples'
+        },
+      ]
+    })
   ],
   server: {
     port: 3000,

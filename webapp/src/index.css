@@ -68,3 +68,28 @@
     @apply outline-none;
   }
 }
+
+/* --------------------------------- */
+
+/* TODO improve */
+
+.select-css {
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+.select-css::-ms-expand {
+	display: none;
+}
+
+.select-css:focus {
+	color: #222; 
+	outline: none;
+}
+.select-css option {
+	font-weight:normal;
+}
+
+.select-css option[selected] {
+    @apply bg-stone-600;
+}

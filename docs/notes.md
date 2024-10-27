@@ -1033,3 +1033,49 @@ I would like to support binary data as well. For that instead of field names we 
 Adding instructions like `JSONGET` and `JSONSET` essentially introduces a third kind of data storage besides the stack and data stored on the board itself. I am not sure how to feel about that yet. Doing it this way almost feels like cheating. It feels too easy. Too high level. The alternative would be to allow all kinds of http response data and bd pushed to the stack but since I don't want to make the stack size dynamic, I don't see that very practical. Storing it on the board however, would be possible but a nightmare to deal with (multiple files could be imported to store huge amounts of data).
 
 *(If anyone reads this, I am not planning to implement this feature anytime soon. If you want to make it part of the language, feel free to open a pull request with a design proposal where we can discuss the details first. It doesn't have to be the way I described above if you have a better idea, I am quite interested to hear about it!)*
+
+
+## Simplifications
+
+I spend quite a while to create a proper benchmark script. In the process of that I discovered that my instructions EXT and the "syntactic sugar" way of calling functions is more annoying than useful the way it is now.
+
+This feature was intended to make a function call loop like an actual instruction but the way it works now makes it just annoying to use. Right now, if an opcode is encountered between 1001-2400 range, it is treated as a call with label (e.g. opcode 1001 is label -1 etc). For this to be useful the developer has to first switch to EXT mode so 2 dominos are used per instruction. In hindsight this defeats the whole purpose of making it require LESS dominos to call functions in the first place.
+
+**So what I am thinking is the following:**
+- a. Either remove the feature completely. So there is only 1 way to call functions.
+- b. Change the range from 1001-2400 to 100-255.
+
+By completely removing this feature, I keep dominoscript extensible.
+By implementing option b, I limit dominoscript to ever only having 100 instructions.
+
+I am a bit torn about this but my gut feeling tells me that having more than 100 instructions would be overkill for an esolang. What dominoscript still needs is some form of floating point number support, some more string manipulation instructions and maybe some more convenience instructions. I think I can fit all of that into 100 instructions.
+
+And anything that cannot be fit into these 100 instructions, can be implemented using the "syntactic sugar" way of labelling function addresses and then calling them like an instruction using opcode 100-255. Assuming I don't get rid of the EXT instruction, I don't even have to limit the upper range to 255 (but I guess I will limit it for now until I see a need to extend it).
+
+**Regarding EXT instruction**
+The main reason of adding it was for double six dominos to be able to exeucte opcodes higher than their max value of 48. With 2 double 6 dominos I can represent opcodes 0-2400 (which is the reason why 1001-2400 was choosen for the initial alternative way of calling functions).
+
+However, with the addition of the BASE instruction we can switch to using dominos with up to 16 dots per side allowing you to represent 256 opcodes with a single domino already.
+
+**Regarding GET and SET instructions**
+I am still thinking of removing EXT completely as it would free up an opcode under the "Misc" category and if I move the TIME instruction to "comparison & logical" I can similify GET and SET.
+
+Right now you need 3 arguments on the stack for SET. That is quite annoying and done due to limited free opcodes in the category. With 2 more opcodes freed, I can turn it into GETNUM SETNUM and GETSTR and SETSTR.
+
+While this makes the instructions less powerful, it is more consistent with the NUMOUT, NUMIN, STROUT and STRIN instructions where I had the same choice to make and decided to split them up in favor of using less arguments whenever executed. There the decision was simpler but for GET and SET I wanted to be able to sort of get and set values with a "type". Right now we have:
+- Domino value
+- unsigned number (not like uint32 as the stack still operates on signed numbers but we save 1 half of a domino by not having to encode the sign)
+- signed number
+
+As well as various ways on which direction it is set or gotten from. This can all be very powerful but just adds layers of complexity which in 95% of cases you won't use.
+
+**Regarding NAVM Instruction**
+When I came up with this, I was quite pleased but in practive I hardly ever want to make use of it. I think it is only benefitial when you as a dev want to design a programm with a little gaps as possible inbetween. 
+
+
+**Final thoughts**
+Since dominoscript has yet to be discovered by anybody else, I still have the freedom to change the spec to my liking. That being said, I am also a bit tired of changing the specification and as a result of that, fixing docs, tests and whatever else there is. It is supposed to be a wacky language and I should just embrace that.
+
+I think I will go with the following changes:
+- move range of "label" opcodes from 1001-2400 to 100-255. Essentially limiting the language to 100 instructions while making label opcodes great again (hopefully).
+- Nothing else.

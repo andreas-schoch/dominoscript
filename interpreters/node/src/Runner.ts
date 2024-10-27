@@ -1,9 +1,11 @@
 import {CALL_INSTRUCTION, Instruction, asyncOpcodes, instructionsByOpcode} from './instructions/index.js';
-import {Context, createContext} from './Context.js';
+import {Context, contexts, createContext} from './Context.js';
 import {DSInterpreterError, DSInvalidInstructionError, DSUnexpectedEndOfNumberError} from './errors.js';
 import {parseDominoValue} from './instructions/Misc.js';
 import {step} from './step.js';
 
+// TODO add a "stepping" config param. When true, the user has to manually resolve a promise for the execution to continue.
+//  Not sure yet how to implement but I could pass the resolve function to the onAfterInstruction listener if the stepping flag is set.s
 export interface DominoScriptRunner {
   ctx: Context;
   run(): Promise<Context>;
@@ -25,10 +27,10 @@ export interface DSConfig {
   dataStackSize: number;
   /** Determines how deeply you can recurse into CALL instructions. Default: 512 */
   returnStackSize: number;
-  /** Slow down the execution of the script (in ms). Useful for debugging and visualizing the execution. If zero, execution isn't unnecessarily awaited unless forceAwait is true. Default: 0 */
+  /** Slow down the execution of the script (in ms) between each instruction. Useful for debugging and visualizing the execution. If zero, it executes instructions as fast as possible. Default: 0 */
   instructionDelay: number;
-  /** Instruct interpreter to always await even if instructionDelay is zero. This makes the exection noticably slower but might prevent infinite loops when speed doesn't matter too much. Default: false */
-  forceAwait: boolean;
+  /** Instruct interpreter to await every nth instruction with a timeout of 0ms to be able to break out of infinitive loops as well as code with only sync instructions that would otherwise be blocking. If instructionDelay is > 0, you don't need this. Default: 0 (no interupts) */
+  forceInterrupt: number;
 }
 
 export function createRunner(source: string, options: Partial<DSConfig> = {}): DominoScriptRunner {
@@ -47,15 +49,15 @@ export function createRunner(source: string, options: Partial<DSConfig> = {}): D
 }
 
 export async function run(ctx: Context): Promise<Context> {
+  const {config, info, stack, afterInstruction, afterRun, beforeRun} = ctx;
+
   const start = performance.now();
-  ctx.info.timeStartMs = Date.now();
-  ctx.beforeRun?.(ctx);
+  info.timeStartMs = Date.now();
+  beforeRun?.(ctx);
 
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
-    let instruction: Instruction | undefined;
 
-    // Since it makes the execution slower, we only await if instructionDelay is greater than 0 or forceAwait is true
-    if (ctx.config.instructionDelay > 0 || ctx.config.forceAwait) await new Promise(resolve => setTimeout(resolve, ctx.config.instructionDelay));
+    let instruction: Instruction | undefined;
 
     if (opcode <= 1000) {
       // Opcode range 0-1000 are reserved for inbuilt instructions
@@ -65,11 +67,11 @@ export async function run(ctx: Context): Promise<Context> {
       // Opcodes 1001-2400 are "Syntactic Sugar" for CALL with labels. Opcode 1001 is a CALL with label -1
       instruction = CALL_INSTRUCTION;
       const label = -opcode + 1000;
-      ctx.stack.push(label);
+      stack.push(label);
     }
 
-    ctx.info.totalInstructions++;
-    ctx.info.totalInstructionExecution[instruction.name] = (ctx.info.totalInstructionExecution[instruction.name] || 0) + 1;
+    info.totalInstructions++;
+    info.totalInstructionExecution[instruction.name] = (info.totalInstructionExecution[instruction.name] || 0) + 1;
     ctx.lastInstruction = ctx.currentInstruction;
     ctx.currentInstruction = instruction.name;
 
@@ -78,12 +80,37 @@ export async function run(ctx: Context): Promise<Context> {
     if (asyncOpcodes.has(opcode)) await instruction.fn(ctx);
     else instruction.fn(ctx);
 
-    ctx.afterInstruction?.(ctx, instruction.name);
+    // Await only when desired due to negative performance impact
+    if (config.instructionDelay > 0) await new Promise(resolve => setTimeout(resolve, config.instructionDelay));
+    else if (config.forceInterrupt > 0 && info.totalInstructions % config.forceInterrupt === 0) await new Promise(resolve => setTimeout(resolve, 0));
+
+    afterInstruction?.(ctx, instruction.name); // this is above the async operations to be able to log the instruction name before the async operation
+
+    // Here we handle all other async operations that need to be awaited, so step() and most instructions can remain synchronous
+    if (ctx.nextImport !== null) {
+      // PERFORM IMPORT
+      await run(createContext(ctx.nextImport.script, ctx, {...ctx.config, filename: ctx.nextImport.filename}));
+      ctx.nextImport = null;
+      ctx.info.totalImports++;
+    } else if (ctx.nextCallAddress !== null && typeof ctx.nextCallAddress !== 'number' && ctx.nextCallAddress.origin !== ctx.id) {
+      // PERFORM EXTERNAL CALL (FROM IMPORTED CHILD CONTEXT)
+      const label = ctx.nextCallAddress;
+      const childCtx = contexts[label.origin];
+      /* c8 ignore next */
+      if (!childCtx) throw new DSInterpreterError(`Context ${label.origin} not found`);
+      const localLabel = childCtx.labels[label.localId];
+      childCtx.nextCallAddress = localLabel;
+      childCtx.isFinished = false;
+      await run(childCtx); // This essentially hands over control to the child context until its IP cannot move anymore.
+      ctx.nextCallAddress = null;
+      ctx.info.totalCalls++;
+      ctx.info.totalReturns++;
+    }
   }
 
-  ctx.info.timeEndMs = Date.now();
-  ctx.info.executionTimeSeconds = (performance.now() - start) / 1000;
-  ctx.afterRun?.(ctx);
+  info.timeEndMs = Date.now();
+  info.executionTimeSeconds = (performance.now() - start) / 1000;
+  afterRun?.(ctx);
   return ctx;
 }
 
