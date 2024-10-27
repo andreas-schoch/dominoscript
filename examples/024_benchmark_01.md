@@ -1,8 +1,9 @@
 # Example 024 - Benchmark 01
 
-The following code loops around 50k times doing a bunch of things using as many different instructions as possible. In total it executes 8'988'021 instructions.
+The following code loops around 50k times doing a bunch of things using as many different instructions as possible.
 
-When running this, I'd recommend to disable any debug output as well as set instructionDelay and forceInterrupt to zero (if using the reference interpreter in the online playground).
+**When running this, I'd recommend to disable "per instruction" debug output**
+(If using the online playground, set delay and forceInterrupt to 0 and uncheck all debug info except the final summary).
 
 This benchmark is used as the baseline to see if interpreter performance is improving or is getting worse (as well as for comparring different implementations in the future)
 
@@ -54,3 +55,15 @@ c . . . . . . . 2 1—0 1—0 a—2 . . 0 . . 0 5—4 e—4 f—4 . 2
                 |                 |                     |
 . . . . . . . . c . . . . . . . . 6 1—1 1—0 d—2 7—0 1—0 c
 ```
+
+
+## Notes:
+
+Before the loop, a file is imported which exposes a factorial function. The loop calls this function every iteration to compute the factorial of 12.
+
+As it turns out, this slows down the interpreter performance significantly. I assume this is due to async/await overhead and not due to the recursion itself.
+
+
+If the factorial function were to be inlined instead of imported, it would probably run 2-3 times faster due to the lack of async/await overhead.
+TODO verify assumption.
+

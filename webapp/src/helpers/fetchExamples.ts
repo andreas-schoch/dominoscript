@@ -1,7 +1,6 @@
 import {dedent} from '../helpers.js';
 
 export async function fetchExample(filename: string): Promise<string> {
-  console.log('fetching example', filename);
   if (filename === '000_intro.md') return intro;
   const response = await fetch(`/examples/${filename}`);
   return response.text();

@@ -3,6 +3,8 @@ import {DominoScriptRunner, createRunner} from 'dominoscript';
 import {FaSolidPlay, FaSolidStop} from 'solid-icons/fa';
 import {IDisposable, Terminal} from '@xterm/xterm';
 import {fetchExample, filenameExamples, intro} from './helpers/fetchExamples.js';
+import {Checkbox} from './components/Checkbox.jsx';
+import {DraggableInput} from './components/DraggableInput.jsx';
 import {EditorView} from '@codemirror/view';
 import {ExampleSelector} from './components/ExampleSelector.jsx';
 import {FitAddon} from '@xterm/addon-fit';
@@ -10,7 +12,6 @@ import {Footer} from './components/Footer.jsx';
 import {Header} from './components/Header.jsx';
 import {PaneHeader} from './components/PaneHeader.jsx';
 import Split from 'split.js';
-import {StepDelaySlider} from './components/StepDelaySlider.jsx';
 import {checkSyntaxErrors} from './helpers/checkSyntaxErrors.js';
 import {contexts} from 'dominoscript/dist/Context.js';
 import {getTotalInfo} from './helpers.js';
@@ -22,6 +23,8 @@ export const App: Component = () => {
 
   const [isRunning, setIsRunning] = createSignal(false);
   const [delay, setDelay] = createSignal(0);
+  const [printInstructions, setPrintInstructions] = createSignal(true);
+  const [printSummary, setPrintSummary] = createSignal(true);
 
   const [exampleName, setExampleName] = createSignal(filenameExamples[0]);
   const [exampleCode] = createResource(exampleName, fetchExample);
@@ -57,7 +60,7 @@ export const App: Component = () => {
     debugTerminalView.write('\x1B[?25l'); // Hide the cursor
 
     Split(['#split-left', '#split-right'], {
-      dragInterval: 30,
+      dragInterval: 1000/60,
       sizes: [60, 40],
       snapOffset: 10,
       direction: 'horizontal',
@@ -65,7 +68,7 @@ export const App: Component = () => {
       onDrag: fitTerminals
     });
     Split(['#split-top', '#split-bottom'], {
-      dragInterval: 30,
+      dragInterval: 1000/60,
       sizes: [50, 50],
       snapOffset: 10,
       direction: 'vertical',
@@ -94,9 +97,12 @@ export const App: Component = () => {
       return;
     }
 
+    const shouldPrintInststructions = printInstructions();
+    const shouldPrintSummary = printSummary();
+
     const tabsize = 2;
     const paddings: Record<number, string> = {};
-    runner = createRunner(source, {instructionDelay: delay(), forceInterrupt: 2000});
+    runner = createRunner(source, {instructionDelay: delay(), forceInterrupt: 0});
     runner.onStdout((ctx, msg) => terminalView.write(msg));
     runner.onImport((ctx, importFilePath) => fetchExample(importFilePath));
     runner.onBeforeRun((ctx) => {
@@ -105,6 +111,7 @@ export const App: Component = () => {
       const padding = ' '.repeat(depth * tabsize);
       paddings[ctx.id] = padding;
 
+      if (!shouldPrintInststructions) return;
       const message = `│ ${ctx.parent ? 'Child context' : 'Global Context'} │`;
       debugTerminalView.writeln(padding);
       debugTerminalView.writeln(padding + '╭' + '─'.repeat(message.length - 2) + '╮');
@@ -112,32 +119,34 @@ export const App: Component = () => {
       debugTerminalView.writeln(padding + '╰' + '─'.repeat(message.length - 2) + '╯');
     });
     runner.onAfterInstruction((ctx, instruction) => {
+      if (!shouldPrintInststructions) return;
       const padding = paddings[ctx.id];
       debugTerminalView.writeln(padding + ` • Op: ${instruction.padEnd(8, ' ')}  Addr: ${String(ctx.currentCell?.address).padEnd(6)}  Stack: ${ctx.stack.toString()}`);
     });
     runner.onAfterRun(ctx => {
       setIsRunning(false);
       const padding = paddings[ctx.id];
-      debugTerminalView.writeln(padding + ' • DONE\n');
 
-      if (!ctx?.parent) {
+      if (shouldPrintInststructions) debugTerminalView.writeln(padding + ' • DONE\n');
+
+      if (!ctx?.parent && shouldPrintSummary) {
 
         const mhz = ctx.info.totalInstructions / ctx.info.executionTimeSeconds / 1e6;
 
         const message = '│ Final Summary │';
-        debugTerminalView.writeln(padding);
-        debugTerminalView.writeln(padding + '╭' + '─'.repeat(message.length - 2) + '╮');
-        debugTerminalView.writeln(padding + message);
-        debugTerminalView.writeln(padding + '╰' + '─'.repeat(message.length - 2) + '╯');
+        debugTerminalView.writeln('');
+        debugTerminalView.writeln('╭' + '─'.repeat(message.length - 2) + '╮');
+        debugTerminalView.writeln(message);
+        debugTerminalView.writeln('╰' + '─'.repeat(message.length - 2) + '╯');
         const totalInfo = getTotalInfo(ctx.id);
-        debugTerminalView.writeln(padding + ` • Imports: ${totalInfo.totalImports}`);
-        debugTerminalView.writeln(padding + ` • Jumps: ${totalInfo.totalJumps}`);
-        debugTerminalView.writeln(padding + ` • Calls: ${totalInfo.totalCalls}`);
-        debugTerminalView.writeln(padding + ` • Returns: ${totalInfo.totalReturns}`);
-        debugTerminalView.writeln(padding + ` • Steps: ${totalInfo.totalSteps}`);
-        debugTerminalView.writeln(padding + ` • ExecutionTime: ${ctx.info.executionTimeSeconds.toFixed(6) + 's'}`);
-        debugTerminalView.writeln(padding + ` • Instructions/s: ${mhz.toFixed(6)} Mhz`);
-        debugTerminalView.writeln(padding + ` • Instructions: ${totalInfo.totalInstructions}`);
+        debugTerminalView.writeln(` • Imports: ${totalInfo.totalImports}`);
+        debugTerminalView.writeln(` • Jumps: ${totalInfo.totalJumps}`);
+        debugTerminalView.writeln(` • Calls: ${totalInfo.totalCalls}`);
+        debugTerminalView.writeln(` • Returns: ${totalInfo.totalReturns}`);
+        debugTerminalView.writeln(` • Steps: ${totalInfo.totalSteps}`);
+        debugTerminalView.writeln(` • ExecutionTime: ${ctx.info.executionTimeSeconds.toFixed(6) + 's'}`);
+        debugTerminalView.writeln(` • Instructions/s: ${mhz.toFixed(6)} Mhz`);
+        debugTerminalView.writeln(` • Instructions: ${totalInfo.totalInstructions}`);
         Object.entries(totalInfo.totalInstructionExecution)
           .sort((a, b) => b[1] - a[1])
           .forEach(([op, count]) => debugTerminalView.writeln(`    • ${op}: ${count}`));
@@ -214,11 +223,11 @@ export const App: Component = () => {
       <div class="flex flex-row w-[95vw] mx-auto">
 
         {/* LEFT CONTAINER - EDITOR*/}
-        <div id="split-left" ref={el => editorContainerRef = el} class="bg-neutral-700 rounded-md border relative border-stone-500 overflow-hidden">
+        <div id="split-left" ref={el => editorContainerRef = el} class="bg-neutral-700 rounded-md border relative border-stone-500 overflow-hidden min-w-[400px]">
           <PaneHeader name={''} >
             <ExampleSelector selected={exampleName} setSelected={setExampleName} />
-            <StepDelaySlider delay={delay} setDelay={setDelay} />
-            <button onClick={() => isRunning() ? handleStop(true) : handleRun()} class="bg-stone-700 px-3 text-white rounded flex flex-row items-center">
+            <DraggableInput min={0} max={999} step={1} value={delay} setValue={setDelay} />
+            <button onClick={() => isRunning() ? handleStop(true) : handleRun()} class="min-w-20 text-white rounded flex flex-row font-bold items-center justify-center" classList={{'bg-green-800': !isRunning(), 'bg-red-800': isRunning()}}>
               {isRunning() ? <><FaSolidStop class="mr-2"/>Stop</> : <><FaSolidPlay class="mr-2"/>Run</>}
             </button>
           </PaneHeader>
@@ -235,7 +244,10 @@ export const App: Component = () => {
 
           {/* DEBUG INFO */}
           <div id="split-bottom" class="bg-black rounded-md overflow-hidden border border-stone-500 relative flex flex-col">
-            <PaneHeader name={'Debug Info'} />
+            <PaneHeader name={'Debug Info'} >
+              <Checkbox disabled={isRunning} label="Instructions" checked={printInstructions} setChecked={setPrintInstructions} />
+              <Checkbox disabled={isRunning} label="Summary" checked={printSummary} setChecked={setPrintSummary} />
+            </PaneHeader>
             <div ref={el => debugInfoRef = el} class="absolute top-[58px] left-2.5 right-0 bottom-2.5"></div>
           </div>
 

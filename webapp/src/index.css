@@ -7,89 +7,90 @@
 * {
   box-sizing: border-box !important;
 }
-.xterm {
-  @apply h-full;
-}
-
-.cm-scroller, .xterm-viewport {
-  @apply !overflow-auto !h-full;
-}
-
-.cm-scroller::-webkit-scrollbar, .xterm-viewport::-webkit-scrollbar {
-  @apply !w-1.5 !h-1.5 relative;
-}
-
-.cm-scroller::-webkit-scrollbar-thumb, .xterm-viewport::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-md;
-}
-
-.cm-scroller::-webkit-scrollbar-thumb:hover, .xterm-viewport::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-300;
-}
-
-.cm-scroller::-webkit-scrollbar-track, .xterm-viewport::-webkit-scrollbar-track {
-  @apply bg-transparent rounded mr-2;
-}
-
-.cm-scroller::-webkit-scrollbar-corner, .xterm-viewport::-webkit-scrollbar-corner {
-  @apply bg-transparent;
-}
-
-.cm-scroller::-webkit-scrollbar-corner, .xterm-viewport::-webkit-scrollbar-corner {
-  @apply bg-transparent;
-}
-
-.gutter.gutter-horizontal {
-  cursor: col-resize;
-}
-
-.gutter.gutter-vertical {
-  cursor: row-resize;
-}
 
 @layer components {
-  .range-input {
-    @apply w-full h-2 bg-stone-500 rounded-2xl cursor-pointer appearance-none;
+  .xterm {
+    @apply h-full;
   }
-  .range-input::-webkit-slider-thumb {
-    @apply w-3 h-3 bg-gray-200 rounded-xl border border-stone-500 -mt-[2px];
-    appearance: none;
-  }
-  .range-input::-moz-range-thumb {
-    @apply w-3 h-3 bg-gray-200 rounded-xl border border-stone-500;
-  }
-  .range-input::-ms-thumb {
-    @apply w-3 h-3 bg-gray-200 rounded-xl border border-stone-500;
-  }
-  .range-input::-webkit-slider-runnable-track {
-    @apply bg-stone-500 h-2 rounded-2xl;
-  }
-  .range-input:focus {
-    @apply outline-none;
-  }
-}
 
-/* --------------------------------- */
+  .cm-scroller, .xterm-viewport {
+    @apply !overflow-auto !h-full;
+  }
 
-/* TODO improve */
+  .cm-scroller::-webkit-scrollbar, .xterm-viewport::-webkit-scrollbar {
+    @apply !w-1.5 !h-1.5 relative;
+  }
 
-.select-css {
-	-moz-appearance: none;
-	-webkit-appearance: none;
-	appearance: none;
-}
-.select-css::-ms-expand {
-	display: none;
-}
+  .cm-scroller::-webkit-scrollbar-thumb, .xterm-viewport::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-md;
+  }
 
-.select-css:focus {
-	color: #222; 
-	outline: none;
-}
-.select-css option {
-	font-weight:normal;
-}
+  .cm-scroller::-webkit-scrollbar-thumb:hover, .xterm-viewport::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-300;
+  }
 
-.select-css option[selected] {
-    @apply bg-stone-600;
+  .cm-scroller::-webkit-scrollbar-track, .xterm-viewport::-webkit-scrollbar-track {
+    @apply bg-transparent rounded mr-2;
+  }
+
+  .cm-scroller::-webkit-scrollbar-corner, .xterm-viewport::-webkit-scrollbar-corner {
+    @apply bg-transparent;
+  }
+
+  .cm-scroller::-webkit-scrollbar-corner, .xterm-viewport::-webkit-scrollbar-corner {
+    @apply bg-transparent;
+  }
+
+  .gutter.gutter-horizontal {
+    cursor: col-resize;
+  }
+
+  .gutter.gutter-vertical {
+    cursor: row-resize;
+  }
+
+  /************/
+  /* CHECKBOX */
+  /************/
+  .checkbox {
+    font-size: 1.2rem;
+    display: grid;
+    grid-template-columns: 1em auto;
+    gap: 0.5em;
+    user-select: none;
+    cursor: pointer;
+  }
+
+  input[type=checkbox] {
+    cursor: pointer; /* Add this line */
+  }
+  
+  input[type=checkbox]::before {
+    margin: 0 auto;
+    content: "";
+    width: 0.65em;
+    height: 0.65em;
+    -webkit-clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    transform: scale(0);
+    transform-origin: bottom left;
+    transition: 100ms transform ease-in-out;
+    box-shadow: inset 1em 1em theme('colors.stone.300');
+    cursor: pointer;
+  }
+  
+  input[type=checkbox]:checked::before {
+    transform: scale(1);
+  }
+  
+  input[type=checkbox]:disabled {
+    --form-control-color: var(--form-control-disabled);
+    color: var(--form-control-disabled);
+    cursor: not-allowed;
+  }
+  
+  .checkbox > .disabled {
+    color: var(--form-control-disabled);
+    cursor: not-allowed;
+  }
 }
