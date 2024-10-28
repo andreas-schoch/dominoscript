@@ -47,7 +47,7 @@ export const intro = dedent(`\
 
   **You can add non-code as long as you follow these 2 rules:**
     1. You cannot start a non-code line with a dot \`.\`
-    2. You cannot start a non-code line with a number \`0 to f\`
+    2. You cannot start a non-code line with a number \`0\` to \`f\`
 
     
   **For the actual code, follow these syntax rules:**
@@ -88,7 +88,7 @@ export const intro = dedent(`\
     6. The Instruction Pointer always moves from one half (entry) of the same domono to the other half (exit) of the same domino.  
        By default, a simple "forward", "left", "right" priority determines where to move. To change this, use the \`NAVM\` instruction.
 
-  **To learn more about how DominoScript works, check out the README in the GitHub repo**
+  **To learn more about how DominoScript works, click the help icon below**
 
 
   `

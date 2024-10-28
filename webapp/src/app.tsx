@@ -102,7 +102,7 @@ export const App: Component = () => {
 
     const tabsize = 2;
     const paddings: Record<number, string> = {};
-    runner = createRunner(source, {instructionDelay: delay(), forceInterrupt: 0});
+    runner = createRunner(source, {instructionDelay: delay(), forceInterrupt: 2500});
     runner.onStdout((ctx, msg) => terminalView.write(msg));
     runner.onImport((ctx, importFilePath) => fetchExample(importFilePath));
     runner.onBeforeRun((ctx) => {

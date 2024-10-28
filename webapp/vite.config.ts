@@ -19,6 +19,18 @@ export default defineConfig({
           src: normalizePath(resolve(__dirname, '../examples/*{.ds,.md}')),
           dest: 'examples'
         },
+        {
+          src: normalizePath(resolve(__dirname, '../docs/*.png')),
+          dest: 'docs'
+        },
+        {
+          src: normalizePath(resolve(__dirname, '../assets/vertical/*.png')),
+          dest: 'assets/vertical'
+        },
+        {
+          src: normalizePath(resolve(__dirname, '../assets/horizontal/*.png')),
+          dest: 'assets/horizontal'
+        },
       ]
     })
   ],
