@@ -61,6 +61,8 @@ export const intro = dedent(`\
     8. As long as the 2d grid is a rectangle and has less than 65535 cells, it can be of any size.
     9. Any other lines before and after the actual code are ignored
 
+  **WARNING: Changes are not persisted on reload. Make sure you save your code somewhere before you leave.**
+
 
   ## The actual code:
 

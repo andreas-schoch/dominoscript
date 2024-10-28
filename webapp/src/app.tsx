@@ -2,7 +2,7 @@ import {type Component, createEffect, createResource, createSignal, onMount} fro
 import {DominoScriptRunner, createRunner} from 'dominoscript';
 import {FaSolidPlay, FaSolidStop} from 'solid-icons/fa';
 import {IDisposable, Terminal} from '@xterm/xterm';
-import {fetchExample, filenameExamples, intro} from './helpers/fetchExamples.js';
+import {fetchExample, intro} from './helpers/fetchExamples.js';
 import {Checkbox} from './components/Checkbox.jsx';
 import {DraggableInput} from './components/DraggableInput.jsx';
 import {EditorView} from '@codemirror/view';
@@ -13,6 +13,7 @@ import {PaneHeader} from './components/PaneHeader.jsx';
 import Split from 'split.js';
 import {checkSyntaxErrors} from './helpers/checkSyntaxErrors.js';
 import {contexts} from 'dominoscript/dist/Context.js';
+import {exampleName} from './index.jsx';
 import {getTotalInfo} from './helpers.js';
 import {initEditorView} from './helpers/initEditorView.js';
 import {initTerminalView} from './helpers/initTerminalView.js';
@@ -25,7 +26,6 @@ export const App: Component = () => {
   const [printInstructions, setPrintInstructions] = createSignal(true);
   const [printSummary, setPrintSummary] = createSignal(true);
 
-  const [exampleName, setExampleName] = createSignal(filenameExamples[0]);
   const [exampleCode] = createResource(exampleName, fetchExample);
 
   let editorContainerRef: HTMLDivElement;
@@ -60,6 +60,7 @@ export const App: Component = () => {
 
     Split(['#split-left', '#split-right'], {
       cursor: 'col-resize',
+      minSize: [300, 300],
       dragInterval: 1000/60,
       sizes: [50, 50],
       snapOffset: 10,
@@ -231,7 +232,7 @@ export const App: Component = () => {
         {/* LEFT CONTAINER - EDITOR*/}
         <div id="split-left" ref={el => editorContainerRef = el} class="rounded-md border relative border-stone-500 overflow-hidden min-w-[200px]">
           <PaneHeader name={''} >
-            <ExampleSelector selected={exampleName} setSelected={setExampleName} />
+            <ExampleSelector />
 
           </PaneHeader>
         </div>

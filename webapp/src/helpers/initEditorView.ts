@@ -11,7 +11,7 @@ export function initEditorView(editorRef: HTMLDivElement, doc: string): EditorVi
     '.cm-gutter': {userSelect: 'none'},
     '.cm-foldGutter': {display: 'none !important'}, // hacky way to keep markdown highlighting but without the folding
     '&.cm-editor': {position: 'absolute !important', left: '0', right: '0', top: '40px', bottom: '0'},
-    '.cm-content': {padding: '20px 0', letterSpacing: '2px'},
+    '.cm-content': {padding: '20px 0', letterSpacing: '2px', outline: 'none'},
     '.cm-line': {padding: '0 16px'},
   });
 
@@ -28,6 +28,7 @@ export function initEditorView(editorRef: HTMLDivElement, doc: string): EditorVi
   });
 
   const state = EditorState.create({extensions: [basicSetup, oneDark, themeCustom, markdown(), hyphenReplacer], doc});
+
   const view = new EditorView({state, parent: editorRef});
 
   return view;

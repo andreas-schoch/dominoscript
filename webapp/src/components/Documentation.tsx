@@ -48,7 +48,7 @@ export const Documentation: Component = () => {
             </For>
           </ul>
 
-          <div class="markdown-body-scroller markdown-body overflow-auto h-full w-full">
+          <div class="custom-scrollbar markdown-body overflow-auto h-full w-full">
             <Dynamic component={currentSegment()} />
           </div>
         </div>

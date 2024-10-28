@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.4.2`**
+**Current version `0.4.6`**
 
 Have you ever wanted to write code using domino pieces? No?
 
