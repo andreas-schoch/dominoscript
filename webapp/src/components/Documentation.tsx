@@ -27,7 +27,9 @@ export const Documentation: Component = () => {
   });
 
   return <>
-    <FaRegularCircleQuestion onclick={() => setShowDocs(!showDocs())} class="text-2xl cursor-pointer mr-4" />
+    <div class="w-10 h-10 flex justify-center items-center cursor-pointer text-2xl rounded hover:bg-stone-800">
+      <FaRegularCircleQuestion onclick={() => setShowDocs(!showDocs())} />
+    </div>
 
     <Portal>
       <div classList={{hidden: !showDocs()}} class="absolute inset-0 flex justify-center items-center overflow-auto">

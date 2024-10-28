@@ -1,4 +1,5 @@
 import {Accessor, Component, Setter, onCleanup} from 'solid-js';
+import {FaRegularClock} from 'solid-icons/fa';
 
 const noop = (): void => { /* NOOP  */};
 
@@ -9,7 +10,7 @@ export const DraggableInput: Component<{min: number, max: number, step: number, 
 
   function displayValue(): string {
     const value = props.value();
-    return `${String(value).padStart(3, ' ')} ms Delay`;
+    return `${String(value).padStart(3, ' ')} ms`;
   }
 
   function onMouseDown(): void {
@@ -58,18 +59,19 @@ export const DraggableInput: Component<{min: number, max: number, step: number, 
   }
 
   return (
-    <>
+    <div class="relative text-black border border-stone-950 bg-stone-300 box-border px-2 py-1 max-w-20 text-center h-full select-none outline-none text-xs hover:border-stone-500 hover:cursor-ew-resize mr-2.5 rounded overflow-hidden">
+      <FaRegularClock class="absolute top-0 bottom-0 left-2 h-full text-lg pointer-events-none" />
       <input
         readOnly={true}
         ref={el => inputRef = el}
         aria-label='Value'
         type="string"
-        class={'text-black border border-stone-950 bg-stone-300 box-border px-2 py-1 max-w-24 text-center h-full outline-none text-xs hover:border-stone-500 hover:cursor-ew-resize ml-auto mr-2 rounded'}
+        class={'w-full h-full bg-transparent outline-none text-xs text-right hover:border-stone-500 hover:cursor-ew-resize select-none'}
         classList={{'value-input': true}}
         value={displayValue()}
         onChange={handleChange}
         onMouseDown={() => onMouseDown()}
       />
-    </>
+    </div>
   );
 };

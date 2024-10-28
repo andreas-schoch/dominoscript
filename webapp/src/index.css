@@ -40,10 +40,19 @@
 
   .gutter.gutter-horizontal {
     cursor: col-resize;
+    background-color: transparent;
+    transition: all 0.3s ease;
   }
-
+  
   .gutter.gutter-vertical {
     cursor: row-resize;
+    transition: all 0.3s ease;
+  }
+
+  .gutter.gutter-horizontal:hover, .gutter.gutter-vertical:hover  {
+    background-color: theme(colors.blue.500 / 75%);
+    opacity: 30%;
+    transition: all 0.3s ease 0.1s; /* Added delay of 0.1s */
   }
 
   /************/

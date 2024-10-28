@@ -8,7 +8,6 @@ import {DraggableInput} from './components/DraggableInput.jsx';
 import {EditorView} from '@codemirror/view';
 import {ExampleSelector} from './components/ExampleSelector.jsx';
 import {FitAddon} from '@xterm/addon-fit';
-import {Footer} from './components/Footer.jsx';
 import {Header} from './components/Header.jsx';
 import {PaneHeader} from './components/PaneHeader.jsx';
 import Split from 'split.js';
@@ -60,14 +59,16 @@ export const App: Component = () => {
     debugTerminalView.write('\x1B[?25l'); // Hide the cursor
 
     Split(['#split-left', '#split-right'], {
+      cursor: 'col-resize',
       dragInterval: 1000/60,
-      sizes: [60, 40],
+      sizes: [50, 50],
       snapOffset: 10,
       direction: 'horizontal',
       onDragEnd: fitTerminals,
       onDrag: fitTerminals
     });
     Split(['#split-top', '#split-bottom'], {
+      cursor: 'row-resize',
       dragInterval: 1000/60,
       sizes: [50, 50],
       snapOffset: 10,
@@ -217,19 +218,21 @@ export const App: Component = () => {
   }
 
   return <>
-    <div class="absolute inset-0 grid grid-rows-[80px_1fr_36px] !max-h-screen w-screen h-screen gap-6 overflow-hidden">
-      <Header/>
+    <div class="absolute inset-0 grid grid-rows-[60px_1fr] !max-h-screen w-screen h-screen overflow-hidden">
+      <Header>
+        <DraggableInput min={0} max={999} step={1} value={delay} setValue={setDelay} />
+        <button onClick={() => isRunning() ? handleStop(true) : handleRun()} class="min-w-20 text-white h-full rounded flex flex-row font-bold items-center justify-center" classList={{'bg-green-800': !isRunning(), 'bg-red-800': isRunning()}}>
+          {isRunning() ? <><FaSolidStop class="mr-2"/>Stop</> : <><FaSolidPlay class="mr-2"/>Run</>}
+        </button>
+      </Header>
 
-      <div class="flex flex-row w-[95vw] mx-auto">
+      <div class="flex flex-row mx-auto w-full p-2.5">
 
         {/* LEFT CONTAINER - EDITOR*/}
-        <div id="split-left" ref={el => editorContainerRef = el} class="bg-neutral-700 rounded-md border relative border-stone-500 overflow-hidden min-w-[400px]">
+        <div id="split-left" ref={el => editorContainerRef = el} class="rounded-md border relative border-stone-500 overflow-hidden min-w-[200px]">
           <PaneHeader name={''} >
             <ExampleSelector selected={exampleName} setSelected={setExampleName} />
-            <DraggableInput min={0} max={999} step={1} value={delay} setValue={setDelay} />
-            <button onClick={() => isRunning() ? handleStop(true) : handleRun()} class="min-w-20 text-white rounded flex flex-row font-bold items-center justify-center" classList={{'bg-green-800': !isRunning(), 'bg-red-800': isRunning()}}>
-              {isRunning() ? <><FaSolidStop class="mr-2"/>Stop</> : <><FaSolidPlay class="mr-2"/>Run</>}
-            </button>
+
           </PaneHeader>
         </div>
 
@@ -244,7 +247,7 @@ export const App: Component = () => {
 
           {/* DEBUG INFO */}
           <div id="split-bottom" class="bg-black rounded-md overflow-hidden border border-stone-500 relative flex flex-col">
-            <PaneHeader name={'Debug Info'} >
+            <PaneHeader name={'Debug'} >
               <Checkbox disabled={isRunning} label="Instructions" checked={printInstructions} setChecked={setPrintInstructions} />
               <Checkbox disabled={isRunning} label="Summary" checked={printSummary} setChecked={setPrintSummary} />
             </PaneHeader>
@@ -254,7 +257,6 @@ export const App: Component = () => {
         </div>
       </div>
 
-      <Footer/>
     </div>
   </>;
 };

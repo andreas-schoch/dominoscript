@@ -1,14 +1,27 @@
-import {Component} from 'solid-js';
+import {Documentation} from './Documentation.jsx';
+import {FaBrandsGithub} from 'solid-icons/fa';
+import {ParentComponent} from 'solid-js';
 import logo from '../../assets/logo.png';
 
-export const Header: Component = () => {
+export const Header: ParentComponent = props => {
   return <>
-    <header class="w-screen flex flex-col items-center px-4 pt-2 h-full">
-      <div class="flex flex-row justify-center items-stretch h-full">
-        <img src={logo} alt="logo" class="h-7 mr-4 sm:h-9" />
-        <h1 class="text-xl text-white font-bold sm:text-3xl">DominoScript Playground</h1>
+    <header class="w-screen bg-stone-900 border-b items-center border-stone-500 text-white grid grid-cols-3">
+
+      <div class="flex flex-row h-full items-center">
+        <div class="ml-2.5 mr-4 size-10 cursor-pointer rounded-full border border-stone-600 bg-stone-800 hover:bg-stone-700 min-h-10 min-w-10">
+          <img src={logo} alt="logo" class="size-full hover:scale-105" />
+        </div>
+        <h1 class="text-lg font">DominoScript</h1>
       </div>
-      <div class="text-[12px] text-gray-600">A recreational stack-oriented concatenative 2D self-modifying esoteric programming language that uses dots on dominos to represent code.</div>
+
+      <div class="flex flex-row h-full py-3 items-center justify-center">
+        {props.children}
+      </div>
+
+      <div class="flex flex-row h-full items-center justify-end">
+        <Documentation/>
+        <a class="w-10 h-10 flex justify-center items-center cursor-pointer text-2xl mr-2.5 rounded hover:bg-stone-800" rel="noopener" href='https://github.com/andreas-schoch/dominoscript' target="_blank"><FaBrandsGithub/></a>
+      </div>
     </header>
   </>;
 };

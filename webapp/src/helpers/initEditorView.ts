@@ -8,10 +8,11 @@ export function initEditorView(editorRef: HTMLDivElement, doc: string): EditorVi
   const themeCustom = EditorView.theme({
     '&': {fontSize: '0.9rem'},
     // '.cm-scroller': {overflow: 'auto'},
+    '.cm-gutter': {userSelect: 'none'},
     '.cm-foldGutter': {display: 'none !important'}, // hacky way to keep markdown highlighting but without the folding
-    '&.cm-editor': {position: 'absolute !important', left: '0', right: '0', top: '48px', bottom: '0'},
+    '&.cm-editor': {position: 'absolute !important', left: '0', right: '0', top: '40px', bottom: '0'},
     '.cm-content': {padding: '20px 0', letterSpacing: '2px'},
-    '.cm-line': {padding: '0 20px'},
+    '.cm-line': {padding: '0 16px'},
   });
 
   // Replace regular hyphen on the fly with long hyphen for horizontal dominos
