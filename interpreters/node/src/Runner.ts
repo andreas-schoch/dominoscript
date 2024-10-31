@@ -1,11 +1,9 @@
-import {CALL_INSTRUCTION, Instruction, asyncOpcodes, instructionsByOpcode} from './instructions/index.js';
 import {Context, contexts, createContext} from './Context.js';
-import {DSInterpreterError, DSInvalidInstructionError, DSUnexpectedEndOfNumberError} from './errors.js';
+import {DSInterpreterError, DSUnexpectedEndOfNumberError} from './errors.js';
+import {asyncStep, step} from './step.js';
+import {getInstructionOrThrow} from './instructions/index.js';
 import {parseDominoValue} from './instructions/Misc.js';
-import {step} from './step.js';
 
-// TODO add a "stepping" config param. When true, the user has to manually resolve a promise for the execution to continue.
-//  Not sure yet how to implement but I could pass the resolve function to the onAfterInstruction listener if the stepping flag is set.s
 export interface DominoScriptRunner {
   ctx: Context;
   run(): Promise<Context>;
@@ -13,8 +11,9 @@ export interface DominoScriptRunner {
   onStdin(fn: Context['listeners']['stdin']): void;
   onImport(fn: Context['listeners']['import']): void;
   onBeforeRun(fn: Context['listeners']['beforeRun']): void;
-  onAfterRun(fn: Context['listeners']['afterRun']): void;
+  onAfterStep(fn: Context['listeners']['afterStep']): void;
   onAfterInstruction(fn: Context['listeners']['afterInstruction']): void;
+  onAfterRun(fn: Context['listeners']['afterRun']): void;
   registerKeyDown(key: string): void
 }
 
@@ -28,7 +27,7 @@ export interface DSConfig {
   /** Determines how deeply you can recurse into CALL instructions. Default: 512 */
   returnStackSize: number;
   /** Slow down the execution of the script (in ms) between each instruction. Useful for debugging and visualizing the execution. If zero, it executes instructions as fast as possible. Default: 0 */
-  instructionDelay: number;
+  stepDelay: number;
   /** Instruct interpreter to await every nth instruction with a timeout of 0ms to be able to break out of infinitive loops as well as code with only sync instructions that would otherwise be blocking. If instructionDelay is > 0, you don't need this. Default: 0 (no interupts) */
   forceInterrupt: number;
 }
@@ -37,63 +36,47 @@ export function createRunner(source: string, options: Partial<DSConfig> = {}): D
   const ctx = createContext(source, null, options);
   return {
     ctx,
-    run: () => run(ctx),
+    run: ctx.config.stepDelay > 0 ? asyncRun.bind(null, ctx) : run.bind(null, ctx),
     onStdout: fn => ctx.listeners.stdout = fn,
     onStdin: fn => ctx.listeners.stdin = fn,
     onImport: fn => ctx.listeners.import = fn,
     onBeforeRun: fn => ctx.listeners.beforeRun = fn,
+    onAfterStep: fn => ctx.listeners.afterStep = fn,
     onAfterInstruction: fn => ctx.listeners.afterInstruction = fn,
     onAfterRun: fn => ctx.listeners.afterRun = fn,
     registerKeyDown: key => ctx.registerKeyDown(key),
   };
 }
 
-export async function run(ctx: Context): Promise<Context> {
-  const {config, info, stack, afterInstruction, afterRun, beforeRun} = ctx;
+async function run(ctx: Context): Promise<Context> {
+  const {config, info, afterInstruction, afterRun, beforeRun} = ctx;
 
   const start = performance.now();
   info.timeStartMs = Date.now();
-  beforeRun?.(ctx);
+  beforeRun(ctx);
 
   for (let opcode = nextOpcode(ctx); opcode !== null; opcode = nextOpcode(ctx)) {
-
-    let instruction: Instruction | undefined;
-
-    if (opcode <= 1000) {
-      // Opcode range 0-1000 are reserved for inbuilt instructions
-      instruction = instructionsByOpcode[opcode];
-      if (!instruction) throw new DSInvalidInstructionError(opcode);
-    } else {
-      // Opcodes 1001-2400 are "Syntactic Sugar" for CALL with labels. Opcode 1001 is a CALL with label -1
-      instruction = CALL_INSTRUCTION;
-      const label = -opcode + 1000;
-      stack.push(label);
-    }
+    const {fn, name, isAsync} = getInstructionOrThrow(ctx, opcode);
 
     info.totalInstructions++;
-    info.totalInstructionExecution[instruction.name] = (info.totalInstructionExecution[instruction.name] || 0) + 1;
+    info.totalInstructionExecution[name] = (info.totalInstructionExecution[name] || 0) + 1;
     ctx.lastInstruction = ctx.currentInstruction;
-    ctx.currentInstruction = instruction.name;
+    ctx.currentInstruction = name;
 
-    /* c8 ignore next */
-    if (instruction.fn === undefined) throw new DSInterpreterError('Instruction function is undefined which should not happen at this point');
-    if (asyncOpcodes.has(opcode)) await instruction.fn(ctx);
-    else instruction.fn(ctx);
+    // EXECUTE INSTRUCTION
+    if (isAsync) await fn(ctx);
+    else fn(ctx);
+    afterInstruction(ctx, name); // this is above the async operations to be able to log the instruction name before the async operation
 
-    // Await only when desired due to negative performance impact
-    if (config.instructionDelay > 0) await new Promise(resolve => setTimeout(resolve, config.instructionDelay));
-    else if (config.forceInterrupt > 0 && info.totalInstructions % config.forceInterrupt === 0) await new Promise(resolve => setTimeout(resolve, 0));
-
-    afterInstruction?.(ctx, instruction.name); // this is above the async operations to be able to log the instruction name before the async operation
-
-    // Here we handle all other async operations that need to be awaited, so step() and most instructions can remain synchronous
-    if (ctx.nextImport !== null) {
-      // PERFORM IMPORT
+    // ASYNC OPERATIONS
+    if (config.forceInterrupt >= 1 && info.totalInstructions % config.forceInterrupt === 0) await new Promise(resolve => setTimeout(resolve, 0));
+    if (ctx.nextImport) {
+      // Imports
       await run(createContext(ctx.nextImport.script, ctx, {...ctx.config, filename: ctx.nextImport.filename}));
       ctx.nextImport = null;
       ctx.info.totalImports++;
     } else if (ctx.nextCallAddress !== null && typeof ctx.nextCallAddress !== 'number' && ctx.nextCallAddress.origin !== ctx.id) {
-      // PERFORM EXTERNAL CALL (FROM IMPORTED CHILD CONTEXT)
+      // external function call
       const label = ctx.nextCallAddress;
       const childCtx = contexts[label.origin];
       /* c8 ignore next */
@@ -101,7 +84,7 @@ export async function run(ctx: Context): Promise<Context> {
       const localLabel = childCtx.labels[label.localId];
       childCtx.nextCallAddress = localLabel;
       childCtx.isFinished = false;
-      await run(childCtx); // This essentially hands over control to the child context until its IP cannot move anymore.
+      await run(childCtx);
       ctx.nextCallAddress = null;
       ctx.info.totalCalls++;
       ctx.info.totalReturns++;
@@ -110,7 +93,7 @@ export async function run(ctx: Context): Promise<Context> {
 
   info.timeEndMs = Date.now();
   info.executionTimeSeconds = (performance.now() - start) / 1000;
-  afterRun?.(ctx);
+  afterRun(ctx);
   return ctx;
 }
 
@@ -130,6 +113,85 @@ function nextOpcode(ctx: Context): number | null {
   if (ctx.isExtendedMode) {
     const c3 = step(ctx);
     const c4 = step(ctx);
+    if (!c3 || !c4) throw new DSUnexpectedEndOfNumberError(c1.address);
+    opcode = parseDominoValue(ctx, c1) * (ctx.base ** 2) + parseDominoValue(ctx, c3);
+  } else {
+    opcode = parseDominoValue(ctx, c1);
+  }
+
+  ctx.lastOpcode = opcode;
+  return opcode;
+}
+
+////////////////////////////////////////
+// The async version of the run function
+// Why? - I needed a way to slow down every step in the online playground without affecting the performance of the sync version.
+// TODO Do this in a nicer way that doesn't involve duplicating stuff.
+
+async function asyncRun(ctx: Context): Promise<Context> {
+  const {info, afterInstruction, afterRun, beforeRun} = ctx;
+
+  const start = performance.now();
+  info.timeStartMs = Date.now();
+  beforeRun(ctx);
+
+  for (let opcode = await asyncNextOpcode(ctx); opcode !== null; opcode = await asyncNextOpcode(ctx)) {
+    const {fn, name, isAsync} = getInstructionOrThrow(ctx, opcode);
+
+    info.totalInstructions++;
+    info.totalInstructionExecution[name] = (info.totalInstructionExecution[name] || 0) + 1;
+    ctx.lastInstruction = ctx.currentInstruction;
+    ctx.currentInstruction = name;
+
+    // EXECUTE INSTRUCTION
+    if (isAsync) await fn(ctx);
+    else fn(ctx);
+    afterInstruction(ctx, name); // this is above the async operations to be able to log the instruction name before the async operation
+
+    // ASYNC OPERATIONS
+    if (ctx.nextImport) {
+      // import
+      await run(createContext(ctx.nextImport.script, ctx, {...ctx.config, filename: ctx.nextImport.filename}));
+      ctx.nextImport = null;
+      ctx.info.totalImports++;
+    } else if (ctx.nextCallAddress !== null && typeof ctx.nextCallAddress !== 'number' && ctx.nextCallAddress.origin !== ctx.id) {
+      // external function call
+      const label = ctx.nextCallAddress;
+      const childCtx = contexts[label.origin];
+      /* c8 ignore next */
+      if (!childCtx) throw new DSInterpreterError(`Context ${label.origin} not found`);
+      const localLabel = childCtx.labels[label.localId];
+      childCtx.nextCallAddress = localLabel;
+      childCtx.isFinished = false;
+      await run(childCtx);
+      ctx.nextCallAddress = null;
+      ctx.info.totalCalls++;
+      ctx.info.totalReturns++;
+    }
+  }
+
+  info.timeEndMs = Date.now();
+  info.executionTimeSeconds = (performance.now() - start) / 1000;
+  afterRun(ctx);
+  return ctx;
+}
+
+async function asyncNextOpcode(ctx: Context): Promise<number | null> {
+  const c1 = await asyncStep(ctx);
+  const c2 = await asyncStep(ctx);
+
+  if (!c1 && !c2) {
+    ctx.isFinished = true;
+    return null;
+  }
+  /* c8 ignore next */
+  else if (!c1 || !c2) throw new DSInterpreterError('The Steps here should always return 2 cells as we expect to move to a new domino');
+  /* c8 ignore end */
+
+  let opcode: number;
+  if (ctx.isExtendedMode) {
+    const c3 = await asyncStep(ctx);
+    const c4 = await asyncStep(ctx);
     if (!c3 || !c4) throw new DSUnexpectedEndOfNumberError(c1.address);
     opcode = parseDominoValue(ctx, c1) * (ctx.base ** 2) + parseDominoValue(ctx, c3);
   } else {

@@ -1,3 +1,4 @@
+import {CanvasAddon} from '@xterm/addon-canvas';
 import {FitAddon} from '@xterm/addon-fit';
 import {Terminal} from '@xterm/xterm';
 import {WebglAddon} from '@xterm/addon-webgl';
@@ -9,7 +10,7 @@ export function initTerminalView(terminalRef: HTMLDivElement, initialMessage: st
   term.loadAddon(fitAddon);
   term.loadAddon(webglAddon);
   webglAddon.onContextLoss(() => webglAddon.dispose());
-  webglAddon.dispose();
+  term.loadAddon(new CanvasAddon());
   term.open(terminalRef);
   term.writeln(initialMessage);
   setTimeout(() => fitAddon.fit()); // timeout to allow the containers styles to be applied in time
@@ -19,5 +20,6 @@ export function initTerminalView(terminalRef: HTMLDivElement, initialMessage: st
     if (resizeTimeoutHandler) clearTimeout(resizeTimeoutHandler);
     resizeTimeoutHandler = setTimeout(() => fitAddon.fit(), 50);
   });
+
   return [term, fitAddon];
 }

@@ -1,11 +1,11 @@
 import {type Component, createEffect, createResource, createSignal, onMount} from 'solid-js';
 import {DominoScriptRunner, createRunner} from 'dominoscript';
+import {Editor, initEditor} from './helpers/initEditorView.js';
 import {FaSolidPlay, FaSolidStop} from 'solid-icons/fa';
 import {IDisposable, Terminal} from '@xterm/xterm';
 import {fetchExample, intro} from './helpers/fetchExamples.js';
 import {Checkbox} from './components/Checkbox.jsx';
 import {DraggableInput} from './components/DraggableInput.jsx';
-import {EditorView} from '@codemirror/view';
 import {ExampleSelector} from './components/ExampleSelector.jsx';
 import {FitAddon} from '@xterm/addon-fit';
 import {Header} from './components/Header.jsx';
@@ -15,24 +15,24 @@ import {checkSyntaxErrors} from './helpers/checkSyntaxErrors.js';
 import {contexts} from 'dominoscript/dist/Context.js';
 import {exampleName} from './index.jsx';
 import {getTotalInfo} from './helpers.js';
-import {initEditorView} from './helpers/initEditorView.js';
 import {initTerminalView} from './helpers/initTerminalView.js';
 import {scrollToBottom} from './helpers/scrollToBottom.js';
 
 export const App: Component = () => {
 
   const [isRunning, setIsRunning] = createSignal(false);
-  const [delay, setDelay] = createSignal(0);
+  const [isAsync, setIsAsync] = createSignal(false);
+  const [stepDelay, setStepDelay] = createSignal(25);
   const [printInstructions, setPrintInstructions] = createSignal(true);
   const [printSummary, setPrintSummary] = createSignal(true);
 
   const [exampleCode] = createResource(exampleName, fetchExample);
 
   let editorContainerRef: HTMLDivElement;
-  let terminalContainerRef: HTMLDivElement;
-  let debugInfoRef: HTMLDivElement;
+  let terminalOutputRef: HTMLDivElement;
+  let terminalDebugRef: HTMLDivElement;
 
-  let editorView: EditorView;
+  let editor: Editor;
   let terminalView: Terminal;
   let terminalViewFitAddon: FitAddon;
   let debugTerminalView: Terminal;
@@ -41,21 +41,28 @@ export const App: Component = () => {
   let runner: DominoScriptRunner | null;
   let onKeyDisposable: IDisposable | null;
 
+  // createEffect(() => {
+  //   if (!editor) return;
+  //   editor.IP.show(!isRunning());
+  // });
+
   createEffect(() => {
     const code = exampleCode();
     if (!code) return;
-    editorView.dispatch({changes: {from: 0, to: editorView.state.doc.length, insert: exampleCode()}});
+    editor.view.dispatch({changes: {from: 0, to: editor.view.state.doc.length, insert: exampleCode()}});
   });
 
   createEffect(() => {
-    const value = delay();
-    if (runner) runner.ctx.config.instructionDelay = value;
+    const delay = stepDelay();
+    if (runner) runner.ctx.config.stepDelay = delay;
+    const ip = document.querySelector<HTMLElement>('.cm-instruction-pointer');
+    if (ip) ip.style.transitionDuration = `${delay * 0.95}ms`;
   });
 
   onMount(() => {
-    editorView = initEditorView(editorContainerRef, intro);
-    [terminalView, terminalViewFitAddon] = initTerminalView(terminalContainerRef, 'Press "Run" to execute the code...');
-    [debugTerminalView, debugTerminalViewFitAddon] = initTerminalView(debugInfoRef, '-');
+    editor = initEditor(editorContainerRef, intro);
+    [terminalView, terminalViewFitAddon] = initTerminalView(terminalOutputRef, 'Press "Run" to execute the code...');
+    [debugTerminalView, debugTerminalViewFitAddon] = initTerminalView(terminalDebugRef, '-');
     debugTerminalView.write('\x1B[?25l'); // Hide the cursor
 
     Split(['#split-left', '#split-right'], {
@@ -85,26 +92,28 @@ export const App: Component = () => {
   }
 
   function handleRun(): void {
-    setIsRunning(true);
     terminalView.write('\x1b[2J\x1b[H'); // clear terminal
     debugTerminalView.write('\x1b[2J\x1b[H'); // clear terminal
     terminalView.clear();
     debugTerminalView.clear();
-    const source = editorView.state.doc.toString();
+    const source = editor.view.state.doc.toString();
 
     const syntaxError = checkSyntaxErrors(source);
     if (syntaxError) {
       terminalView.writeln('\x1b[1;31m' + syntaxError + '\x1b[0m');
-      setIsRunning(false);
       return;
     }
 
     const shouldPrintInststructions = printInstructions();
     const shouldPrintSummary = printSummary();
+    const delay = stepDelay();
+
+    setIsRunning(true);
+    setIsAsync(delay > 0);
 
     const tabsize = 2;
     const paddings: Record<number, string> = {};
-    runner = createRunner(source, {instructionDelay: delay(), forceInterrupt: 2500});
+    runner = createRunner(source, {stepDelay: stepDelay(), forceInterrupt: 0});
     runner.onStdout((ctx, msg) => terminalView.write(msg));
     runner.onImport((ctx, importFilePath) => fetchExample(importFilePath));
     runner.onBeforeRun((ctx) => {
@@ -125,8 +134,16 @@ export const App: Component = () => {
       const padding = paddings[ctx.id];
       debugTerminalView.writeln(padding + ` • Op: ${instruction.padEnd(8, ' ')}  Addr: ${String(ctx.currentCell?.address).padEnd(6)}  Stack: ${ctx.stack.toString()}`);
     });
+
+    runner.onAfterStep((ctx) => {
+      if (ctx.config.stepDelay < 1) return;
+      const line = Math.floor(ctx.lastCell.address / ctx.board.grid.width);
+      const col = ctx.lastCell.address % ctx.board.grid.width;
+      editor.IP.move((line * 2) + 1, col * 2);
+    });
     runner.onAfterRun(ctx => {
       setIsRunning(false);
+      setIsAsync(false);
       const padding = paddings[ctx.id];
 
       if (shouldPrintInststructions) debugTerminalView.writeln(padding + ' • DONE\n');
@@ -156,7 +173,7 @@ export const App: Component = () => {
         // Attempt to ensure the debug info is scrolled to the bottom.
         // Does not work reliably but leaving it for now
         setTimeout(() => {
-          const scroller = debugInfoRef.querySelector('.xterm-viewport');
+          const scroller = terminalDebugRef.querySelector('.xterm-viewport');
           scrollToBottom(scroller);
         }, 50);
 
@@ -201,7 +218,8 @@ export const App: Component = () => {
       }
     });
     terminalView.focus();
-    runner.run().catch(printError).then(() => handleStop());
+    // timeout to allow the UI to update before running potentially blocking code
+    setTimeout(() => runner.run().catch(printError).then(() => handleStop()));
   }
 
   function printError(error: Error): void {
@@ -210,6 +228,7 @@ export const App: Component = () => {
 
   function handleStop(forced = false): void {
     setIsRunning(false);
+    setIsAsync(false);
     if (onKeyDisposable) onKeyDisposable.dispose();
     if (runner) {
       if (forced) terminalView.writeln('\n\n\x1b[1;31mExecution aborted by user.\x1b[0m\n');
@@ -221,8 +240,8 @@ export const App: Component = () => {
   return <>
     <div class="absolute inset-0 grid grid-rows-[60px_1fr] !max-h-screen w-screen h-screen overflow-hidden">
       <Header>
-        <DraggableInput min={0} max={999} step={1} value={delay} setValue={setDelay} />
-        <button onClick={() => isRunning() ? handleStop(true) : handleRun()} class="min-w-20 text-white h-full rounded flex flex-row font-bold items-center justify-center" classList={{'bg-green-800': !isRunning(), 'bg-red-800': isRunning()}}>
+        <DraggableInput value={stepDelay} setValue={setStepDelay} asyncMode={isAsync} />
+        <button data-testid="run" onClick={() => isRunning() ? handleStop(true) : handleRun()} class="min-w-20 text-white h-full rounded flex flex-row font-bold items-center justify-center" classList={{'bg-green-800': !isRunning(), 'bg-red-800': isRunning()}}>
           {isRunning() ? <><FaSolidStop class="mr-2"/>Stop</> : <><FaSolidPlay class="mr-2"/>Run</>}
         </button>
       </Header>
@@ -230,7 +249,7 @@ export const App: Component = () => {
       <div class="flex flex-row mx-auto w-full p-2.5">
 
         {/* LEFT CONTAINER - EDITOR*/}
-        <div id="split-left" ref={el => editorContainerRef = el} class="rounded-md border relative border-stone-500 overflow-hidden min-w-[200px]">
+        <div data-testid="editor" id="split-left" ref={el => editorContainerRef = el} class="rounded-md border relative border-stone-500 overflow-hidden min-w-[200px]">
           <PaneHeader name={''} >
             <ExampleSelector />
 
@@ -243,7 +262,7 @@ export const App: Component = () => {
           {/* TERMINAL */}
           <div id="split-top" class="bg-black rounded-md overflow-hidden border border-stone-500 relative flex flex-col">
             <PaneHeader name={'Output'} />
-            <div ref={el => terminalContainerRef = el} class="absolute top-[58px] left-2.5 right-0 bottom-2.5"></div>
+            <div data-testid="terminal-output" ref={el => terminalOutputRef = el} class="absolute top-[58px] left-2.5 right-0 bottom-2.5"></div>
           </div>
 
           {/* DEBUG INFO */}
@@ -252,7 +271,7 @@ export const App: Component = () => {
               <Checkbox disabled={isRunning} label="Instructions" checked={printInstructions} setChecked={setPrintInstructions} />
               <Checkbox disabled={isRunning} label="Summary" checked={printSummary} setChecked={setPrintSummary} />
             </PaneHeader>
-            <div ref={el => debugInfoRef = el} class="absolute top-[58px] left-2.5 right-0 bottom-2.5"></div>
+            <div data-testid="terminal-debug" ref={el => terminalDebugRef = el} class="absolute top-[58px] left-2.5 right-0 bottom-2.5"></div>
           </div>
 
         </div>

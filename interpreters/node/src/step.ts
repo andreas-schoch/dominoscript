@@ -3,6 +3,12 @@ import {FORWARD, LEFT, RIGHT, navModes} from './navModes.js';
 import {Cell} from './Board.js';
 import {Context} from './Context.js';
 
+// Async stepping only used when desired due to negative performance impact
+export async function asyncStep(ctx: Context): Promise<Cell | null> {
+  await new Promise(resolve => setTimeout(resolve, ctx.config.stepDelay));
+  return step(ctx);
+}
+
 export function step(ctx: Context): Cell | null {
 
   if (ctx.isFirstDomino) {
@@ -11,6 +17,7 @@ export function step(ctx: Context): Cell | null {
   }
 
   if (ctx.isFinished) return null;
+
   /* c8 ignore next */
   if (!ctx.currentCell) throw new DSInterpreterError('It should not be possible to step when currentCell is null');
 
@@ -22,6 +29,7 @@ export function step(ctx: Context): Cell | null {
     ctx.currentCell = nextCell;
     ctx.nextJumpAddress = null;
     ctx.info.totalJumps++;
+    ctx.afterStep(ctx);
     return ctx.currentCell;
   }
 
@@ -38,12 +46,13 @@ export function step(ctx: Context): Cell | null {
       ctx.currentCell = ctx.board.getOrThrow(address);
       ctx.nextCallAddress = null;
       ctx.info.totalCalls++;
+      ctx.afterStep(ctx);
       return ctx.currentCell;
     }
   }
 
   /* c8 ignore next */
-  if (ctx.currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
+  // if (ctx.currentCell.connection === null) throw new DSInterpreterError('IP is on a cell without a connection. Should never happen');
   const isOnEntryHalf = ctx.lastCell === null || ctx.lastCell.address !== ctx.currentCell.connection;
 
   // The IP will always go from one half (entry) of a domino to the other half (exit) of the same domino before moving to the next domino.
@@ -103,11 +112,13 @@ export function step(ctx: Context): Cell | null {
     ctx.lastCell = entryCell;
     ctx.currentCell = returnCell;
     ctx.info.totalReturns++;
+    // TODO for async steps this will not await. I can get away with it for now but ideally EVERY step should be awaited if stepDelay > 0
     return step(ctx);
   }
 
   // if it reaches here it means that according to the direction mode, the IP had no valid moves (despite there being 1 or more neighbours)
   ctx.isFinished = true;
+  ctx.afterStep(ctx);
   return null;
 }
 
@@ -120,6 +131,7 @@ function moveIP(ctx: Context, cell: Cell): Cell {
   ctx.lastCell = ctx.currentCell;
   ctx.currentCell = cell;
   ctx.info.totalSteps++;
+  ctx.afterStep(ctx);
   return cell;
 }
 

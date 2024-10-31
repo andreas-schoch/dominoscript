@@ -33,7 +33,8 @@ export const filenameExamples: string[] = [
   '021_reduce_domino_amount.md',
   '022_modify_code_using_set.md',
   '023_wasd_controls.md',
-  '024_benchmark_01.md'
+  '024_benchmark_01.md',
+  '025_benchmark_02.md',
 ];
 
 // I want users to see this example first before selecting any other
@@ -68,9 +69,9 @@ export const intro = dedent(`\
 
   . 0 . . . . . . . . . . . . . . . . . . . . . . . . . . .
     |                                                      
-  . 1 . . . . . . . . . . . . . . . . . . . 3—4 0—6 1—1 1 .
-                                                        |  
-  . 1 . . . . . . . . . . . . . . . . . . . . . . . . . 0 .
+  . 1 . . 6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6—6 6 .
+          |                                             |  
+  . 1 . . 6 . . . . . . . . . . . . . . . . . . . . . . 6 .
     |                                                      
   . 0 6—6 0—3 5—1 0—2 1—0 1—3 0—0 5—3 0—1 0—1 1—1 0—3 4—1 .
                                                            

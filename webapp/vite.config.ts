@@ -1,4 +1,5 @@
 import {defineConfig, normalizePath} from 'vite';
+import IstanbulPlugin from 'vite-plugin-istanbul';
 import {resolve} from 'path';
 import solidPlugin from 'vite-plugin-solid';
 import {viteStaticCopy} from 'vite-plugin-static-copy';
@@ -32,12 +33,18 @@ export default defineConfig({
           dest: 'assets/horizontal'
         },
       ]
-    })
+    }),
+    ...(process.env.USE_BABEL_PLUGIN_ISTANBUL ? [IstanbulPlugin({
+      include: 'src/*',
+      exclude: ['node_modules', 'test/'],
+      extension: [ '.js', '.ts','.tsx' ],
+    })] : [])
   ],
   server: {
     port: 3000,
   },
   build: {
     target: 'esnext',
+    sourcemap: true,
   },
 });

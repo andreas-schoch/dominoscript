@@ -3,7 +3,7 @@ import {FaRegularClock} from 'solid-icons/fa';
 
 const noop = (): void => { /* NOOP  */};
 
-export const DraggableInput: Component<{min: number, max: number, step: number, value: Accessor<number>; setValue: Setter<number>}> = props => {
+export const DraggableInput: Component<{value: Accessor<number>; setValue: Setter<number>, asyncMode: Accessor<boolean>}> = props => {
   let inputRef: HTMLInputElement;
 
   let cleanupMove: () => void = () => noop;
@@ -17,10 +17,13 @@ export const DraggableInput: Component<{min: number, max: number, step: number, 
     let didMove = false;
     document.body.requestPointerLock();
 
+    const min = props.asyncMode() ? 1 : 0;
+    const max = 999;
+
     function onMouseMove(e: MouseEvent): void {
       didMove = true;
-      const newValue = extractNumber(inputRef.value) + (e.movementX * props.step);
-      const clamped = Math.max(props.min, Math.min(props.max, newValue));
+      const newValue = extractNumber(inputRef.value) + (e.movementX);
+      const clamped = Math.round(Math.max(min, Math.min(max, newValue)));
       props.setValue(clamped);
     };
 
@@ -30,8 +33,8 @@ export const DraggableInput: Component<{min: number, max: number, step: number, 
       document.exitPointerLock();
 
       if (didMove) {
-        const newValue = extractNumber(inputRef.value) + (e.movementX * props.step);
-        const clamped = Math.max(props.min, Math.min(props.max, newValue));
+        const newValue = extractNumber(inputRef.value) + (e.movementX);
+        const clamped = Math.round(Math.max(min, Math.min(max, newValue)));
         props.setValue(clamped);
       }
     };
@@ -55,11 +58,11 @@ export const DraggableInput: Component<{min: number, max: number, step: number, 
   }
 
   function extractNumber(value: string): number {
-    return Number(value.replace(/\D/g, ''));
+    return Math.round(Number(value.replace(/\D/g, '')));
   }
 
   return (
-    <div class="relative text-black border border-stone-950 bg-stone-300 box-border px-2 py-1 max-w-20 text-center h-full select-none outline-none text-xs hover:border-stone-500 hover:cursor-ew-resize mr-2.5 rounded overflow-hidden">
+    <div data-testid="delay" class="relative text-black border border-stone-950 bg-stone-300 box-border px-2 py-1 max-w-20 text-center h-full select-none outline-none text-xs hover:border-stone-500 hover:cursor-ew-resize mr-2.5 rounded overflow-hidden">
       <FaRegularClock class="absolute top-0 bottom-0 left-2 h-full text-lg pointer-events-none" />
       <input
         readOnly={true}

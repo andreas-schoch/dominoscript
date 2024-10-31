@@ -52,18 +52,20 @@ export interface Context {
     stdin: (ctx: Context, type: 'num' | 'str') => Promise<number | string>;
     stdout: (ctx: Context, msg: string) => void;
     import: (ctx: Context, filename: string) => Promise<string>;
-    beforeRun?: (ctx: Context) => void;
-    afterInstruction?: (ctx: Context, instruction: string) => void;
-    afterRun?: (ctx: Context) => void;
+    beforeRun: (ctx: Context) => void;
+    afterStep: (ctx: Context) => void;
+    afterInstruction: (ctx: Context, instruction: string) => void;
+    afterRun: (ctx: Context) => void;
   };
 
   stdin: (ctx: Context, type: 'num' | 'str') => Promise<void>;
   stdout: (ctx: Context, msg: string) => void;
   import: (ctx: Context, filename: string) => Promise<string>;
+  beforeRun: (ctx: Context) => void;
+  afterStep: (ctx: Context) => void;
+  afterInstruction: (ctx: Context, instruction: string) => void;
+  afterRun: (ctx: Context) => void;
   registerKeyDown: (key: string) => void;
-  beforeRun?: (ctx: Context) => void;
-  afterRun?: (ctx: Context) => void;
-  afterInstruction?: (ctx: Context, instruction: string) => void;
 
   info: {
     timeStartMs: number;
@@ -79,6 +81,8 @@ export interface Context {
   }
 }
 
+function noop(): void {return void 0;}
+
 function getDefaultListeners(): Context['listeners'] {
   return {
     stdin: (_ctx: Context, _type: 'num' | 'str') => {
@@ -90,6 +94,10 @@ function getDefaultListeners(): Context['listeners'] {
     import: async (_ctx: Context, _filename: string) => {
       throw new DSMissingListenerError('You need to provide a listener for import using Context.onImport(...)');
     },
+    beforeRun: noop,
+    afterStep: noop,
+    afterInstruction: noop,
+    afterRun: noop,
   };
 }
 
@@ -109,33 +117,9 @@ export function createContext(source: string, parent: Context | null = null, opt
     }
   }
 
-  function handleStdout(ctx: Context, msg: string): void {
-    ctx.listeners.stdout(ctx, msg);
-  }
-
-  function handleImport(ctx: Context, filename: string): Promise<string> {
-    return ctx.listeners.import(ctx, filename);
-  }
-
-  function handleOnAfterInstruction(ctx: Context, instruction: string): void {
-    if (ctx.listeners.afterInstruction) ctx.listeners.afterInstruction(ctx, instruction);
-  }
-
-  function handleBeforeRun(ctx: Context): void {
-    if (ctx.listeners.beforeRun) ctx.listeners.beforeRun(ctx);
-  }
-
-  function handleAfterRun(ctx: Context): void {
-    if (ctx.listeners.afterRun) ctx.listeners.afterRun(ctx);
-  }
-
-  function handleRegisterKeyDown(key: string): void {
-    ctx.keys.add(key);
-  }
-
   const dataStackSize = options.dataStackSize || 512;
   const returnStackSize = options.returnStackSize || 512;
-  const instructionDelay = options.instructionDelay || 0;
+  const instructionDelay = options.stepDelay || 0;
 
   const ctx: Context = {
     id: Math.random().toString(36).slice(2),
@@ -165,12 +149,13 @@ export function createContext(source: string, parent: Context | null = null, opt
     base: 7,
     listeners: parent?.listeners || getDefaultListeners(),
     stdin: handleStdin,
-    stdout: handleStdout,
-    import: handleImport,
-    registerKeyDown: handleRegisterKeyDown,
-    beforeRun: handleBeforeRun,
-    afterInstruction: handleOnAfterInstruction,
-    afterRun: handleAfterRun,
+    stdout: (ctx, msg) => ctx.listeners.stdout(ctx, msg),
+    import: (ctx, filename) => ctx.listeners.import(ctx, filename),
+    beforeRun: ctx => ctx.listeners.beforeRun(ctx),
+    afterStep: ctx => ctx.listeners.afterStep(ctx),
+    afterInstruction: (ctx, instruction) => ctx.listeners.afterInstruction(ctx, instruction),
+    afterRun: ctx => ctx.listeners.afterRun(ctx),
+    registerKeyDown: key => ctx.keys.add(key),
     info: {
       timeStartMs: 0,
       timeEndMs: 0,
@@ -188,7 +173,7 @@ export function createContext(source: string, parent: Context | null = null, opt
       debug: options.debug || false,
       dataStackSize,
       returnStackSize,
-      instructionDelay: instructionDelay,
+      stepDelay: instructionDelay,
       forceInterrupt: options.forceInterrupt || 0,
     },
   };

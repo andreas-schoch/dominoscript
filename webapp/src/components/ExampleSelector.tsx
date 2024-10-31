@@ -49,7 +49,7 @@ export const ExampleSelector: Component = () => {
 
           <div ref={el => selectorRef = el} class="absolute appearance-none text-white border rounded-md border-stone-600 bg-stone-900 overflow-auto custom-scrollbar max-h-[350px]">
             <For each={filenameExamples}>
-              {(item) => <div onclick={() => select(item)} classList={{'bg-stone-700': exampleName() === item}} class="text-white font-light overflow-ellipsis w-full px-4 py-2 hover:bg-stone-700">{item}</div>}
+              {(item) => <div onclick={() => select(item)} classList={{'bg-stone-700': exampleName() === item}} class="text-white font-light overflow-ellipsis w-full px-4 py-2 cursor-pointer hover:bg-stone-700">{item}</div>}
             </For>
           </div>
         </div>
