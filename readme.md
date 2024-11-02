@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.4.6`**
+**Current version `0.4.7`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -80,7 +80,7 @@ Try it in the [**Online Playground**](https://dominoscript.com/).
 ## How to run DominoScript
 
 > [!WARNING]  
-> Despite being well tested, the reference interpreter might not always work as expected. See the [Source code](./interpreters/node/readme.md).
+> Despite being well tested, the reference interpreter might not always work as expected. See the [Source code](https://github.com/andreas-schoch/dominoscript/tree/main/interpreters/node).
 
 
 The easiest way to run DominoScript is the [**Online Playground**](https://dominoscript.com/) *(early prototype, might be more buggy than running it via the command line...)*.
@@ -1277,7 +1277,7 @@ Unlike `NUMIN` and `STRIN` it doesn't block the program, so you can use it in a 
 
 **<ins>What is an escape sequence?:</ins>**  
 
-Escape sequences are sequences of characters that are used to represent special non-printable keyboard keys like arrow keys but can also be used to control terminal behavior, such as cursor position, text color and more. Check out the [Escape Sequence reference](#Special-keyboard-Characters) instruction to see how to reset the state of all keys.
+Escape sequences are sequences of characters that are used to represent special non-printable keyboard keys like arrow keys but can also be used to control terminal behavior, such as cursor position, text color and more. You can google them. Then just transform them to the correct domino sequence.
 
 #### `KEYRES`
 <img src="assets/horizontal/5-5.png" alt="Domino" width="128">

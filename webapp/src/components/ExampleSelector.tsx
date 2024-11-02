@@ -1,5 +1,5 @@
 import {Component, For, createEffect, createSignal} from 'solid-js';
-import {exampleName, setExampleName} from '../index.js';
+import {exampleName, isRunning, setExampleName} from '../index.js';
 import {FaSolidChevronDown} from 'solid-icons/fa';
 import {Portal} from 'solid-js/web';
 import {filenameExamples} from '../helpers/fetchExamples.js';
@@ -35,9 +35,17 @@ export const ExampleSelector: Component = () => {
     setExpanded(false);
   }
 
+  function handleExpand(): void {
+    const canExpand = !isRunning();
+    const isExpanded = expanded();
+
+    if (!isExpanded && !canExpand) return;
+    setExpanded(!expanded());
+  }
+
   return (
     <>
-      <div ref={el => mountRef = el} onclick={() => setExpanded(!expanded())} class="px-4 flex items-center relative overflow-visible cursor-pointer border-b border-stone-400 hover:bg-stone-700">
+      <div ref={el => mountRef = el} onclick={handleExpand} class="px-4 flex items-center relative overflow-visible cursor-pointer border-b border-stone-400 hover:bg-stone-700" classList={{'!bg-transparent !cursor-not-allowed opacity-50': isRunning()}}>
         {'Example - ' + exampleName()}
         <FaSolidChevronDown class={`ml-3 transition-transform ${expanded() ? 'rotate-180' : 'rotate-0'}`} />
       </div>

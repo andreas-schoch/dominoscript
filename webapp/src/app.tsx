@@ -3,6 +3,7 @@ import {DominoScriptRunner, createRunner} from 'dominoscript';
 import {Editor, initEditor} from './helpers/initEditorView.js';
 import {FaSolidPlay, FaSolidStop} from 'solid-icons/fa';
 import {IDisposable, Terminal} from '@xterm/xterm';
+import {exampleName, isRunning, setIsRunning} from './index.jsx';
 import {fetchExample, intro} from './helpers/fetchExamples.js';
 import {Checkbox} from './components/Checkbox.jsx';
 import {DraggableInput} from './components/DraggableInput.jsx';
@@ -13,14 +14,12 @@ import {PaneHeader} from './components/PaneHeader.jsx';
 import Split from 'split.js';
 import {checkSyntaxErrors} from './helpers/checkSyntaxErrors.js';
 import {contexts} from 'dominoscript/dist/Context.js';
-import {exampleName} from './index.jsx';
 import {getTotalInfo} from './helpers.js';
 import {initTerminalView} from './helpers/initTerminalView.js';
 import {scrollToBottom} from './helpers/scrollToBottom.js';
 
 export const App: Component = () => {
 
-  const [isRunning, setIsRunning] = createSignal(false);
   const [isAsync, setIsAsync] = createSignal(false);
   const [stepDelay, setStepDelay] = createSignal(25);
   const [printInstructions, setPrintInstructions] = createSignal(true);
@@ -41,22 +40,16 @@ export const App: Component = () => {
   let runner: DominoScriptRunner | null;
   let onKeyDisposable: IDisposable | null;
 
-  // createEffect(() => {
-  //   if (!editor) return;
-  //   editor.IP.show(!isRunning());
-  // });
-
   createEffect(() => {
     const code = exampleCode();
+
     if (!code) return;
     editor.view.dispatch({changes: {from: 0, to: editor.view.state.doc.length, insert: exampleCode()}});
   });
 
   createEffect(() => {
     const delay = stepDelay();
-    if (runner) runner.ctx.config.stepDelay = delay;
-    const ip = document.querySelector<HTMLElement>('.cm-instruction-pointer');
-    if (ip) ip.style.transitionDuration = `${delay * 0.95}ms`;
+    if (runner) runner.ctx.config.stepDelay = Math.round(delay);
   });
 
   onMount(() => {
@@ -113,7 +106,7 @@ export const App: Component = () => {
 
     const tabsize = 2;
     const paddings: Record<number, string> = {};
-    runner = createRunner(source, {stepDelay: stepDelay(), forceInterrupt: 0});
+    runner = createRunner(source, {stepDelay: stepDelay(), forceInterrupt: 150000});
     runner.onStdout((ctx, msg) => terminalView.write(msg));
     runner.onImport((ctx, importFilePath) => fetchExample(importFilePath));
     runner.onBeforeRun((ctx) => {
@@ -136,20 +129,20 @@ export const App: Component = () => {
     });
 
     runner.onAfterStep((ctx) => {
-      if (ctx.config.stepDelay < 1) return;
-      const line = Math.floor(ctx.lastCell.address / ctx.board.grid.width);
-      const col = ctx.lastCell.address % ctx.board.grid.width;
-      editor.IP.move((line * 2) + 1, col * 2);
+      // Only visualizing the InstructionPointer when there is a delay and it's the global context
+      //  TODO consider implementing editor tabs where it switches automatically to the child context 
+      if (ctx.config.stepDelay < 1 || ctx.parent) return;
+      const currentLine = ((Math.floor(ctx.currentCell.address / ctx.board.grid.width) + (ctx.board.grid.codeStart / 2)) * 2) + 1;
+      const currentColumn = (ctx.currentCell.address % ctx.board.grid.width) * 2;
+      editor.setInstructionPointer(currentLine, currentColumn);
     });
+
     runner.onAfterRun(ctx => {
-      setIsRunning(false);
-      setIsAsync(false);
       const padding = paddings[ctx.id];
-
       if (shouldPrintInststructions) debugTerminalView.writeln(padding + ' • DONE\n');
-
-      if (!ctx?.parent && shouldPrintSummary) {
-
+      if (!ctx?.parent) {
+        handleStop();
+        if (!shouldPrintSummary) return;
         const mhz = ctx.info.totalInstructions / ctx.info.executionTimeSeconds / 1e6;
 
         const message = '│ Final Summary │';
@@ -219,10 +212,11 @@ export const App: Component = () => {
     });
     terminalView.focus();
     // timeout to allow the UI to update before running potentially blocking code
-    setTimeout(() => runner.run().catch(printError).then(() => handleStop()));
+    setTimeout(() => runner.run().catch(printError));
   }
 
   function printError(error: Error): void {
+    if (!isRunning()) return;
     terminalView.writeln(`\n\x1b[1;31m${error.name}: ${error.message}\x1b[0m`);
   }
 

@@ -5,6 +5,8 @@ export interface Grid {
   cells: Cell[];
   width: number;
   height: number;
+  codeStart: number;
+  codeEnd: number;
 }
 
 const allowedValueChars = '.0123456789abcdef';
@@ -55,14 +57,14 @@ export function sourceToGrid(source: string): Grid {
   const lines = source.split('\n');
 
   // We need to figure out where the code actually starts in the source file
-  const boardStart = lines.findIndex(line => allowedValueChars.includes(line[0]));
-  const boardEnd = lines.findLastIndex(line => allowedValueChars.includes(line[0]));
+  const codeStart = lines.findIndex(line => allowedValueChars.includes(line[0]));
+  const codeEnd = lines.findLastIndex(line => allowedValueChars.includes(line[0]));
 
-  if (boardStart === -1 || boardEnd === -1) throw new DSInvalidGridError();
+  if (codeStart === -1 || codeEnd === -1) throw new DSInvalidGridError();
 
   // This gets rid of all the non-code
-  lines.splice(boardEnd + 1);
-  lines.splice(0, boardStart);
+  lines.splice(codeEnd + 1);
+  lines.splice(0, codeStart);
 
   const [width, height] = getDimensions(lines);
   const totalCells = width * height;
@@ -81,7 +83,7 @@ export function sourceToGrid(source: string): Grid {
     });
   }
 
-  const grid: Grid = {width, height, cells};
+  const grid: Grid = {width, height, cells, codeStart, codeEnd};
 
   let totalCellsSoFar = 0;
   let totalConnectors = 0;

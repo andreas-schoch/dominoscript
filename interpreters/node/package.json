@@ -1,6 +1,6 @@
 {
   "name": "dominoscript",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "A recreational stack-oriented concatenative two-dimensional non-linear self-modifying esoteric programming language that uses the dots on domino pieces to represent code.",
   "type": "module",
   "main": "./dist/Runner.js",

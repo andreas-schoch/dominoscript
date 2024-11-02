@@ -39,8 +39,8 @@ dependencies:
     specifier: ^6.0.1
     version: 6.0.1(@lezer/common@1.2.3)
   dominoscript:
-    specifier: ^0.4.6
-    version: link:../interpreters/node
+    specifier: ^0.4.7
+    version: 0.4.7
   github-markdown-css:
     specifier: ^5.7.0
     version: 5.7.0
@@ -2113,6 +2113,11 @@ packages:
   /dlv@1.1.3:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
     dev: true
+
+  /dominoscript@0.4.7:
+    resolution: {integrity: sha512-Xst8RjmBNuSvdC5agUyUXazU2ufigXD9urXQhgmHbHRZXxc+XgUgjbeIp9oxTkXvk+wAiywBj5BO7brWyO99eQ==}
+    hasBin: true
+    dev: false
 
   /electron-to-chromium@1.4.639:
     resolution: {integrity: sha512-CkKf3ZUVZchr+zDpAlNLEEy2NJJ9T64ULWaDgy3THXXlPVPkLu3VOs9Bac44nebVtdwl2geSj6AxTtGDOxoXhg==}

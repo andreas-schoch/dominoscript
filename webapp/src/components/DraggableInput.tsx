@@ -62,7 +62,7 @@ export const DraggableInput: Component<{value: Accessor<number>; setValue: Sette
   }
 
   return (
-    <div data-testid="delay" class="relative text-black border border-stone-950 bg-stone-300 box-border px-2 py-1 max-w-20 text-center h-full select-none outline-none text-xs hover:border-stone-500 hover:cursor-ew-resize mr-2.5 rounded overflow-hidden">
+    <div data-testid="delay" class="relative text-black border border-stone-950 bg-stone-300 box-border px-2 py-1 max-w-20 min-w-20 text-center h-full select-none outline-none text-xs hover:border-stone-500 hover:cursor-ew-resize mr-2.5 rounded overflow-hidden">
       <FaRegularClock class="absolute top-0 bottom-0 left-2 h-full text-lg pointer-events-none" />
       <input
         readOnly={true}

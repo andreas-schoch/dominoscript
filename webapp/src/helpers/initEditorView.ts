@@ -1,22 +1,14 @@
-import {ChangeSpec, EditorState, Extension, StateEffect, StateField} from '@codemirror/state';
+import {ChangeSpec, EditorState} from '@codemirror/state';
 import {EditorView, basicSetup} from 'codemirror';
-import {RectangleMarker, layer} from '@codemirror/view';
 import {markdown} from '@codemirror/lang-markdown';
 import {oneDark} from '@codemirror/theme-one-dark';
 
+export const CLASS_INSTRUCTION_POINTER = 'cm-instruction-pointer';
+
 export interface Editor {
   view: EditorView,
-  IP: {
-    move(line: number, col: number): void;
-    show(visible: boolean): void;
-    getState(): InstructionPointerState;
-  }
+  setInstructionPointer(line: number, column: number): void;
 };
-
-export interface InstructionPointerState {
-  line: number;
-  col: number;
-}
 
 export function initEditor(editorRef: HTMLDivElement, doc: string): Editor {
 
@@ -26,7 +18,7 @@ export function initEditor(editorRef: HTMLDivElement, doc: string): Editor {
     '.cm-gutter': {userSelect: 'none'},
     '.cm-foldGutter': {display: 'none !important'}, // hacky way to keep markdown highlighting but without the folding
     '&.cm-editor': {position: 'absolute !important', left: '0', right: '0', top: '40px', bottom: '0'},
-    '.cm-content': {padding: '20px 0', letterSpacing: '2px', outline: 'none'},
+    '.cm-content': {padding: '20px 0', letterSpacing: '3px', outline: 'none', lineHeight: 1.15},
     '.cm-line': {padding: '0 16px'},
   });
 
@@ -42,64 +34,49 @@ export function initEditor(editorRef: HTMLDivElement, doc: string): Editor {
     }
   });
 
-  const setInstructionPointerPosition = StateEffect.define<InstructionPointerState>();
-
-  const instructionPointer = StateField.define<InstructionPointerState>({
-    create: () => ({line: 1, col: 0}),
-    update: (value, tr) => {
-      for (const effect of tr.effects) {
-        if (effect.is(setInstructionPointerPosition)) return effect.value;
-      }
-      return value;
-    },
-  });
-
-  function backlayer(): Extension {
-    return layer({
-      above: false,
-      update: update => update.docChanged || update.startState.field(instructionPointer) !== update.state.field(instructionPointer),
-      markers: view => {
-        const scrollRect = view.scrollDOM.getBoundingClientRect(); // view.scrollDOM is the element with the class .cm-scroller 
-
-        const position = view.state.field<InstructionPointerState>(instructionPointer);
-        const targetLineNumber = position.line;
-        const targetColumn = position.col;
-
-        const line = view.state.doc.line(targetLineNumber);
-        if (!line) return []; // Line number is out of bounds
-
-        const column = Math.max(0, Math.min(targetColumn, line.length));
-        const pos = line.from + column;
-
-        // Get coordinates of the target position
-        const coords = view.coordsAtPos(pos);
-        const nextCoords = view.coordsAtPos(pos + 1);
-
-        if (!coords || !nextCoords) return []; // Position is not visible or invalid
-
-        // Calculate rectangle properties
-        const left = coords.left - scrollRect.left + view.scrollDOM.scrollLeft;
-        const top = coords.top - scrollRect.top + view.scrollDOM.scrollTop;
-        const width = nextCoords.left - coords.right;
-        const height = coords.bottom - coords.top;
-        return [new RectangleMarker('cm-instruction-pointer', left, top, width, height)];
-      },
-    });
-  }
-
-  const state = EditorState.create({extensions: [basicSetup, oneDark, themeCustom, markdown(), hyphenReplacer, instructionPointer.extension, backlayer()], doc});
-
+  const state = EditorState.create({extensions: [basicSetup, oneDark, themeCustom, markdown(), hyphenReplacer], doc});
   const view = new EditorView({state, parent: editorRef});
+
+  const trails: HTMLDivElement[]= Array.from({length: 500}, () => {
+    const trail = document.createElement('div');
+    trail.classList.add('trail');
+    return trail;
+  });
 
   return {
     view,
-    IP: {
-      getState: () => view.state.field(instructionPointer),
-      move: (line: number, col: number) => view.dispatch({effects: setInstructionPointerPosition.of({line, col})}),
-      show: (visible: boolean) => {
-        const ip = document.querySelector('.cm-instruction-pointer');
-        if (ip) ip.classList.toggle('hidden', !visible);
-      },
-    }
+    setInstructionPointer: (targetLineNumber, targetColumn) => {
+      // Note: I first tried creating a codemirror extension which adds a RectangleMarker
+      // but annoyingly when the stepDelay is too low it would skip updates and the trail would have gaps.
+      const scrollRect = view.scrollDOM.getBoundingClientRect(); // view.scrollDOM is the element with the class .cm-scroller 
+
+      const line = view.state.doc.line(targetLineNumber);
+      if (!line) return; // Out of bounds
+
+      const column = Math.max(0, Math.min(targetColumn, line.length));
+      const pos = line.from + column;
+
+      // Get coordinates of the target position
+      const coords = view.coordsAtPos(pos);
+      const nextCoords = view.coordsAtPos(pos + 1);
+
+      if (!coords || !nextCoords) return; // Position is not visible or invalid
+
+      const left = coords.left - scrollRect.left + view.scrollDOM.scrollLeft;
+      const top = coords.top - scrollRect.top + view.scrollDOM.scrollTop;
+      const height = coords.bottom - coords.top; // using height as width to make it a square
+
+      const trail = trails.pop();
+      const scroller = document.querySelector('.cm-scroller');
+      if (!trail.parentElement) scroller.appendChild(trail);
+      trail.style.top = (top - 2) + 'px';
+      trail.style.left = (left - 6) + 'px';
+      trail.style.width = (height + 5) + 'px';
+      trail.style.height = (height + 5) + 'px';
+      trail.classList.add('trail-out');
+      trail.scrollIntoView({block: 'nearest', inline: 'nearest'});
+      trail.addEventListener('animationend', () => trail.classList.remove('trail-out'), {once: true});
+      trails.unshift(trail);
+    },
   };
 }

@@ -13,6 +13,7 @@ export function step(ctx: Context): Cell | null {
 
   if (ctx.isFirstDomino) {
     findFirstDomino(ctx);
+    ctx.afterStep(ctx);
     return ctx.isFinished ? null : ctx.currentCell;
   }
 
