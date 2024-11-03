@@ -115,7 +115,7 @@ Everything is either:
 - a number literal
 - or a string literal
 
-Using Double-Six dominos, we are essentially working with base7 numbers. This can be changed using the [BASE](#Base) instruction.
+Using Double-Six dominos, we are essentially working with base7 numbers. This can be changed using the [BASE](#base) instruction.
 
 With a higher base you can use dominos with more dots to represent larger numbers with fewer pieces.
 
@@ -402,7 +402,7 @@ The instruction pointer (`IP`) keeps track of the current cell address that will
 
 ### How Navigation Modes work
 
-In a nutshell: Navigation Modes are predefined "behaviours" that follow a specific priority or pattern.
+In a nutshell: Navigation Modes are predefined priority patterns which change the way the Instruction Pointer moves.
 
 > [!TIP]  
 > Change navigation modes using the [NAVM](#navm) instruction.

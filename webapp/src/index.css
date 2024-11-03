@@ -125,21 +125,24 @@
   .markdown-body h2 {
     margin-top: 0;
   }
-}
 
-.trail {
-  position: absolute;
-  background-color: theme(colors.yellow.700 / 60%);
-  pointer-events: none;
-  border-radius: 50%;
-  opacity: 0;
-  transition: none;
+  /***********************/
+  /* Instruction Pointer */
+  /***********************/
+  .trail {
+    position: absolute;
+    background-color: theme(colors.yellow.700 / 60%);
+    pointer-events: none;
+    border-radius: 50%;
+    opacity: 0;
+    transition: none;
+  }
+  
+  .trail-out {
+    animation: fade-out 3s 1;
+  }
+ 
 }
-
-.trail-out {
-  animation: fade-out 3s 1;
-}
-
 
 @keyframes fade-out {
   0% {

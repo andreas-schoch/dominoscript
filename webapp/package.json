@@ -50,6 +50,9 @@
     "solid-js": "^1.9.3",
     "split.js": "^1.6.5"
   },
+  "overrides": {
+    "rimraf": "^6.0.1"
+  },
   "license": "MIT",
   "author": "Andreas Schoch"
 }

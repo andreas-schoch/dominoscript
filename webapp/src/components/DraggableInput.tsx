@@ -13,7 +13,7 @@ export const DraggableInput: Component<{value: Accessor<number>; setValue: Sette
     return `${String(value).padStart(3, ' ')} ms`;
   }
 
-  function onMouseDown(): void {
+  function onPointerDown(): void {
     let didMove = false;
     document.body.requestPointerLock();
 
@@ -28,8 +28,8 @@ export const DraggableInput: Component<{value: Accessor<number>; setValue: Sette
     };
 
     function onMouseUp(e: MouseEvent): void {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('pointermove', onMouseMove);
+      document.removeEventListener('pointerup', onMouseUp);
       document.exitPointerLock();
 
       if (didMove) {
@@ -39,11 +39,11 @@ export const DraggableInput: Component<{value: Accessor<number>; setValue: Sette
       }
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onMouseMove);
+    document.addEventListener('pointerup', onMouseUp);
 
     cleanupMove = () => {
-      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('pointermove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
   };
@@ -73,7 +73,7 @@ export const DraggableInput: Component<{value: Accessor<number>; setValue: Sette
         classList={{'value-input': true}}
         value={displayValue()}
         onChange={handleChange}
-        onMouseDown={() => onMouseDown()}
+        onpointerdown={() => onPointerDown()}
       />
     </div>
   );
