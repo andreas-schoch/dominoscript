@@ -1,5 +1,6 @@
 import {dedent, getTotalInfo} from '../src/helpers.js';
 import {deepStrictEqual, strictEqual} from 'node:assert';
+import {describe, it} from 'node:test';
 import {createRunner} from '../src/Runner.js';
 
 describe('helpers', () => {
@@ -27,7 +28,7 @@ describe('helpers', () => {
       deepStrictEqual(totalInfo, {
         timeStartMs: ctx.info.timeStartMs,
         timeEndMs: ctx.info.timeEndMs,
-        executionTimeSeconds: ctx.info.executionTimeSeconds,
+        executionTimeMS: ctx.info.executionTimeMS,
         totalInstructions: 10,
         totalSteps: 80,
         totalJumps: 1,

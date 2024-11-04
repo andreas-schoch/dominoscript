@@ -139,7 +139,7 @@ function handleOnAfterRun(ctx: Context): void {
   if (!ctx.config.debug) return;
 
   const padding = paddings[ctx.id];
-  console.debug(padding + '╚═ Finished! - Execution time: ' + ctx.info.executionTimeSeconds.toFixed(4) + 's');
+  console.debug(padding + '╚═ Finished! - Execution time: ' + ctx.info.executionTimeMS.toFixed(1) + ' ms');
   console.debug(padding);
 
   if (!ctx.parent) {

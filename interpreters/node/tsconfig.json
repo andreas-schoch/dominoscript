@@ -14,7 +14,7 @@
     "noImplicitAny": true,
     "allowUnreachableCode": false,
     "skipLibCheck": true,
-    "types": ["node", "mocha"]
+    "types": ["node"]
   },
   "include": [
     "src/**/*.ts",

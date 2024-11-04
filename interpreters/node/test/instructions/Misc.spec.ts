@@ -1,4 +1,5 @@
 import {DSAddressError, DSFullStackError, DSInvalidBaseError, DSInvalidInstructionError, DSInvalidLabelError, DSInvalidLiteralParseModeError, DSInvalidSignError, DSInvalidValueError, DSUnexpectedChangeInDirectionError, DSUnexpectedEndOfNumberError, DSValueTooLargeError} from '../../src/errors.js';
+import {describe, it} from 'node:test';
 import {rejects, strictEqual} from 'assert';
 import {createRunner} from '../../src/Runner.js';
 import {dedent} from '../../src/helpers.js';
@@ -67,8 +68,10 @@ describe('Misc', () => {
       });
       it('should throw UnexpectedEndOfNumberError when reaching edge of board before having parsed the number (LIT 4)', async () => {
         // NUM 1 NUM 20 NUM 4 LIT GET
-        const ds = createRunner('0—1 0—1 0—1 1—0 2—6 0—1 0—4 6—2 6—0 . . 1—2 3—4 5—6');
-        await rejects(ds.run(), DSUnexpectedEndOfNumberError);
+        const dsSync = createRunner('0—1 0—1 0—1 1—0 2—6 0—1 0—4 6—2 6—0 . . 1—2 3—4 5—6');
+        const dsAsync = createRunner('0—1 0—1 0—1 1—0 2—6 0—1 0—4 6—2 6—0 . . 1—2 3—4 5—6', {stepDelay: 1});
+        await rejects(dsSync.run(), DSUnexpectedEndOfNumberError);
+        await rejects(dsAsync.run(), DSUnexpectedEndOfNumberError);
       });
       it('should throw UnexpectedChangeInDirectionError when moving to the entry of a domino whose connection points in a different direction', async () => {
         // NUM 1 NUM 20 NUM 3 LIT GET
@@ -910,7 +913,7 @@ describe('Misc', () => {
         strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
       }
     });
-    it('should use 1 to 6 dominos to parse number literals (LIT mode 1 to 6, Base 16)', async () => {
+    it('should use 1 to 6 dominos to parse number literals (LIT mode 1 to 6, Base 16)', async (t) => {
       const data = [
         ['0—1', '6—6', 102],
         ['0—2', '6—6 6—6', 26214],
@@ -932,9 +935,24 @@ describe('Misc', () => {
         ['0—6', '0—0 0—0 0—0 0—0 0—0 f—f', 255],
       ];
 
+      // SYNC
+      let setTimeoutSpy = t.mock.fn(setTimeout);
+      t.mock.method(global, 'setTimeout', setTimeoutSpy);
       for (const [litMode, literal, expectedValue] of data) {
       // NUM 16 BASE NUM <litMode> LIT NUM <literal>
         const ds = createRunner(`0—1 1—0 2—2 6—3 0—1 ${litMode} 2—c 0—1 ${literal}`);
+        const ctx = await ds.run();
+        strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
+      }
+
+      t.mock.restoreAll();
+
+      // ASYNC
+      setTimeoutSpy = t.mock.fn(setTimeout);
+      t.mock.method(global, 'setTimeout', setTimeoutSpy);
+      for (const [litMode, literal, expectedValue] of data) {
+        // NUM 16 BASE NUM <litMode> LIT NUM <literal>
+        const ds = createRunner(`0—1 1—0 2—2 6—3 0—1 ${litMode} 2—c 0—1 ${literal}`, {stepDelay: 1});
         const ctx = await ds.run();
         strictEqual(ctx.stack.peek(), expectedValue, `should have pushed ${expectedValue} to the stack`);
       }
@@ -1007,9 +1025,10 @@ describe('Misc', () => {
   describe('EXT', () => {
     it('should use 2 dominos for each opcode when extended mode is toggled on', async () => {
       // EXT NUM 6 DUPE MULT
-      const ds = createRunner('6—4 0—0 0—1 0—6 0—0 0—3 0—0 1—2');
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[36]');
+      const ctxSync = await createRunner('6—4 0—0 0—1 0—6 0—0 0—3 0—0 1—2').run();
+      const ctxAsync = await createRunner('6—4 0—0 0—1 0—6 0—0 0—3 0—0 1—2', {stepDelay: 1}).run();
+      strictEqual(ctxSync.stack.toString(), '[36]');
+      strictEqual(ctxAsync.stack.toString(), '[36]');
     });
     it('should toggle between using one, two and one dominoes for opcodes', async () => {
       // NUM 1 EXT NUM 2 EXT NUM 3
@@ -1018,26 +1037,26 @@ describe('Misc', () => {
       strictEqual(ctx.stack.toString(), '[1 2 3]');
     });
     it('should call by label using the extended modes alternative syntax', async () => {
-      // NUM 25 LABEL EXT OPCODE_1001
-      const ds = createRunner('0—1 1—0 3—4 4—2 6—4 2—6 3—0 . . . . 6—6 6—1 1—0 0—0');
+      // NUM 25 LABEL EXT OPCODE_100
+      const ds = createRunner('0—1 1—0 3—4 4—2 6—4 0—2 0—2 . . . . 6—6 6—1 1—0 0—0');
       const ctx = await ds.run();
       strictEqual(ctx.info.totalCalls, 1, 'should have called once');
       strictEqual(ctx.stack.toString(), '[342]', 'should have pushed 342 to the stack by the end');
     });
-    it('should throw an InvalidInstructionError when unmapped opcode is executed in extended mode', async () => {
-      // EXT INVALID_OPCODE_500
-      const ds = createRunner('6—4 1—3 1—3');
-      await rejects(ds.run(), DSInvalidInstructionError);
-    });
-    it('should throw an InvalidLabelError when opcode in range 1001—2400 is executed without corresponding label', async () => {
-      // EXT OPCODE_1001
-      const ds = createRunner('6—4 2—6 3—0');
-      await rejects(ds.run(), DSInvalidLabelError);
+    it('should throw an InvalidLabelError when opcode above 99 is executed and there is no corresponding label', async () => {
+      // EXT OPCODE_500 (non existing label -401)
+      // EXT OPCODE_1001 (non existing label −902)
+      // EXT OPCODE_100 (non existing label -1)
+      await rejects(createRunner('6—4 1—3 1—3').run(), DSInvalidLabelError);
+      await rejects(createRunner('6—4 2—6 3—0').run(), DSInvalidLabelError);
+      await rejects(createRunner('6—4 0—2 0—2').run(), DSInvalidLabelError);
     });
     it('should throw an UnexpectedEndOfNumberError when 2 dominos are expected for an opcode but only 1 is provided', async () => {
       // EXT INVALID_OPCODE_500
-      const ds = createRunner('6—4 6—6');
-      await rejects(ds.run(), DSUnexpectedEndOfNumberError);
+      const dsSync = createRunner('6—4 6—6');
+      const dsAsync = createRunner('6—4 6—6', {stepDelay: 1});
+      await rejects(dsSync.run(), DSUnexpectedEndOfNumberError);
+      await rejects(dsAsync.run(), DSUnexpectedEndOfNumberError);
     });
   });
 
@@ -1076,9 +1095,11 @@ describe('Misc', () => {
 
   describe('INVALID', () => {
     it('should throw an error when an invalid instruction is encountered', async () => {
-      // NUM 16 BASE <INVALID_OPCODE_255>
-      const ds = createRunner('0—1 1—0 2—2 6—3 f—f');
-      await rejects(ds.run(), DSInvalidInstructionError);
+      await rejects(createRunner('2—6').run(), DSInvalidInstructionError, 'opcode 20 is unmapped');
+      await rejects(createRunner('5—6').run(), DSInvalidInstructionError, 'opcode 41 is unmapped');
+      await rejects(createRunner('0—1 1-0 2—2 6—3 3—6').run(), DSInvalidInstructionError, 'opcode 49 is unmapped');
+      await rejects(createRunner('0—1 1-0 2—2 6—3 6—3').run(), DSInvalidInstructionError, 'opcode 49 is unmapped');
+      await rejects(createRunner('0—1 1-0 2—2 6—3 6—4').run(), DSInvalidLabelError, 'opcode 100 does not have a corresponding label');
     });
   });
 });

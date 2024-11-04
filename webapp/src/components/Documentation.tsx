@@ -66,14 +66,14 @@ export const Documentation: Component = () => {
       <div classList={{hidden: !showDocs()}} class="absolute inset-0 flex justify-center items-center overflow-auto">
         <div onclick={() => setShowDocs(false)} class="absolute inset-0 bg-black opacity-55 z-40"></div>
 
-        <div class="mx-auto max-w-[95vw] w-[1200px] max-h-[95vh] h-[95vh] overflow-hidden bg-stone-400 rounded-lg border border-stone-500 z-50 relative pt-12 grid grid-cols-[240px_1fr]">
+        <div class="mx-auto max-w-[95vw] w-[1200px] max-h-[95vh] h-[95vh] overflow-hidden bg-stone-400 rounded-lg border border-stone-600 z-50 relative pt-12 grid grid-cols-[240px_1fr]">
 
           <div class="absolute top-0 left-0 right-0 px-3 py-2 border-b border-stone-600 bg-stone-900 text-white flex h-12">
             <span class="flex items-center font-bold">Documentation</span>
             <VsChromeClose class="text-white ml-auto h-full text-3xl font-bold cursor-pointer bg-red-600 rounded" onclick={() => setShowDocs(false)} />
           </div>
 
-          <ul class="bg-slate-800 text-white">
+          <ul class="bg-slate-800 text-white border-r border-r-stone-600">
             <For each={Object.keys(segments())}>
               {segment => <li onclick={() => handleClickTitle(segment)} class="py-2 pl-4 cursor-pointer hover:bg-slate-700" classList={{'bg-slate-700': segment === selected()}}>{segment}</li>}
             </For>
@@ -172,7 +172,6 @@ function fixExternalLinks(doc: Document): void {
   links.forEach(link => {
     // Any links without fragment should open in new tab (it is assumed external links won't have fragment)
     if (!link.href.includes('#')) {
-      console.log('external link:', link);
       link.setAttribute('target', '_blank');
     }
 

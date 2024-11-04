@@ -1,10 +1,13 @@
 import {Context, contexts} from './Context.js';
+import {DSInterpreterError} from './errors.js';
 
 // Remove indentation that is not part of a DominoScript string
 export function dedent(str: string): string {
   const lines = str.split('\n');
   const match = lines[0].match(/^ */);
-  const indent = match ? match[0].length : 0;
+  /* c8 ignore next */
+  if (!match) throw new DSInterpreterError('dedent match is null. This should never happen with the way we use it.');
+  const indent = match[0].length;
   const dedentedLines = lines.map(line => line.slice(indent));
   return dedentedLines.join('\n');
 }
@@ -19,7 +22,7 @@ export function getTotalInfo(ctxId: Context['id'], infos: Context['info'][] = []
     const globalInfo: Context['info'] = {
       timeStartMs: ctx.info.timeStartMs,
       timeEndMs: ctx.info.timeEndMs,
-      executionTimeSeconds: ctx.info.executionTimeSeconds,
+      executionTimeMS: ctx.info.executionTimeMS,
       totalInstructions: 0,
       totalSteps: 0,
       totalJumps: 0,

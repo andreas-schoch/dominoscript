@@ -70,7 +70,7 @@ export interface Context {
   info: {
     timeStartMs: number;
     timeEndMs: number;
-    executionTimeSeconds: number;
+    executionTimeMS: number;
     totalInstructions: number;
     totalSteps: number;
     totalJumps: number;
@@ -159,7 +159,7 @@ export function createContext(source: string, parent: Context | null = null, opt
     info: {
       timeStartMs: 0,
       timeEndMs: 0,
-      executionTimeSeconds: 0,
+      executionTimeMS: 0,
       totalInstructions: 0,
       totalSteps: 0,
       totalJumps: 0,

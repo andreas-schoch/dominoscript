@@ -113,9 +113,23 @@
     list-style-type: decimal;
   }
 
+  .markdown-body code {
+    border: 1px solid theme(colors.stone.700);
+  }
+
+  .markdown-body h4 > code {
+    background-color: theme(colors.slate.300);
+    font-weight: bold;
+    color: black;
+    border: 1px solid theme(colors.stone.950);
+    padding: 4px 12px;
+  }
+
   .markdown-body pre {
     letter-spacing: 2px;
     line-height: 1.15;
+    border-radius: 6px;
+    border: 1px solid theme(colors.stone.500);
   }
 
   .markdown-body .markdown-alert-title {
@@ -124,6 +138,15 @@
 
   .markdown-body h2 {
     margin-top: 0;
+  }
+
+  .markdown-body h2#instructions ~ h3 {
+    background-color: theme(colors.slate.800);
+    border-top: 1px solid theme(colors.stone.700);
+    border-bottom: 1px solid theme(colors.stone.700);
+    padding: 12px 40px;
+    margin-left: -40px;
+    margin-right: -40px;
   }
 
   /***********************/

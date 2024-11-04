@@ -1,4 +1,5 @@
 import {DSEmptyStackError, DSFullStackError, DSInvalidValueError, DSUnexpectedEndOfNumberError} from '../../src/errors.js';
+import {describe, it} from 'node:test';
 import {rejects, strictEqual} from 'node:assert';
 import {createRunner} from '../../src/Runner.js';
 import {dedent} from '../../src/helpers.js';
@@ -39,12 +40,14 @@ describe('StackManipulations', () => {
       await rejects(ds.run(), DSUnexpectedEndOfNumberError);
     });
     it('should throw FullStackError when trying to push a number to a full stack', async () => {
-      const ds = createRunner(dedent(`\
+      const script = dedent(`\
         6—6 0—1 0—6
                    
-        . . 6—0 1—0`
-      ));
-      await rejects(ds.run(), DSFullStackError);
+        . . 6—0 1—0`);
+      const dsSync = createRunner(script, {dataStackSize: 5});
+      const dsAsync = createRunner(script, {dataStackSize: 5, stepDelay: 1});
+      await rejects(dsSync.run(), DSFullStackError);
+      await rejects(dsAsync.run(), DSFullStackError);
     });
   });
 
@@ -56,12 +59,15 @@ describe('StackManipulations', () => {
 
     });
     it('should throw FullStackError when NULL terminator is missing and IP is stuck in a loop', async () => {
-      const ds = createRunner(dedent(`\
+      const script = dedent(`\
         0—2 1—0 4—4
                    
         . . 4—4 0—1`
-      ));
-      await rejects(ds.run(), DSFullStackError);
+      );
+      const dsSync = createRunner(script, {dataStackSize: 5});
+      const dsAsync = createRunner(script, {dataStackSize: 5, stepDelay: 1});
+      await rejects(dsSync.run(), DSFullStackError);
+      await rejects(dsAsync.run(), DSFullStackError);
     });
     it('should parse dominos as instructions again once null terminator encountered during STR parsing', async () => {
       // First half of each domino representing a character indicates how many more dominos will be parsed as part of the character

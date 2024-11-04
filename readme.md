@@ -1,7 +1,7 @@
 DominoScript
 ================================================================================
 
-**Current version `0.4.7`**
+**Current version `0.5.0`**
 
 Have you ever wanted to write code using domino pieces? No?
 
@@ -802,7 +802,7 @@ In the below overview, you can see the instructions on a 7x7 matrix representing
 |**5**|[NUMIN](#numin)   |[NUMOUT](#numout) |[STRIN](#strin)   |[STROUT](#strout) |[KEY](#key)   |[KEYRES](#keyres) |[_](#reserved_5_6)|[Input & Output](#input-and-output)            |
 |**6**|[GET](#get)       |[SET](#set)       |[LIT](#lit)       |[BASE](#base)     |[EXT](#ext)   |[TIME](#time)     |[NOOP](#noop)     |[Misc](#misc)                                  |
 
-*(DominoScript isn't limited to these 49 instructions. The way the language is designed, it can theoretically be extended to up to 1000 instructions)*
+*(DominoScript isn't limited to these 49 instructions. Opcodes 0-99 are reserved for "official" instructions, while opcodes 100+ can be used to extend the language using the  [LABEL](#label) instruction as well as eventually via the JS API. TODO explain in more detail.)*
 
 <br>
 <h3 id="stack-management">Stack Management</h3>
@@ -1149,12 +1149,12 @@ It pops the top of the stack as a condition and then:
 #### `LABEL`
 <img src="assets/horizontal/4-2.png" alt="Domino" width="128">
 
-A label is like a bookmark or an alternative identifier of a specific Cell address. You can also think of it as a pointer. It can be used by the `JUMP`, `CALL`, `GET` and `SET` instructions.
+Label are like a bookmarks or an alternative identifier of a specific Cell address. They can be used by the `JUMP`, `CALL`, `GET` and `SET` instructions.
 
 **<ins>Labels are probably not what you expect them to be.</ins>** 
 - They are <ins>not</ins> strings, but negative numbers.
 - They are auto generated and self decrementing: `-1`, `-2`, `-3`, etc. ...
-- You can kind of imagine them as a pointer to a specific cell address.
+- You can kind of imagine them as pointers to a specific cell address.
 
 Executing the LABEL instruction pops the address of the cell you want to label from the stack and assigns it to the next available negative number label.
 
@@ -1172,9 +1172,12 @@ For clarity, I'd generally recommend adding comments like the following to your 
 
 It is not mandatory to use labels. The 4 mentioned instructions that can use them also work with addresses directly!
 
-**<ins>Labels are mandatory only in  the following cases:</ins>**
-- Calling JS functions: The "official" js interpreter exposes an API where you can define functions in JS and call them from DominoScript via a label (Not implemented yet!)
-- Calling imported functions: DominoScript will have an `IMPORT` instruction that allows source files to be imported into others. The imported functions can only be called via labels, so in that regard a label also acts like an export. (Not implemented yet!)
+**<ins>About Labels in imported files:</ins>**  
+DominoScript has an `IMPORT` instruction that allows source files to be imported into others. The imported functions can only be called via labels, so in that regard a label also acts like an export. If the parent file doesn't define labels of their own, the label values will be the same in both parent and child. However if the parent file creates labels <ins>before</ins> importing a child file, the exported child labels will have a different value in the parent. For example:  
+1. Parent creates label `-1`, `-2`, `-3` and then imports the child file
+2. The child file defines labels `-1`, `-2`, `-3` and gives back control to parent
+3. The parent file will now have the labels `-1`, `-2`, `-3` and the child labels will be `-4`, `-5`, `-6`
+4. Now when the parent wants to call a child function which internally is labelled with `-1`, it needs to use label `-4` instead.
 
 #### `JUMP`
 <img src="assets/horizontal/4-3.png" alt="Domino" width="128">
@@ -1193,6 +1196,9 @@ Like the name suggests, it is similar to a function call.
 Exactly like JUMP with one crucial difference: When it cannot move anymore, the IP will return to where it was called from instead of terminating the program.
 
 Internally there is a return stack that keeps track of the return addresses.
+
+**Alternative way to CALL**
+Instead of doing `ǸUM 1 NEG CALL` to call by label, you can just do `OPCODE_100`. Why? Because labels are mapped to opcodes 100+. So when you create the labels `-1`, `-2`, `-3`, etc. they are automatically mapped to opcodes `100`, `101`, `102`.
 
 > [!IMPORTANT]  
 > You can perform recursive calls (See [factorial example](./examples/009_recursive_factorial.md)) but be aware that the depth is limited by the size of the return stack. By default its size is 512.
@@ -1443,14 +1449,7 @@ The below table shows how the domino `3—0` is mapped to different opcodes depe
 #### `EXT`
 <img src="assets/horizontal/6-4.png" alt="Domino" width="128">
 
-Toggle extended mode on or off. If extended mode is active the interpreter will use 2 dominos instead of 1 for each instruction which extends the opcode range from 0-48 to 0-2400.
-
-The range 0-1000 is reserved for "real" instructions.
-
-The range 1001-2400 is used to call functions by label. It is essentially "Syntactic Sugar" to execute CALL with a label. Making function calls look like actual instructions.
-
-To call a function with the label -1 you'd normally do `0—1 0—1 1—5 4—4` which is equivalent to `NUM 1 NEG CALL`.
-In extended mode you could do the same `0—0 0—1 0—1 0—0 1—5 0—0 4—4` BUT You can also do the exact same using `2—6 3—0` which is the opcode 1001 and is mapped to the label -1.
+Toggle extended mode on or off. If extended mode is active the interpreter will use 2 dominos instead of 1 for each instruction which extends the opcode range from 0-48 to 0-2400 when using Double six dominos.
 
 #### `TIME`
 <img src="assets/horizontal/6-5.png" alt="Domino" width="128">

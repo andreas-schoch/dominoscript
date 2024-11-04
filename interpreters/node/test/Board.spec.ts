@@ -1,5 +1,6 @@
 import {DSConnectionToEmptyCellError, DSConnectionToEmptyCellsError, DSInterpreterError, DSInvalidGridError, DSMissingConnectionError, DSMultiConnectionError, DSSyntaxError} from '../src/errors.js';
 import {deepStrictEqual, strictEqual, throws} from 'assert';
+import {describe, it} from 'node:test';
 import {Cell} from '../src/Board.js';
 import {createRunner} from '../src/Runner.js';
 import {dedent} from '../src/helpers.js';
@@ -104,12 +105,12 @@ describe('Board', () => {
 
   it('should throw InvalidGridError when source is empty', () => {
     throws(() => createRunner(''), DSInvalidGridError);
+    throws(() => createRunner('', {stepDelay: 1}), DSInvalidGridError);
   });
 
   it('should not throw any errors when grid is empty', async () => {
-    const ds = createRunner('. .');
-    const ctx = await ds.run();
-    strictEqual(ctx.currentCell, null);
+    strictEqual((await createRunner('. .').run()).currentCell, null);
+    strictEqual((await createRunner('. .', {stepDelay: 1}).run()).currentCell, null);
   });
 
   it('should throw InvalidGridError for an invalid grid', () => {

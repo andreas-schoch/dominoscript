@@ -1,4 +1,5 @@
 import {DSInvalidInputError, DSMissingListenerError} from '../../src/errors.js';
+import {describe, it} from 'node:test';
 import {rejects, strictEqual} from 'node:assert';
 import {createRunner} from '../../src/Runner.js';
 
@@ -28,7 +29,7 @@ describe('InputOutput', () => {
   });
 
   describe('NUMOUT', () => {
-    it('should output the number 1000 to stdout', (done) => {
+    it('should output the number 1000 to stdout', (_, done) => {
       const ds = createRunner('0—1 2—0 2—6 2—6 5—1');
       ds.onStdout((ctx, o) => {
         try {
@@ -65,7 +66,7 @@ describe('InputOutput', () => {
   });
 
   describe('STROUT', () => {
-    it('should output \'hello world to stdout', (done) => {
+    it('should output \'hello world to stdout', (_, done) => {
       const ds = createRunner('0—2 1—2 0—6 1—2 0—3 1—2 1—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—2 1—3 1—2 0—2 0—0 5—3');
       ds.onStdout((ctx, o) => {
         try {
@@ -77,7 +78,7 @@ describe('InputOutput', () => {
       });
       ds.run();
     });
-    it('should stringify the number after an UnitSeparator (ascii 31) instead of treating it as a Unicode char code', (done) => {
+    it('should stringify the number after an UnitSeparator (ascii 31) instead of treating it as a Unicode char code', (_, done) => {
       const ds = createRunner('0—2 1—2 0—6 1—0 4—3 1—0 4—3 1—2 1—3 1—2 1—6 1—0 4—4 1—2 3—0 1—2 1—6 1—2 2—2 1—0 4—3 1—0 0—1 1—2 0—2 0—0 5—3');
       ds.onStdout((ctx, o) => {
         try {

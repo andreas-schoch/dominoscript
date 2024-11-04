@@ -1,5 +1,6 @@
 import {DSAddressError, DSCallToItselfError, DSInvalidLabelError, DSInvalidValueError, DSJumpToItselfError, DSMissingListenerError, DSStepToEmptyCellError} from '../../src/errors.js';
 import {deepStrictEqual, rejects, strictEqual} from 'assert';
+import {describe, it} from 'node:test';
 import {contexts} from '../../src/Context.js';
 import {createRunner} from '../../src/Runner.js';
 import {dedent} from '../../src/helpers.js';
@@ -180,9 +181,9 @@ describe('ControlFlow', () => {
     });
     it('should be able to call imported functions', async () => {
       // STR "f" IMPORT NUM 12 NUM 1 NEG CALL NUM 12 NUM 1 NEG CALL NUM 12
-      const ds = createRunner('0—2 1—2 0—4 0—0 4—5 0—1 1—0 1—5 0—1 0—1 1—5 4—4 0—1 1—0 1—5 0—1 0—1 1—5 4—4');
+      const script = '0—2 1—2 0—4 0—0 4—5 0—1 1—0 1—5 0—1 0—1 1—5 4—4 0—1 1—0 1—5 0—1 0—1 1—5 4—4';
       // NUM 42 LABEL - then factorial function at address 42 (same as in example 015)
-      ds.onImport(() => Promise.resolve(dedent(`\
+      const importedScript = dedent(`\
         0 . . . . . . 1—0 1—0 0 . . . 2—1 4—4 0
         |                     |               |
         1 . . . . . . . . . . 0 . . . . . . . 6
@@ -191,22 +192,30 @@ describe('ControlFlow', () => {
         |                                     |
         0 . . . . . . . . . . 0 . . . . . . . 1
                               |                
-        6—0 4—2 . . . . . . . 3 0—1 0—1 1—1 0—1
-      `)));
+        6—0 4—2 . . . . . . . 3 0—1 0—1 1—1 0—1`
+      );
 
-      const ctx = await ds.run();
-      strictEqual(ctx.stack.toString(), '[479001600 479001600]', 'should have calculated the factorial of 12 twice');
+      const dsSync = createRunner(script);
+      const dsAsync = createRunner(script, {stepDelay: 1});
+      dsSync.onImport(() => Promise.resolve(importedScript));
+      dsAsync.onImport(() => Promise.resolve(importedScript));
+      const ctxSync = await dsSync.run();
+      const ctxAsync = await dsAsync.run();
+      strictEqual(ctxSync.stack.toString(), '[479001600 479001600]', 'should have calculated the factorial of 12 twice');
+      strictEqual(ctxAsync.stack.toString(), '[479001600 479001600]', 'should have calculated the factorial of 12 twice');
     });
   });
 
-  describe('WAIT', () => {
-    it('should wait for 50ms before continuing', async () => {
-      const ds = createRunner('0—1 1—1 0—1 4—6 6—6');
-      const start = Date.now();
-      await ds.run();
-      const end = Date.now();
-      strictEqual(end - start >= 50, true, 'should have waited for at least 50ms');
-      strictEqual(end - start < 60, true, 'should not have waited for more than 60ms');
+  describe('WAIT', async () => {
+    it('should wait for 6ms before continuing', async (t) => {
+      const setTimeoutSpy = t.mock.fn(setTimeout);
+      t.mock.method(global, 'setTimeout', setTimeoutSpy);
+
+      // NUM 6 WAIT NOOP
+      await createRunner('0—1 0—6 4—6 6—6').run();
+
+      setTimeoutSpy.mock.calls.forEach((call) => strictEqual(call.arguments[1], 6, 'should have waited for 6ms'));
+      strictEqual(setTimeoutSpy.mock.callCount(), 1, 'should have called setTimeout when WAIT instruction is executed');
     });
     it('should throw a ValueError when WAIT is executed with a negative delay', async () => {
       const ds = createRunner('0—1 0—1 1—5 4—6');

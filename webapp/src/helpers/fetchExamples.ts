@@ -91,7 +91,12 @@ export const intro = dedent(`\
     6. The Instruction Pointer always moves from one half (entry) of the same domono to the other half (exit) of the same domino.  
        By default, a simple "forward", "left", "right" priority determines where to move. To change this, use the \`NAVM\` instruction.
 
-  **To learn more about how DominoScript works, click the help icon below**
+  **To learn more about how DominoScript works, click the help icon**
+
+
+  Do you want your own examples to appear here or found a bug? Please open a pull request or an issue on GitHub.
+
+  If you have any questions or feedback, feel free to start a discussion on GitHub. I appreciate any interest in this project!
 
 
   `

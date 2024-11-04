@@ -92,7 +92,7 @@ async function run(ctx: Context): Promise<Context> {
   }
 
   info.timeEndMs = Date.now();
-  info.executionTimeSeconds = (performance.now() - start) / 1000;
+  info.executionTimeMS = performance.now() - start;
   afterRun(ctx);
   return ctx;
 }
@@ -171,7 +171,7 @@ async function asyncRun(ctx: Context): Promise<Context> {
   }
 
   info.timeEndMs = Date.now();
-  info.executionTimeSeconds = (performance.now() - start) / 1000;
+  info.executionTimeMS = performance.now() - start;
   afterRun(ctx);
   return ctx;
 }

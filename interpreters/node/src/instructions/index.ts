@@ -4,9 +4,9 @@ import {ASR, BAND, BNOT, BOR, BXOR, LSL, LSR} from './Bitwise.js';
 import {BASE, EXT, GET, LIT, NOOP, SET, TIME} from './Misc.js';
 import {BRANCH, CALL, IMPORT, JUMP, LABEL, NAVM, WAIT} from './ControlFlow.js';
 import {CLR, DUP, LEN, NUM, POP, ROLL, STR, asyncNUM, asyncSTR} from './StackManipulations.js';
+import {DSInvalidInstructionError, DSInvalidLabelError} from '../errors.js';
 import {KEY, KEYRES, NUMIN, NUMOUT, STRIN, STROUT} from './InputOutput.js';
 import {Context} from '../Context.js';
-import {DSInvalidInstructionError} from '../errors.js';
 
 export interface Instruction {
   fn: ((ctx: Context) => void) | ((ctx: Context) => Promise<void>);
@@ -46,7 +46,7 @@ const INSTRUCTION_BNOT: Instruction = {fn: BNOT, name: 'BNOT'};
 const INSTRUCTION_BAND: Instruction = {fn: BAND, name: 'BAND'};
 const INSTRUCTION_BOR: Instruction = {fn: BOR, name: 'BOR'};
 const INSTRUCTION_BXOR: Instruction = {fn: BXOR, name: 'BXOR'};
-const INSTRUCTION_LSL: Instruction = {fn: LSL, name: 'LSL'}; // Losgical Shift Left <;
+const INSTRUCTION_LSL: Instruction = {fn: LSL, name: 'LSL'}; // Logical Shift Left <;
 const INSTRUCTION_LSR: Instruction = {fn: LSR, name: 'LSR'}; // Logical Shift Right >>> (unsigned;
 const INSTRUCTION_ASR: Instruction = {fn: ASR, name: 'ASR'}; // Arithmetic Shift Right >;
 
@@ -73,7 +73,7 @@ const INSTRUCTION_GET: Instruction = {fn: GET, name: 'GET'};
 const INSTRUCTION_SET: Instruction = {fn: SET, name: 'SET'};
 const INSTRUCTION_LIT: Instruction = {fn: LIT, name: 'LIT'};
 const INSTRUCTION_BASE: Instruction = {fn: BASE, name: 'BASE'};
-const INSTRUCTION_EXT: Instruction = {fn: EXT, name: 'EXT'}; // Toggle extended mod;
+const INSTRUCTION_EXT: Instruction = {fn: EXT, name: 'EXT'};
 const INSTRUCTION_TIME: Instruction = {fn: TIME, name: 'TIME'};
 const INSTRUCTION_NOOP: Instruction = {fn: NOOP, name: 'NOOP'};
 
@@ -82,10 +82,10 @@ const INSTRUCTION_ASYNC_NUM: Instruction = {fn: asyncNUM, name: 'NUM', isAsync: 
 const INSTRUCTION_ASYNC_STR: Instruction = {fn: asyncSTR, name: 'STR', isAsync: true};
 
 export function getInstructionOrThrow(ctx: Context, opcode: number): Instruction {
-  if (opcode >= 1000) {
-    // Opcodes 1001-2400 are "Syntactic Sugar" for CALL with labels. Opcode 1001 is a CALL with label -1
-    // TODO consider removing or changing to lower range of opcode 100+ for call by label
-    const label = -opcode + 1000;
+  if (opcode >= 100) {
+    // Opcode above 100 are "Syntactic Sugar" for CALL with labels. Opcode 100 is a CALL with label -1
+    const label = -opcode + 99;
+    if (ctx.labels[label] === undefined) throw new DSInvalidLabelError(label);
     ctx.stack.push(label);
     return INSTRUCTION_CALL;
   }

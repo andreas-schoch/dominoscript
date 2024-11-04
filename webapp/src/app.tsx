@@ -124,11 +124,13 @@ export const App: Component = () => {
     });
     runner.onAfterInstruction((ctx, instruction) => {
       if (!shouldPrintInststructions) return;
-      const padding = paddings[ctx.id];
-      debugTerminalView.writeln(padding + ` • Op: ${instruction.padEnd(8, ' ')}  Addr: ${String(ctx.currentCell?.address).padEnd(6)}  Stack: ${ctx.stack.toString()}`);
+      const {id, lastCell: {value: v1}, currentCell: {value: v2}} = ctx;
+      const padding = paddings[id];
+      debugTerminalView.writeln(padding + ` • Op: ${instruction.padEnd(8, ' ')}    Dom: ${v1}—${v2}    Addr: ${String(ctx.currentCell?.address).padEnd(6)}  Stack: ${ctx.stack.toString()}`);
     });
 
     runner.onAfterStep((ctx) => {
+      if (!ctx.currentCell) return; // this can happen if the board is empty
       // Only visualizing the InstructionPointer when there is a delay and it's the global context
       //  TODO consider implementing editor tabs where it switches automatically to the child context 
       if (ctx.config.stepDelay < 1 || ctx.parent) return;
@@ -140,37 +142,35 @@ export const App: Component = () => {
     runner.onAfterRun(ctx => {
       const padding = paddings[ctx.id];
       if (shouldPrintInststructions) debugTerminalView.writeln(padding + ' • DONE\n');
-      if (!ctx?.parent) {
-        handleStop();
-        if (!shouldPrintSummary) return;
-        const mhz = ctx.info.totalInstructions / ctx.info.executionTimeSeconds / 1e6;
+      if (ctx?.parent) return;
+      handleStop();
+      if (!shouldPrintSummary) return;
+      const mhz = ctx.info.totalInstructions / ctx.info.executionTimeMS / 1e3;
 
-        const message = '│ Final Summary │';
-        debugTerminalView.writeln('');
-        debugTerminalView.writeln('╭' + '─'.repeat(message.length - 2) + '╮');
-        debugTerminalView.writeln(message);
-        debugTerminalView.writeln('╰' + '─'.repeat(message.length - 2) + '╯');
-        const totalInfo = getTotalInfo(ctx.id);
-        debugTerminalView.writeln(` • Imports: ${totalInfo.totalImports}`);
-        debugTerminalView.writeln(` • Jumps: ${totalInfo.totalJumps}`);
-        debugTerminalView.writeln(` • Calls: ${totalInfo.totalCalls}`);
-        debugTerminalView.writeln(` • Returns: ${totalInfo.totalReturns}`);
-        debugTerminalView.writeln(` • Steps: ${totalInfo.totalSteps}`);
-        debugTerminalView.writeln(` • ExecutionTime: ${ctx.info.executionTimeSeconds.toFixed(6) + 's'}`);
-        debugTerminalView.writeln(` • Instructions/s: ${mhz.toFixed(6)} Mhz`);
-        debugTerminalView.writeln(` • Instructions: ${totalInfo.totalInstructions}`);
-        Object.entries(totalInfo.totalInstructionExecution)
-          .sort((a, b) => b[1] - a[1])
-          .forEach(([op, count]) => debugTerminalView.writeln(`    • ${op}: ${count}`));
+      const message = '│ Final Summary │';
+      debugTerminalView.writeln('');
+      debugTerminalView.writeln('╭' + '─'.repeat(message.length - 2) + '╮');
+      debugTerminalView.writeln(message);
+      debugTerminalView.writeln('╰' + '─'.repeat(message.length - 2) + '╯');
+      const totalInfo = getTotalInfo(ctx.id);
+      debugTerminalView.writeln(` • Imports: ${totalInfo.totalImports}`);
+      debugTerminalView.writeln(` • Jumps: ${totalInfo.totalJumps}`);
+      debugTerminalView.writeln(` • Calls: ${totalInfo.totalCalls}`);
+      debugTerminalView.writeln(` • Returns: ${totalInfo.totalReturns}`);
+      debugTerminalView.writeln(` • Steps: ${totalInfo.totalSteps}`);
+      debugTerminalView.writeln(` • ExecutionTime: ${ctx.info.executionTimeMS.toFixed(1) + ' ms'}`);
+      debugTerminalView.writeln(` • Instructions/s: ${mhz.toFixed(6)} Mhz`);
+      debugTerminalView.writeln(` • Instructions: ${totalInfo.totalInstructions}`);
+      Object.entries(totalInfo.totalInstructionExecution)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([op, count]) => debugTerminalView.writeln(`    • ${op}: ${count}`));
 
-        // Attempt to ensure the debug info is scrolled to the bottom.
-        // Does not work reliably but leaving it for now
-        setTimeout(() => {
-          const scroller = terminalDebugRef.querySelector('.xterm-viewport');
-          scrollToBottom(scroller);
-        }, 50);
-
-      }
+      // Attempt to ensure the debug info is scrolled to the bottom.
+      // Does not work reliably but leaving it for now
+      setTimeout(() => {
+        const scroller = terminalDebugRef.querySelector('.xterm-viewport');
+        scrollToBottom(scroller);
+      }, 50);
     });
 
     let processingStdin: 'num' | 'str' | null = null;
@@ -212,11 +212,13 @@ export const App: Component = () => {
     });
     terminalView.focus();
     // timeout to allow the UI to update before running potentially blocking code
-    setTimeout(() => runner.run().catch(printError));
+    setTimeout(() => runner.run().catch(handleError));
   }
 
-  function printError(error: Error): void {
+  function handleError(error: Error): void {
     if (!isRunning()) return;
+    console.trace(error);
+    handleStop();
     terminalView.writeln(`\n\x1b[1;31m${error.name}: ${error.message}\x1b[0m`);
   }
 

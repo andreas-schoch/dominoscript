@@ -1,3 +1,4 @@
+import {describe, it} from 'node:test';
 import {createRunner} from '../../src/Runner.js';
 import {strictEqual} from 'node:assert';
 

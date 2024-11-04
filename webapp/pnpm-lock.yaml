@@ -20,9 +20,6 @@ dependencies:
   '@codemirror/view':
     specifier: ^6.34.1
     version: 6.34.1
-  '@solidjs/router':
-    specifier: ^0.8.2
-    version: 0.8.2(solid-js@1.9.3)
   '@xterm/addon-canvas':
     specifier: ^0.7.0
     version: 0.7.0(@xterm/xterm@5.5.0)
@@ -39,8 +36,8 @@ dependencies:
     specifier: ^6.0.1
     version: 6.0.1(@lezer/common@1.2.3)
   dominoscript:
-    specifier: ^0.4.7
-    version: 0.4.7
+    specifier: ^0.5.0
+    version: 0.5.0
   github-markdown-css:
     specifier: ^5.7.0
     version: 5.7.0
@@ -65,7 +62,7 @@ dependencies:
 
 devDependencies:
   '@eslint/js':
-    specifier: ^9.12.0
+    specifier: ^9.13.0
     version: 9.13.0
   '@playwright/test':
     specifier: ^1.48.2
@@ -83,7 +80,7 @@ devDependencies:
     specifier: ^10.4.17
     version: 10.4.17(postcss@8.4.33)
   eslint:
-    specifier: ^9.12.0
+    specifier: ^9.13.0
     version: 9.13.0
   nyc:
     specifier: ^17.1.0
@@ -1507,14 +1504,6 @@ packages:
       solid-js: 1.9.3
     dev: true
 
-  /@solidjs/router@0.8.2(solid-js@1.9.3):
-    resolution: {integrity: sha512-gUKW+LZqxtX6y/Aw6JKyy4gQ9E7dLqp513oB9pSYJR1HM5c56Pf7eijzyXX+b3WuXig18Cxqah4tMtF0YGu80w==}
-    peerDependencies:
-      solid-js: ^1.5.3
-    dependencies:
-      solid-js: 1.9.3
-    dev: false
-
   /@stylistic/eslint-plugin@2.9.0(eslint@9.13.0)(typescript@5.6.3):
     resolution: {integrity: sha512-OrDyFAYjBT61122MIY1a3SfEgy3YCMgt2vL4eoPmvTwDBwyQhAXurxNQznlRD/jESNfYWfID8Ej+31LljvF7Xg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -1841,7 +1830,7 @@ packages:
       postcss: ^8.1.0
     dependencies:
       browserslist: 4.22.2
-      caniuse-lite: 1.0.30001579
+      caniuse-lite: 1.0.30001677
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.0.0
@@ -1905,7 +1894,7 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001579
+      caniuse-lite: 1.0.30001677
       electron-to-chromium: 1.4.639
       node-releases: 2.0.14
       update-browserslist-db: 1.0.13(browserslist@4.22.2)
@@ -1916,7 +1905,7 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001673
+      caniuse-lite: 1.0.30001677
       electron-to-chromium: 1.5.49
       node-releases: 2.0.18
       update-browserslist-db: 1.1.1(browserslist@4.24.2)
@@ -1947,12 +1936,8 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /caniuse-lite@1.0.30001579:
-    resolution: {integrity: sha512-u5AUVkixruKHJjw/pj9wISlcMpgFWzSrczLZbrqBSxukQixmg0SJ5sZTpvaFvxU0HoQKd4yoyAogyrAz9pzJnA==}
-    dev: true
-
-  /caniuse-lite@1.0.30001673:
-    resolution: {integrity: sha512-WTrjUCSMp3LYX0nE12ECkV0a+e6LC85E0Auz75555/qr78Oc8YWhEPNfDd6SHdtlCMSzqtuXY0uyEMNRcsKpKw==}
+  /caniuse-lite@1.0.30001677:
+    resolution: {integrity: sha512-fmfjsOlJUpMWu+mAAtZZZHz7UEwsUxIIvu1TJfO1HqFQvB/B+ii0xr9B5HpbZY/mC4XZ8SvjHJqtAY6pDPQEog==}
     dev: true
 
   /chalk@2.4.2:
@@ -2114,8 +2099,8 @@ packages:
     resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
     dev: true
 
-  /dominoscript@0.4.7:
-    resolution: {integrity: sha512-Xst8RjmBNuSvdC5agUyUXazU2ufigXD9urXQhgmHbHRZXxc+XgUgjbeIp9oxTkXvk+wAiywBj5BO7brWyO99eQ==}
+  /dominoscript@0.5.0:
+    resolution: {integrity: sha512-XKXT+a2v/o2r5nnOXdxB+SI4v9xVWQu9UQoho4Ga6hqZPW7YUMjfl05asAmZYn1dI/DuXQxAmcmoEf93fjIIIQ==}
     hasBin: true
     dev: false
 

@@ -34,7 +34,7 @@ export function gridToSource(grid: Grid): string {
     const col = (cell.address % grid.width) * 2;
     const lineIndex = row;
     const charIndex = col;
-    const value = cell.value === null ? '.' : cell.value.toString(16);
+    const value = cell.value.toString(16);
     lines[lineIndex] = lines[lineIndex].substring(0, charIndex) + value + lines[lineIndex].substring(charIndex + 1);
 
     if (cell.connection - cell.address === 1) {
